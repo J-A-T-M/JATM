@@ -1,3 +1,2 @@
 # JATM
-
-Johnny and the mongooses
+Johnny & The Mongooses
