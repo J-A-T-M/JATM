@@ -1,9 +1,3 @@
 # JATM
 
-Carl
-Daniel
-Markus
-Johnny
-Tanja
-Yu
-Jessica
+Markus The Weasel Linseisen
