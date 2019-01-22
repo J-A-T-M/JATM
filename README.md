@@ -1,3 +1,3 @@
 # JATM
 
-Markus The Weasel Linseisen
+Johnny and the mongooses
