@@ -20,10 +20,11 @@ enum {
 	UNIFORM_MATERIAL_ROUGHNESS,
 	UNIFORM_MATERIAL_METALLIC,
 	UNIFORM_MATERIAL_F0,
-	UNIFORM_AMBIENT_COLOR,
+	UNIFORM_UP,
+	UNIFORM_AMBIENT_COLOR_UP,
+	UNIFORM_AMBIENT_COLOR_DOWN,
 	UNIFORM_LIGHT_COLOR,
-	UNIFORM_LIGHT_BRIGHTNESS,
-	UNIFORM_LIGHT_POSITION,
+	UNIFORM_LIGHT_DIRECTION,
 	UNIFORM_SHADOWMAP_SAMPLER,
 	UNIFORM_SHADOW_MODEL_MATRIX,
 	UNIFORM_SHADOW_LIGHTSPACE_MATRIX,
@@ -87,11 +88,11 @@ void Renderer::DrawRenderable_ShadowMap(std::shared_ptr<Renderable> renderable) 
 void Renderer::draw() {
 	// draw shadow stuff
 	glm::mat4 light_view = glm::lookAt(
-		light_position,
-		light_target,
-		glm::vec3(0, 1, 0)
+		glm::vec3(0, 0, 0),
+		light_direction,
+		glm::vec3(0.01, 1, 0)
 	);
-	glm::mat4 light_projection = glm::perspective(light_FOV * (float)M_PI / 180.0f, 1.0f, light_nearclip, light_farclip);
+	glm::mat4 light_projection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, light_nearclip, light_farclip);
 	glm::mat4 light_viewProjection = light_projection * light_view;
 	glUseProgram(shadowProgram);
 	glUniformMatrix4fv(uniforms[UNIFORM_SHADOW_LIGHTSPACE_MATRIX], 1, GL_FALSE, glm::value_ptr(light_viewProjection));
@@ -104,17 +105,23 @@ void Renderer::draw() {
 	}
 
 	// draw 3d stuff
-	glm::mat4 view = glm::translate(glm::mat4(1.0), -cameraPosition);
+	glm::mat4 view = glm::lookAt(
+		cameraPosition,
+		cameraTarget,
+		glm::vec3(0, 1, 0)
+	);
 	glm::mat4 projection = glm::perspective(cameraFOV * (float)M_PI / 180.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, nearClip, farClip);
-	glm::vec3 lightPos = view * glm::vec4(light_position, 1.0f);
+	glm::vec3 lightDir = view * glm::vec4(light_direction, 0.0f);
+	glm::vec3 upDir = view * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
 	glUseProgram(mainProgram);
 	glUniformMatrix4fv(uniforms[UNIFORM_VIEW_MATRIX], 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(uniforms[UNIFORM_PROJECTION_MATRIX], 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(uniforms[UNIFORM_LIGHTSPACE_MATRIX], 1, GL_FALSE, glm::value_ptr(light_viewProjection));
-	glUniform3fv(uniforms[UNIFORM_AMBIENT_COLOR], 1, glm::value_ptr(glm::convertSRGBToLinear(ambient_color)));
+	glUniform3fv(uniforms[UNIFORM_UP], 1, glm::value_ptr(upDir));
+	glUniform3fv(uniforms[UNIFORM_AMBIENT_COLOR_UP], 1, glm::value_ptr(glm::convertSRGBToLinear(ambient_color_up)));
+	glUniform3fv(uniforms[UNIFORM_AMBIENT_COLOR_DOWN], 1, glm::value_ptr(glm::convertSRGBToLinear(ambient_color_down)));
 	glUniform3fv(uniforms[UNIFORM_LIGHT_COLOR], 1, glm::value_ptr(glm::convertSRGBToLinear(light_color)));
-	glUniform1f(uniforms[UNIFORM_LIGHT_BRIGHTNESS], light_brightness);
-	glUniform3fv(uniforms[UNIFORM_LIGHT_POSITION], 1, glm::value_ptr(lightPos));
+	glUniform3fv(uniforms[UNIFORM_LIGHT_DIRECTION], 1, glm::value_ptr(lightDir));
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 	glViewport(0, 0, WIDTH, HEIGHT);
@@ -276,9 +283,10 @@ int Renderer::RenderLoop() {
 	uniforms[UNIFORM_MATERIAL_METALLIC] = glGetUniformLocation(mainProgram, "u_metallic");
 	uniforms[UNIFORM_MATERIAL_F0] = glGetUniformLocation(mainProgram, "u_f0");
 	uniforms[UNIFORM_SHADOWMAP_SAMPLER] = glGetUniformLocation(mainProgram, "u_shadowMapSampler");
-	uniforms[UNIFORM_AMBIENT_COLOR] = glGetUniformLocation(mainProgram, "u_ambientColor");
-	uniforms[UNIFORM_LIGHT_POSITION] = glGetUniformLocation(mainProgram, "u_lightPosition");
-	uniforms[UNIFORM_LIGHT_BRIGHTNESS] = glGetUniformLocation(mainProgram, "u_lightBrightness");
+	uniforms[UNIFORM_UP] = glGetUniformLocation(mainProgram, "u_up");
+	uniforms[UNIFORM_AMBIENT_COLOR_UP] = glGetUniformLocation(mainProgram, "u_ambientColorUp");
+	uniforms[UNIFORM_AMBIENT_COLOR_DOWN] = glGetUniformLocation(mainProgram, "u_ambientColorDown");
+	uniforms[UNIFORM_LIGHT_DIRECTION] = glGetUniformLocation(mainProgram, "u_lightDirection");
 	uniforms[UNIFORM_LIGHT_COLOR] = glGetUniformLocation(mainProgram, "u_lightColor");
 	// uniforms for shadow mapping
 	uniforms[UNIFORM_SHADOW_MODEL_MATRIX] = glGetUniformLocation(shadowProgram, "model");
@@ -310,7 +318,7 @@ int Renderer::RenderLoop() {
 	// set opengl to swap framebuffer every # screen refreshes
 	glfwSwapInterval(1);
 
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(ambient_color_up.r, ambient_color_up.g, ambient_color_up.b, 1.0f);
 
 	lck.unlock();
 	cv.notify_all();
