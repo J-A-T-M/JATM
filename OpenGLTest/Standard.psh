@@ -14,11 +14,11 @@ uniform float u_f0;
 uniform sampler2D u_textureSampler;
 uniform sampler2D u_shadowMapSampler;
 
-uniform vec3 u_ambientColor;
-uniform vec3 u_lightPosition;
+uniform vec3 u_up;
+uniform vec3 u_ambientColorUp;
+uniform vec3 u_ambientColorDown;
 uniform vec3 u_lightDirection;
 uniform vec3 u_lightColor;
-uniform float u_lightBrightness;
 
 out vec4 o_fragColor;
 
@@ -76,6 +76,20 @@ float visibility(vec4 lightSpace_position) {
 	return visibility;
 }
 
+// Hash without Sine
+// stolen from here https://www.shadertoy.com/view/4djSRW
+#define HASHSCALE1 .1031
+float hash12(vec2 p) {
+	vec3 p3 = fract(vec3(p.xyx) * HASHSCALE1);
+	p3 += dot(p3, p3.yzx + 19.19);
+	return fract((p3.x + p3.y) * p3.z);
+}
+
+vec4 dither(vec4 color) {
+	color.xyz *= 0.975 + 0.05 * (hash12(gl_FragCoord.xy) + hash12(gl_FragCoord.xy + 3.1337) - 0.5);
+	return color;
+}
+
 void main() {
 	vec4 color = u_color;
 
@@ -90,18 +104,16 @@ void main() {
 
 	vec3 N = normalize(v_normal);
 	vec3 V = normalize(-v_position);
-	vec3 L = u_lightPosition - v_position;
+	vec3 L = normalize(-u_lightDirection);
 	vec3 F0 = mix(vec3(u_f0), color.xyz, u_metallic);
-	float len = length(L);
-	L /= len;
 
 	float diffuse = lambert(N, L, u_f0) * (1 - u_metallic);
 	vec3 specular = GGX(N, V, L, u_roughness, F0);
-	float attenuation = u_lightBrightness / (len * len);
 	float visibility = visibility(v_lightSpace_position);
 
 	vec4 ret = color;
-	ret.xyz *= u_ambientColor;
-	ret.xyz += (diffuse * color.xyz + specular) * u_lightColor * attenuation * visibility;
-	o_fragColor = ret;
+	ret.xyz *= mix(u_ambientColorDown, u_ambientColorUp, dot(u_up, N) * 0.5 + 0.5);
+	ret.xyz += (diffuse * color.xyz + specular) * u_lightColor * visibility;
+
+	o_fragColor = dither(ret);
 }

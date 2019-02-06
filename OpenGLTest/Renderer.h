@@ -24,20 +24,19 @@ class Renderer : public ISubscriber {
 		int RenderLoop();
 		~Renderer();
 
-		glm::vec3 cameraPosition = { 64.0f, 64.0f, 64.0f };
-		GLfloat cameraFOV = 90.0f;
+		glm::vec3 cameraPosition = { 0.0f, 64.0f, 100.0f };
+		glm::vec3 cameraTarget = { 0.0f, 0.0f, 0.0f };
+		GLfloat cameraFOV = 25.0f;
 		GLfloat nearClip = 0.1f;
 		GLfloat farClip = 1000.0f;
 
-		glm::vec3 ambient_color = { 0.1, 0.1, 0.1 };
+		glm::vec3 ambient_color_up = { 0.25, 0.25, 0.25 };
+		glm::vec3 ambient_color_down = { 0.0f, 0.0f, 0.0f };
 
-		glm::vec3 light_position = { 0.0f, 200.0f, 64.0f };
-		glm::vec3 light_target = { 182.5f, 90.0f, 0.0f };
+		glm::vec3 light_direction = { 0.0f, -1.0f, 0.0f };
 		glm::vec3 light_color = { 1.0f, 1.0f, 1.0f };
-		GLfloat light_brightness = 40000.0f;
-		GLfloat light_FOV = 90.0f;
-		GLfloat light_nearclip = 0.1f;
-		GLfloat	light_farclip = 1000.0f;
+		GLfloat light_nearclip = -50.0f;
+		GLfloat	light_farclip = 50.0f;
 	private:
 		void draw();
 
