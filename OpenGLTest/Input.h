@@ -6,6 +6,8 @@
 #include <map>
 #include <vector>
 
+
+
 class Input {
 public:
 
@@ -29,3 +31,4 @@ private:
 	std::map<int, std::vector<Callback>> keyrepeat_Callbacks; //functions that are called when the key is held down
 
 };
+
