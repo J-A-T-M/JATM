@@ -116,6 +116,7 @@ int ProcessClient(CLIENT &new_client, std::vector<CLIENT> &client_array, std::th
 					serverPlayersData.players[new_client.id].x--;
 					break;
 				case 'd':
+					break;
 					serverPlayersData.players[new_client.id].x++;
 				case 'q':
 					serverPlayersData.players[new_client.id].health++;

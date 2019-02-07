@@ -25,7 +25,7 @@ std::vector<std::shared_ptr<Renderable>> playerSharedPointers;
 std::vector<Renderable*> playerList;
 
 bool isNetworked = true;
-bool isServer = true;
+bool isServer = false;
 
 void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
 	switch (key) {
