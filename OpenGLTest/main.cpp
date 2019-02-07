@@ -24,8 +24,8 @@ Input inputHandler;
 std::vector<std::shared_ptr<Renderable>> playerSharedPointers;
 std::vector<Renderable*> playerList;
 
-bool isNetworked = true;
-bool isServer = false;
+const bool isNetworked = true;
+const bool isServer = false;
 
 void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
 	switch (key) {
@@ -39,8 +39,15 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 			printf("A pressed\n");
 			
 			if (isNetworked) {
+
 				char msgBuffer[] = "a";
-				ClientSendMessage(msgBuffer);
+				if (!isServer) {	//client
+					ClientSendMessage(msgBuffer);
+				}
+				else { //server
+					ProcessInput(msgBuffer, MASTER_CLIENT_ID);
+					BroadCastAll();
+				}
 			}
 			else {
 				//tempPlayerPointer->position.x--;
@@ -48,21 +55,28 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		}
 		if (action == GLFW_RELEASE)
 		{
-			//printf("A Released\n");
+			
 		}
 		break;
 	case GLFW_KEY_RIGHT:
 	case GLFW_KEY_D:
 		if (action == GLFW_PRESS)
 		{
-			//printf("D pressed\n");
 			if (isNetworked) {
+
 				char msgBuffer[] = "d";
-				ClientSendMessage(msgBuffer);
+				if (!isServer) {	//client
+					ClientSendMessage(msgBuffer);
+				}
+				else { //server
+					ProcessInput(msgBuffer, MASTER_CLIENT_ID);
+					BroadCastAll();
+				}
 			}
 			else {
 				//tempPlayerPointer->position.x++;
 			}
+
 		}
 		if (action == GLFW_RELEASE)
 		{
@@ -76,7 +90,13 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		{
 			if (isNetworked) {
 				char msgBuffer[] = "w";
-				ClientSendMessage(msgBuffer);
+				if (!isServer) {	//client
+					ClientSendMessage(msgBuffer);
+				}
+				else { //server
+					ProcessInput(msgBuffer, MASTER_CLIENT_ID);
+					BroadCastAll();
+				}
 			}
 			else {
 				//tempPlayerPointer->position.z--;
@@ -90,7 +110,13 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		{
 			if (isNetworked) {
 				char msgBuffer[] = "s";
-				ClientSendMessage(msgBuffer);
+				if (!isServer) {	//client
+					ClientSendMessage(msgBuffer);
+				}
+				else { //server
+					ProcessInput(msgBuffer, MASTER_CLIENT_ID);
+					BroadCastAll();
+				}
 			}
 			else {
 				//tempPlayerPointer->position.z++;
@@ -103,11 +129,15 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		{
 			if (isNetworked) {
 				char msgBuffer[] = "q";
-				ClientSendMessage(msgBuffer);
+				if (!isServer) {	//client
+					ClientSendMessage(msgBuffer);
+				}
+				else { //server
+					ProcessInput(msgBuffer, MASTER_CLIENT_ID);
+					BroadCastAll();
+				}
 			}
-			else {
-				//tempPlayerPointer->position.z++;
-			}
+
 		}
 		break;
 
@@ -118,16 +148,13 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 				char msgBuffer[] = "e";
 				ClientSendMessage(msgBuffer);
 			}
-			else {
-				//tempPlayerPointer->position.z++;
-			}
 		}
 		break;
 
 	case GLFW_KEY_SPACE:
 		if (action == GLFW_PRESS)
 		{
-			printf("Space pressed\n");
+			//printf("Space pressed\n");
 		}
 		if (action == GLFW_RELEASE)
 		{

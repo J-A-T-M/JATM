@@ -4,6 +4,7 @@
 #define SERVER_IP_ADDRESS "127.0.0.1"
 #define DEFAULT_BUFLEN 512	//max buffer size oof 512 bytes
 #define DEFAULT_PORT "5055"
+#define MASTER_CLIENT_ID 0
 #define MAX_CLIENTS 3
 
 #define WIN32_LEAN_AND_MEAN
@@ -25,7 +26,7 @@
 #pragma comment (lib, "AdvApi32.lib")//client
 
 
-
+//NOTE - id = 0 is reserved for the player hosting the game, aka master client.
 typedef struct client
 {
 	int id;
@@ -43,6 +44,7 @@ typedef struct player
 
 }PLAYER;
 
+
 class PlayerPacket
 {
 public:
@@ -50,6 +52,13 @@ public:
 	PlayerPacket() {}
 	~PlayerPacket() {}
 };
+
+std::vector<CLIENT> clients(MAX_CLIENTS);
+std::thread my_thread[MAX_CLIENTS];
+PlayerPacket serverPlayersData;
+
+int num_clients = 0;
+int temp_id = -1;
 
 
 PlayerPacket initialializePlayerPacket(float x, float z, float velX, float velZ, int health) {
@@ -73,12 +82,7 @@ void print(char string[], int length) {
 	std::cout << std::endl;
 }
 
-std::vector<CLIENT> clients(MAX_CLIENTS);
-std::thread my_thread[MAX_CLIENTS];
-PlayerPacket serverPlayersData;
 
-int num_clients = 0;
-int temp_id = -1;
 
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -86,6 +90,51 @@ int temp_id = -1;
 //    Server code
 //
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+void ProcessInput(char recvbuf[], int id) {
+	//Handle reciving input logic here.
+	switch (recvbuf[0]) {
+	case 'w':
+		serverPlayersData.players[id].z--;
+		break;
+	case 's':
+		serverPlayersData.players[id].z++;
+		break;
+	case 'a':
+		serverPlayersData.players[id].x--;
+		break;
+	case 'd':
+		serverPlayersData.players[id].x++;
+		break;
+	case 'q':
+		serverPlayersData.players[id].health++;
+		break;
+	case 'e':
+		//serverPlayersData.players[new_client.id].y--;
+		printf("e received\n");
+		break;
+	default:
+		break;
+	}
+}
+
+bool BroadCastAll() {
+
+	char playerPacketBuffer[sizeof(PlayerPacket)];
+
+	memcpy(playerPacketBuffer, (char*)&serverPlayersData, sizeof(PlayerPacket));
+
+	int iResult = 0;
+
+	for (int i = 0; i < MAX_CLIENTS;i++) {
+
+		if (clients[i].socket != INVALID_SOCKET) 
+			iResult = send(clients[i].socket, playerPacketBuffer, sizeof(playerPacketBuffer), 0);
+	}
+
+	return true;
+}
 
 int ProcessClient(CLIENT &new_client, std::vector<CLIENT> &client_array, std::thread &thread) {
 
@@ -105,36 +154,14 @@ int ProcessClient(CLIENT &new_client, std::vector<CLIENT> &client_array, std::th
 				print(recvbuf, iResult);
 
 				//Handle reciving input logic here.
-				switch (recvbuf[0]) {
-				case 'w':
-					serverPlayersData.players[new_client.id].z--;
-					break;
-				case 's':
-					serverPlayersData.players[new_client.id].z++;
-					break;
-				case 'a':
-					serverPlayersData.players[new_client.id].x--;
-					break;
-				case 'd':
-					break;
-					serverPlayersData.players[new_client.id].x++;
-				case 'q':
-					serverPlayersData.players[new_client.id].health++;
-					break;
-				case 'e':
-					//serverPlayersData.players[new_client.id].y--;
-					printf("E received\n");
-					break;
-				default:
-					break;
-				}
+				ProcessInput(recvbuf, new_client.id);
 
 				memcpy(playerPacketBuffer, (char*)&serverPlayersData, sizeof(PlayerPacket));
 
 				//Broadcast the message received by this client to all other clients connected to this server
 				for (int i = 0; i < MAX_CLIENTS;i++) {
 					if (clients[i].socket != INVALID_SOCKET) //if (new_client.id != i) - this line makes it so we don't send to the client sending the data.
-						iResult = send(clients[i].socket, playerPacketBuffer, sizeof(playerPacketBuffer), 0);//iResult = send(clients[i].socket, recvbuf, (int)strlen(recvbuf), 0);
+						iResult = send(clients[i].socket, playerPacketBuffer, sizeof(playerPacketBuffer), 0);	//iResult = send(clients[i].socket, recvbuf, (int)strlen(recvbuf), 0);
 				}
 
 			}
@@ -266,7 +293,7 @@ void ServerLoop() {
 		num_clients = -1; //reset number of clients
 		temp_id = -1;	  //create temp id for the next client, with -1 being invalid
 
-		for (int i = 0;i < MAX_CLIENTS;i++) {
+		for (int i = 1;i < MAX_CLIENTS;i++) {	//reserve id = 0  for the server (master client)
 
 			if (clients[i].socket == INVALID_SOCKET && temp_id == -1) { //checks to see if there's an empty spot in the client array
 				clients[i].socket = incomingClientSocket;
