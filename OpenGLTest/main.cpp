@@ -1,3 +1,4 @@
+#include "Network.h"
 #include <Windows.h>
 #include <iostream>
 #include "Renderer.h"
@@ -18,8 +19,13 @@ std::condition_variable cv;
 Renderer *renderer;
 Input inputHandler;
 
-Renderable *tempPlayerPointer;
+//Renderable *tempPlayerPointer;
 
+std::vector<std::shared_ptr<Renderable>> playerSharedPointers;
+std::vector<Renderable*> playerList;
+
+bool isNetworked = true;
+bool isServer = true;
 
 void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
 	switch (key) {
@@ -31,19 +37,32 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 			//EventManager::notify(PLAYER_LEFT, &param, false);
 			//EventManager::notify(AIM_LEFT, &param, false);
 			printf("A pressed\n");
-			tempPlayerPointer->position.x--;
+			
+			if (isNetworked) {
+				char msgBuffer[] = "a";
+				ClientSendMessage(msgBuffer);
+			}
+			else {
+				//tempPlayerPointer->position.x--;
+			}
 		}
 		if (action == GLFW_RELEASE)
 		{
-			printf("A Released\n");
+			//printf("A Released\n");
 		}
 		break;
 	case GLFW_KEY_RIGHT:
 	case GLFW_KEY_D:
 		if (action == GLFW_PRESS)
 		{
-			printf("D pressed\n");
-			tempPlayerPointer->position.x++;
+			//printf("D pressed\n");
+			if (isNetworked) {
+				char msgBuffer[] = "d";
+				ClientSendMessage(msgBuffer);
+			}
+			else {
+				//tempPlayerPointer->position.x++;
+			}
 		}
 		if (action == GLFW_RELEASE)
 		{
@@ -55,7 +74,13 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	case GLFW_KEY_W:
 		if (action == GLFW_PRESS)
 		{
-			tempPlayerPointer->position.z--;
+			if (isNetworked) {
+				char msgBuffer[] = "w";
+				ClientSendMessage(msgBuffer);
+			}
+			else {
+				//tempPlayerPointer->position.z--;
+			}
 		}
 		break;
 
@@ -63,7 +88,39 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	case GLFW_KEY_S:
 		if (action == GLFW_PRESS)
 		{
-			tempPlayerPointer->position.z++;
+			if (isNetworked) {
+				char msgBuffer[] = "s";
+				ClientSendMessage(msgBuffer);
+			}
+			else {
+				//tempPlayerPointer->position.z++;
+			}
+		}
+		break;
+
+	case GLFW_KEY_Q:
+		if (action == GLFW_PRESS)
+		{
+			if (isNetworked) {
+				char msgBuffer[] = "q";
+				ClientSendMessage(msgBuffer);
+			}
+			else {
+				//tempPlayerPointer->position.z++;
+			}
+		}
+		break;
+
+	case GLFW_KEY_E:
+		if (action == GLFW_PRESS)
+		{
+			if (isNetworked) {
+				char msgBuffer[] = "e";
+				ClientSendMessage(msgBuffer);
+			}
+			else {
+				//tempPlayerPointer->position.z++;
+			}
 		}
 		break;
 
@@ -108,12 +165,41 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	}
 }
 
-int main() {
+int __cdecl main() {
+
+	//Server setup
+	
+	if (isNetworked) {
+		if (isServer) {
+			std::thread serverThread = std::thread(ServerLoop); 
+			serverThread.detach();
+		}
+		else {
+			std::thread clientThread = std::thread(ClientLoop);
+			clientThread.detach();
+		}
+	}
+	
 	AssetLoader::preloadAssets();
 	renderer = new Renderer();
 	std::unique_lock<std::mutex> lck(mtx);
 	std::thread renderThread = std::thread(&Renderer::RenderLoop, renderer);
 
+	for (int i = 0;i < MAX_CLIENTS;i++) {
+
+		Renderable *playerRenderable = new Renderable();
+		playerRenderable->metallic = 1.0f;
+		playerRenderable->position = glm::vec3(0.0, 1.0, i * 3.0);
+		playerRenderable->scale = glm::vec3(2.0f);
+		playerRenderable->color = glm::vec4(1.000, 0.766, 0.336, 1.0);
+		playerRenderable->model = MODEL_SPHERE;
+		std::shared_ptr<Renderable> player_renderable_ptr(playerRenderable);
+		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player_renderable_ptr), false);
+
+		playerSharedPointers.push_back(player_renderable_ptr);
+		playerList.push_back(playerRenderable);
+	}
+	
 	Renderable plastic_sphere;
 	plastic_sphere.metallic = 0.0f;
 	plastic_sphere.position = glm::vec3(-10.0, 1.0, 0.0);
@@ -131,7 +217,7 @@ int main() {
 	gold_sphere.model = MODEL_SPHERE;
 	std::shared_ptr<Renderable> gold_sphere_ptr(&gold_sphere);
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(gold_sphere_ptr), false);
-	tempPlayerPointer = &gold_sphere;
+	//tempPlayerPointer = &gold_sphere;
 
 	Renderable copper_sphere;
 	copper_sphere.metallic = 1.0f;
@@ -141,6 +227,8 @@ int main() {
 	copper_sphere.model = MODEL_SPHERE;
 	std::shared_ptr<Renderable> copper_sphere_ptr(&copper_sphere);
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(copper_sphere_ptr), false);
+	
+
 
 	Renderable floor;
 	floor.roughness = 0.8;
@@ -157,8 +245,23 @@ int main() {
 	cv.wait(lck);
 	inputHandler.setInputCallbacks(window, KeyCallback, mouse_button_callback);	//setup input handling
 
-	for (int i = 0;; i++) {
+	
+	for (int i = 0;; i++) { //temp network code, logic will be eventually moved elsewhere
+
 		Sleep(16);
+
+		
+		if (isNetworked) {
+
+			for (int id = 0;id < MAX_CLIENTS;id++) {
+
+				playerList[id]->position.x = serverPlayersData.players[id].x;
+				playerList[id]->position.z = serverPlayersData.players[id].z;
+
+			}
+
+		}
+
 		renderer->light_direction.z = sin(i * 0.01);
 		renderer->light_direction.x = cos(i * 0.01);
 		copper_sphere.model = (ModelEnum)( (i / 30) % NUM_MODELS);
