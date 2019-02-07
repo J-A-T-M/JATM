@@ -161,6 +161,7 @@ int main() {
 		Sleep(16);
 		renderer->light_direction.z = sin(i * 0.01);
 		renderer->light_direction.x = cos(i * 0.01);
+		copper_sphere.model = (ModelEnum)( (i / 30) % NUM_MODELS);
 	}
 
 	std::cout << "goodbye world\n";
