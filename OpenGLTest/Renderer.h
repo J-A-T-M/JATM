@@ -39,15 +39,10 @@ class Renderer : public ISubscriber {
 		GLfloat	light_farclip = 50.0f;
 	private:
 		void draw();
-
-		void GenerateBuffers(std::shared_ptr<Renderable> renderable);
-		void PopulateBuffers(std::shared_ptr<Renderable> renderable);
-
-        void AddToRenderables(std::shared_ptr<Renderable> renderable);
-
 		void DrawRenderable(std::shared_ptr<Renderable> renderable);
-		void DrawRenderable_ShadowMap(std::shared_ptr<Renderable> renderable);
+		void DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable);
 
+		void PreloadAssetBuffers();
 		void CreateShaderProgram(GLuint & programLoc, const char * vertexShaderPath, const char * fragmentShaderPath);
 
         void notify(EventName eventName, Param* params);    // Overrides ISubscriber::notify

@@ -9,6 +9,8 @@
 #include <GLEW/glew.h>
 #include <glm/glm.hpp>
 
+#include "Enums.h"
+
 GLFWwindow* window;
 std::mutex mtx;
 std::condition_variable cv;
@@ -53,7 +55,7 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	case GLFW_KEY_W:
 		if (action == GLFW_PRESS)
 		{
-			tempPlayerPointer->z--;
+			tempPlayerPointer->position.z--;
 		}
 		break;
 
@@ -61,7 +63,7 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	case GLFW_KEY_S:
 		if (action == GLFW_PRESS)
 		{
-			tempPlayerPointer->z++;
+			tempPlayerPointer->position.z++;
 		}
 		break;
 
@@ -107,7 +109,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 
 int main() {
-
+	AssetLoader::preloadAssets();
 	renderer = new Renderer();
 	std::unique_lock<std::mutex> lck(mtx);
 	std::thread renderThread = std::thread(&Renderer::RenderLoop, renderer);
@@ -117,7 +119,7 @@ int main() {
 	plastic_sphere.position = glm::vec3(-10.0, 1.0, 0.0);
 	plastic_sphere.scale = glm::vec3(2.0f);
 	plastic_sphere.color = glm::vec4(0.5, 1.0, 0.1, 1.0);
-	plastic_sphere.model = AssetLoader::loadModel("../assets/models/sphere.obj");
+	plastic_sphere.model = MODEL_SPHERE;
 	std::shared_ptr<Renderable> plastic_sphere_ptr(&plastic_sphere);
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(plastic_sphere_ptr), false);
 
@@ -126,7 +128,7 @@ int main() {
 	gold_sphere.position = glm::vec3(0.0, 1.0, 0.0);
 	gold_sphere.scale = glm::vec3(2.0f);
 	gold_sphere.color = glm::vec4(1.000, 0.766, 0.336, 1.0);
-	gold_sphere.model = AssetLoader::loadModel("../assets/models/sphere.obj");
+	gold_sphere.model = MODEL_SPHERE;
 	std::shared_ptr<Renderable> gold_sphere_ptr(&gold_sphere);
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(gold_sphere_ptr), false);
 	tempPlayerPointer = &gold_sphere;
@@ -136,7 +138,7 @@ int main() {
 	copper_sphere.position = glm::vec3(10.0, 1.0, 0.0);
 	copper_sphere.scale = glm::vec3(2.0f);
 	copper_sphere.color = glm::vec4(0.955, 0.637, 0.538, 1.0);
-	copper_sphere.model = AssetLoader::loadModel("../assets/models/sphere.obj");
+	copper_sphere.model = MODEL_SPHERE;
 	std::shared_ptr<Renderable> copper_sphere_ptr(&copper_sphere);
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(copper_sphere_ptr), false);
 
@@ -145,7 +147,7 @@ int main() {
 	floor.color = glm::vec4(0.25, 0.25, 0.25, 1.0);
 	floor.scale = glm::vec3(64);
 	floor.position = glm::vec3(0, -33, 0);
-	floor.model = AssetLoader::loadModel("../assets/models/cube.obj");
+	floor.model = MODEL_CUBE;
 	std::shared_ptr<Renderable> ptr2(&floor);
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(ptr2), false);
 
