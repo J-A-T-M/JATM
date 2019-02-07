@@ -136,6 +136,16 @@ bool BroadCastAll() {
 	return true;
 }
 
+int BroadCastAllLoop() {
+
+	while (1) {
+		BroadCastAll();
+		Sleep(200);
+	}
+	return 0;
+}
+
+
 int ProcessClient(CLIENT &new_client, std::vector<CLIENT> &client_array, std::thread &thread) {
 
 	char recvbuf[DEFAULT_BUFLEN];
@@ -278,6 +288,8 @@ void ServerLoop() {
 
 	for (int i = 0;i < MAX_CLIENTS;i++) clients[i] = { -1, INVALID_SOCKET }; //Initialize the client list
 
+	std::thread broadcast_thread(BroadCastAllLoop);
+	broadcast_thread.detach();
 
 	while (1) {
 
@@ -366,10 +378,9 @@ int ProcessServerSocket(CLIENT &new_client) {
 
 				serverPlayersData = playerPacket;//memcpy(playerPacketBuffer, (char*)&serverPlayersData, sizeof(PlayerPacket));
 
-				printPlayerPacket(playerPacket);
-				printf("\n");
+				//printPlayerPacket(playerPacket);
+				//printf("\n");
 
-				//print(recvbuf, iResult);
 			}
 			else {
 				printf("recv() failed: %d\n", WSAGetLastError());

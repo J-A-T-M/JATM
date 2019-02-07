@@ -25,7 +25,7 @@ std::vector<std::shared_ptr<Renderable>> playerSharedPointers;
 std::vector<Renderable*> playerList;
 
 const bool isNetworked = true;
-const bool isServer = false;
+const bool isServer = true;
 
 void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
 	switch (key) {
@@ -46,7 +46,7 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 				}
 				else { //server
 					ProcessInput(msgBuffer, MASTER_CLIENT_ID);
-					BroadCastAll();
+					//BroadCastAll();
 				}
 			}
 			else {
