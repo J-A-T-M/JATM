@@ -257,6 +257,7 @@ int __cdecl main() {
 
 				playerList[id]->position.x = serverPlayersData.players[id].x;
 				playerList[id]->position.z = serverPlayersData.players[id].z;
+				playerList[id]->model = (ModelEnum)(serverPlayersData.players[id].health % NUM_MODELS);
 
 			}
 
