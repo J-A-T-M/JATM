@@ -10,6 +10,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Enums.h"
+#include "AssetLoader.h"
+
 enum {
 	UNIFORM_MODEL_MATRIX,
 	UNIFORM_VIEW_MATRIX,
@@ -36,22 +39,25 @@ enum {
 GLuint uniforms[NUM_UNIFORMS];
 
 void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
-	glBindBuffer(GL_ARRAY_BUFFER, renderable->model.positionLoc);
+	Model* model = &AssetLoader::models[renderable->model];
+	Texture* texture = &AssetLoader::textures[renderable->texture];
+
+	glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, renderable->model.UVLoc);
+	glBindBuffer(GL_ARRAY_BUFFER, model->UVLoc);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (GLvoid*)0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, renderable->model.normalLoc);
+	glBindBuffer(GL_ARRAY_BUFFER, model->normalLoc);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderable->model.elementLoc);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->elementLoc);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, renderable->texture.loc);
+	glBindTexture(GL_TEXTURE_2D, texture->loc);
 
 	glm::mat4 m = glm::mat4(1.0);
-	m = glm::translate(m, renderable->getPosition3());
+	m = glm::translate(m, renderable->position);
 	m = glm::rotate(m, renderable->rotation.z * (float)M_PI / 180.0f, glm::vec3(0, 0, 1));
 	m = glm::rotate(m, renderable->rotation.y * (float)M_PI / 180.0f, glm::vec3(0, 1, 0));
 	m = glm::rotate(m, renderable->rotation.x * (float)M_PI / 180.0f, glm::vec3(1, 0, 0));
@@ -64,17 +70,20 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 	glUniform1f(uniforms[UNIFORM_MATERIAL_METALLIC], renderable->metallic);
 	glUniform1f(uniforms[UNIFORM_MATERIAL_F0], renderable->f0);
 
-	glDrawElements(GL_TRIANGLES, renderable->model.elements.size(), GL_UNSIGNED_INT, (void*)0);
+	glDrawElements(GL_TRIANGLES, model->elements.size(), GL_UNSIGNED_INT, (void*)0);
 }
 
-void Renderer::DrawRenderable_ShadowMap(std::shared_ptr<Renderable> renderable) {
-	glBindBuffer(GL_ARRAY_BUFFER, renderable->model.positionLoc);
+void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
+	Model* model = &AssetLoader::models[renderable->model];
+	Texture* texture = &AssetLoader::textures[renderable->texture];
+
+	glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderable->model.elementLoc);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->elementLoc);
 
 	glm::mat4 m = glm::mat4(1.0);
-	m = glm::translate(m, renderable->getPosition3());
+	m = glm::translate(m, renderable->position);
 	m = glm::rotate(m, renderable->rotation.z * (float)M_PI / 180.0f, glm::vec3(0, 0, 1));
 	m = glm::rotate(m, renderable->rotation.y * (float)M_PI / 180.0f, glm::vec3(0, 1, 0));
 	m = glm::rotate(m, renderable->rotation.x * (float)M_PI / 180.0f, glm::vec3(1, 0, 0));
@@ -82,7 +91,7 @@ void Renderer::DrawRenderable_ShadowMap(std::shared_ptr<Renderable> renderable) 
 
 	glUniformMatrix4fv(uniforms[UNIFORM_SHADOW_MODEL_MATRIX], 1, GL_FALSE, glm::value_ptr(m));
 
-	glDrawElements(GL_TRIANGLES, renderable->model.elements.size(), GL_UNSIGNED_INT, (void*)0);
+	glDrawElements(GL_TRIANGLES, model->elements.size(), GL_UNSIGNED_INT, (void*)0);
 }
 
 void Renderer::draw() {
@@ -101,27 +110,27 @@ void Renderer::draw() {
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glCullFace(GL_FRONT);
 	for (auto renderable : renderables) {
-		DrawRenderable_ShadowMap(renderable);
+		DrawRenderableDepthMap(renderable);
 	}
 
 	// draw 3d stuff
-	glm::mat4 view = glm::lookAt(
+	glm::mat4 camera_view = glm::lookAt(
 		cameraPosition,
 		cameraTarget,
 		glm::vec3(0, 1, 0)
 	);
-	glm::mat4 projection = glm::perspective(cameraFOV * (float)M_PI / 180.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, nearClip, farClip);
-	glm::vec3 lightDir = view * glm::vec4(light_direction, 0.0f);
-	glm::vec3 upDir = view * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+	glm::mat4 camera_projection = glm::perspective(cameraFOV * (float)M_PI / 180.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, nearClip, farClip);
+	glm::vec3 camera_lightDir = camera_view * glm::vec4(light_direction, 0.0f);
+	glm::vec3 camera_upDir = camera_view * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
 	glUseProgram(mainProgram);
-	glUniformMatrix4fv(uniforms[UNIFORM_VIEW_MATRIX], 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(uniforms[UNIFORM_PROJECTION_MATRIX], 1, GL_FALSE, glm::value_ptr(projection));
+	glUniformMatrix4fv(uniforms[UNIFORM_VIEW_MATRIX], 1, GL_FALSE, glm::value_ptr(camera_view));
+	glUniformMatrix4fv(uniforms[UNIFORM_PROJECTION_MATRIX], 1, GL_FALSE, glm::value_ptr(camera_projection));
 	glUniformMatrix4fv(uniforms[UNIFORM_LIGHTSPACE_MATRIX], 1, GL_FALSE, glm::value_ptr(light_viewProjection));
-	glUniform3fv(uniforms[UNIFORM_UP], 1, glm::value_ptr(upDir));
+	glUniform3fv(uniforms[UNIFORM_UP], 1, glm::value_ptr(camera_upDir));
 	glUniform3fv(uniforms[UNIFORM_AMBIENT_COLOR_UP], 1, glm::value_ptr(glm::convertSRGBToLinear(ambient_color_up)));
 	glUniform3fv(uniforms[UNIFORM_AMBIENT_COLOR_DOWN], 1, glm::value_ptr(glm::convertSRGBToLinear(ambient_color_down)));
 	glUniform3fv(uniforms[UNIFORM_LIGHT_COLOR], 1, glm::value_ptr(glm::convertSRGBToLinear(light_color)));
-	glUniform3fv(uniforms[UNIFORM_LIGHT_DIRECTION], 1, glm::value_ptr(lightDir));
+	glUniform3fv(uniforms[UNIFORM_LIGHT_DIRECTION], 1, glm::value_ptr(camera_lightDir));
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 	glViewport(0, 0, WIDTH, HEIGHT);
@@ -132,49 +141,41 @@ void Renderer::draw() {
 		DrawRenderable(renderable);
 	}
 
-	// draw 2d stuff
+	/* draw 2d stuff
 	glUseProgram(uiProgram);
 	glm::mat4 ui_viewProjection = glm::ortho(0.0f, (GLfloat)WIDTH, 0.0f, (GLfloat)HEIGHT, -100.0f, 100.0f);
 	glUniformMatrix4fv(uniforms[UNIFORM_UI_VIEWPROJECTION_MATRIX], 1, GL_FALSE, glm::value_ptr(ui_viewProjection));
+	*/
 }
 
-void Renderer::GenerateBuffers(std::shared_ptr<Renderable> renderable) {
-	glGenBuffers(1, &renderable->model.positionLoc);
-	glGenBuffers(1, &renderable->model.UVLoc);
-	glGenBuffers(1, &renderable->model.normalLoc);
-	glGenBuffers(1, &renderable->model.elementLoc);
-	glGenTextures(1, &renderable->texture.loc);
+void Renderer::PreloadAssetBuffers() {
+	for (int i = 0; i < NUM_MODELS; i++) {
+		Model* model = &AssetLoader::models[i];
+		glGenBuffers(1, &model->positionLoc);
+		glGenBuffers(1, &model->UVLoc);
+		glGenBuffers(1, &model->normalLoc);
+		glGenBuffers(1, &model->elementLoc);
+		glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
+		glBufferData(GL_ARRAY_BUFFER, model->positions.size() * sizeof(glm::vec3), model->positions.data(), GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, model->UVLoc);
+		glBufferData(GL_ARRAY_BUFFER, model->UVs.size() * sizeof(glm::vec2), model->UVs.data(), GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, model->normalLoc);
+		glBufferData(GL_ARRAY_BUFFER, model->normals.size() * sizeof(glm::vec3), model->normals.data(), GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->elementLoc);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->elements.size() * sizeof(GLuint), model->elements.data(), GL_STATIC_DRAW);
+	}
+	for (int i = 0; i < NUM_TEXTURES; i++) {
+		Texture* texture = &AssetLoader::textures[i];
+		glGenTextures(1, &texture->loc);
+		glBindTexture(GL_TEXTURE_2D, texture->loc);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, texture->width, texture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->data.data());
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
 }
-
-
-void Renderer::PopulateBuffers(std::shared_ptr<Renderable> renderable) {
-	glBindBuffer(GL_ARRAY_BUFFER, renderable->model.positionLoc);
-	glBufferData(GL_ARRAY_BUFFER, renderable->model.positions.size() * sizeof(glm::vec3), renderable->model.positions.data(), GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ARRAY_BUFFER, renderable->model.UVLoc);
-	glBufferData(GL_ARRAY_BUFFER, renderable->model.UVs.size() * sizeof(glm::vec2), renderable->model.UVs.data(), GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ARRAY_BUFFER, renderable->model.normalLoc);
-	glBufferData(GL_ARRAY_BUFFER, renderable->model.normals.size() * sizeof(glm::vec3), renderable->model.normals.data(), GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderable->model.elementLoc);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, renderable->model.elements.size() * sizeof(GLuint), renderable->model.elements.data(), GL_STATIC_DRAW);
-
-	glBindTexture(GL_TEXTURE_2D, renderable->texture.loc);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, renderable->texture.width, renderable->texture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, renderable->texture.data.data());
-	glGenerateMipmap(GL_TEXTURE_2D);
-}
-
-void Renderer::AddToRenderables(std::shared_ptr<Renderable> renderable) {
-    GenerateBuffers(renderable);
-    PopulateBuffers(renderable);
-    renderables.push_back(renderable);
-}
-
 
 void Renderer::CreateShaderProgram(GLuint &programLoc, const char* vertexShaderPath, const char* fragmentShaderPath) {
 	//Create shader program
@@ -203,8 +204,6 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum se
 
 int Renderer::RenderLoop() {
 	std::unique_lock<std::mutex> lck(mtx);
-
-
 
 	//Setup GLFW
 	glfwInit();
@@ -308,7 +307,6 @@ int Renderer::RenderLoop() {
 
 	// don't draw polygons if they are behind other polygons
 	glEnable(GL_DEPTH_TEST);
-
 	glEnable(GL_CULL_FACE);
 
 	// use alpha for transperancy
@@ -323,13 +321,15 @@ int Renderer::RenderLoop() {
 	lck.unlock();
 	cv.notify_all();
 
+	PreloadAssetBuffers();
+
 	while (!glfwWindowShouldClose(window)) {
 		//Check for events like key pressed, mouse moves, etc.
 		glfwPollEvents();
 
 		renderables_waitList_mutex.lock();
 		while (renderables_waitList.size() != 0) {
-			AddToRenderables(renderables_waitList.back());
+			renderables.push_back(renderables_waitList.back());
 			renderables_waitList.pop_back();
 		}
 		renderables_waitList_mutex.unlock();
@@ -339,9 +339,6 @@ int Renderer::RenderLoop() {
 				// set unused renderable to null while itterating
 				// but don't remove them yet because deletion while itterating is spooky
 				renderable = NULL;
-			} else if (renderable->invalidated) {
-				PopulateBuffers(renderable);
-				renderable->invalidated = false;
 			}
 		}
 

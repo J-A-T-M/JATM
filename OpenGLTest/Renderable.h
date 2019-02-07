@@ -7,6 +7,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
+#include "Enums.h"
 
 struct Model {
 	std::vector<glm::vec3> positions;
@@ -29,15 +30,12 @@ struct Texture {
 class Renderable {
 	public:
 		Renderable();
-		glm::vec3 getPosition3();
 
-		Model model;
-		Texture texture;
-		bool invalidated;
+		ModelEnum model;
+		TextureEnum texture;
 
 		// transform
-		glm::vec2 position;
-		float z;
+		glm::vec3 position;
 		glm::vec3 rotation;
 		glm::vec3 scale;
 
