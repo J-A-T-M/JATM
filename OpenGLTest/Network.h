@@ -31,7 +31,7 @@ struct PLAYER {
 };
 
 struct SERVERPACKET {
-	PLAYER players[MAX_CLIENTS];
+	PLAYER players[MAX_CLIENTS + 1];
 };
 
 typedef Input CLIENTPACKET;

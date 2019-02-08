@@ -20,10 +20,10 @@ std::condition_variable cv;
 const bool isServer = true;
 std::thread networkThread;
 std::vector<std::shared_ptr<Renderable>> players;
-std::vector<InputSourceEnum> playerInputSources = { INPUT_LOCAL1, INPUT_CLIENT1, INPUT_CLIENT2 };
+std::vector<InputSourceEnum> playerInputSources = { INPUT_LOCAL1, INPUT_CLIENT1, INPUT_CLIENT2, INPUT_CLIENT3 };
 
 void movePlayersBasedOnInput() {
-	for (int j = 0; j < players.size(); j++) {
+	for (int j = 0; j < players.size() && j < playerInputSources.size(); j++) {
 		Input input = InputManager::getInput(playerInputSources[j]);
 		float xAxis = input.right - input.left;
 		float zAxis = input.down - input.up;
@@ -39,7 +39,7 @@ void movePlayersBasedOnInput() {
 }
 
 void movePlayersBasedOnNetworking() {
-	for (int id = 0; id < MAX_CLIENTS; id++) {
+	for (int id = 0; id < players.size(); id++) {
 		players[id]->position.x = serverState.players[id].x;
 		players[id]->position.z = serverState.players[id].z;
 	}
@@ -59,9 +59,9 @@ int main() {
 	cv.wait(lck);
 	InputManager::registerInputCallbacks(window);
 
-	for (int i = 0;i < MAX_CLIENTS;i++) {
+	for (int i = 0; i <= MAX_CLIENTS; i++) {
 		Renderable *playerRenderable = new Renderable();
-		playerRenderable->position = glm::vec3(10.0 * i - 10.0, 1.0, 5.0);
+		playerRenderable->position = glm::vec3(10.0 * i - 15.0, 1.0, 5.0);
 		playerRenderable->scale = glm::vec3(2.0f);
 		playerRenderable->color = glm::vec4(1.0, 0.25, 0.1, 1.0);
 		playerRenderable->model = MODEL_SUZANNE;
