@@ -1,262 +1,77 @@
-#include "Network.h"
-#include <Windows.h>
-#include <iostream>
-#include "Renderer.h"
-#include "Renderable.h"
-#include "AssetLoader.h"
-#include "Input.h"
-
 #define GLEW_STATIC
 #include <GLEW/glew.h>
 #include <glm/glm.hpp>
+#include <iostream>
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 
+#include "AssetLoader.h"
 #include "Enums.h"
+#include "InputManager.h"
+#include "Network.h"
+#include "Renderer.h"
+#include "Renderable.h"
 
 GLFWwindow* window;
 std::mutex mtx;
 std::condition_variable cv;
 
-Renderer *renderer;
-Input inputHandler;
-
-//Renderable *tempPlayerPointer;
-
-std::vector<std::shared_ptr<Renderable>> playerSharedPointers;
-std::vector<Renderable*> playerList;
-
-const bool isNetworked = true;
+// temporary garbage related to networking
 const bool isServer = true;
+std::thread networkThread;
+std::vector<std::shared_ptr<Renderable>> players;
+std::vector<InputSourceEnum> playerInputSources = { INPUT_LOCAL1, INPUT_CLIENT1, INPUT_CLIENT2, INPUT_CLIENT3, INPUT_CLIENT4, INPUT_CLIENT5, INPUT_CLIENT6, INPUT_CLIENT7 };
 
-void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-	switch (key) {
-	case GLFW_KEY_LEFT:
-	case GLFW_KEY_A:
-		if (action == GLFW_PRESS)
-		{
-			//TypeParam<bool> param(true);
-			//EventManager::notify(PLAYER_LEFT, &param, false);
-			//EventManager::notify(AIM_LEFT, &param, false);
-			printf("A pressed\n");
-			
-			if (isNetworked) {
-
-				char msgBuffer[] = "a";
-				if (!isServer) {	//client
-					ClientSendMessage(msgBuffer);
-				}
-				else { //server
-					ProcessInput(msgBuffer, MASTER_CLIENT_ID);
-					//BroadCastAll();
-				}
-			}
-			else {
-				//tempPlayerPointer->position.x--;
-			}
+void movePlayersBasedOnInput() {
+	for (int i = 0; i < players.size() && i < playerInputSources.size(); i++) {
+		Input input = InputManager::getInput(playerInputSources[i]);
+		float xAxis = input.right - input.left;
+		float zAxis = input.down - input.up;
+		glm::vec3 movement = glm::vec3(xAxis, 0.0f, zAxis);
+		if (movement != glm::vec3(0)) {
+			movement = normalize(movement);
 		}
-		if (action == GLFW_RELEASE)
-		{
-			
-		}
-		break;
-	case GLFW_KEY_RIGHT:
-	case GLFW_KEY_D:
-		if (action == GLFW_PRESS)
-		{
-			if (isNetworked) {
-
-				char msgBuffer[] = "d";
-				if (!isServer) {	//client
-					ClientSendMessage(msgBuffer);
-				}
-				else { //server
-					ProcessInput(msgBuffer, MASTER_CLIENT_ID);
-					BroadCastAll();
-				}
-			}
-			else {
-				//tempPlayerPointer->position.x++;
-			}
-
-		}
-		if (action == GLFW_RELEASE)
-		{
-
-		}
-		break;
-
-	case GLFW_KEY_UP:
-	case GLFW_KEY_W:
-		if (action == GLFW_PRESS)
-		{
-			if (isNetworked) {
-				char msgBuffer[] = "w";
-				if (!isServer) {	//client
-					ClientSendMessage(msgBuffer);
-				}
-				else { //server
-					ProcessInput(msgBuffer, MASTER_CLIENT_ID);
-					BroadCastAll();
-				}
-			}
-			else {
-				//tempPlayerPointer->position.z--;
-			}
-		}
-		break;
-
-	case GLFW_KEY_DOWN:
-	case GLFW_KEY_S:
-		if (action == GLFW_PRESS)
-		{
-			if (isNetworked) {
-				char msgBuffer[] = "s";
-				if (!isServer) {	//client
-					ClientSendMessage(msgBuffer);
-				}
-				else { //server
-					ProcessInput(msgBuffer, MASTER_CLIENT_ID);
-					BroadCastAll();
-				}
-			}
-			else {
-				//tempPlayerPointer->position.z++;
-			}
-		}
-		break;
-
-	case GLFW_KEY_Q:
-		if (action == GLFW_PRESS)
-		{
-			if (isNetworked) {
-				char msgBuffer[] = "q";
-				if (!isServer) {	//client
-					ClientSendMessage(msgBuffer);
-				}
-				else { //server
-					ProcessInput(msgBuffer, MASTER_CLIENT_ID);
-					BroadCastAll();
-				}
-			}
-
-		}
-		break;
-
-	case GLFW_KEY_E:
-		if (action == GLFW_PRESS)
-		{
-			if (isNetworked) {
-				char msgBuffer[] = "e";
-				ClientSendMessage(msgBuffer);
-			}
-		}
-		break;
-
-	case GLFW_KEY_SPACE:
-		if (action == GLFW_PRESS)
-		{
-			//printf("Space pressed\n");
-		}
-		if (action == GLFW_RELEASE)
-		{
-
-		}
-		break;
-	case GLFW_KEY_F:
-		if (action == GLFW_PRESS)
-		{
-
-		}
-	default:
-
-		break;
+		players[i]->position += movement * 0.5f;
 	}
 
-}
-
-
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
-{
-	double xpos, ypos;
-	glfwGetCursorPos(window, &xpos, &ypos);
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) //GLFW_RELEASE is the other possible state.
-	{
-		//printf("%lf %lf\n", xpos, ypos);
-	}
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE) //GLFW_RELEASE is the other possible state.
-	{
-		//printf("Right mouse button released\n");
-	}
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) //GLFW_RELEASE is the other possible state.
-	{
-		//printf("left mouse button clicked at: %lf %lf\n", xpos, ypos);
+	for (int i = 0; i < players.size(); i++) {
+		serverState.players[i].x = players[i]->position.x;
+		serverState.players[i].z = players[i]->position.z;
 	}
 }
 
-int __cdecl main() {
+void movePlayersBasedOnNetworking() {
+	for (int i = 0; i < players.size(); i++) {
+		players[i]->position.x = serverState.players[i].x;
+		players[i]->position.z = serverState.players[i].z;
+	}
+}
 
-	//Server setup
-	
-	if (isNetworked) {
-		if (isServer) {
-			std::thread serverThread = std::thread(ServerLoop); 
-			serverThread.detach();
-		}
-		else {
-			std::thread clientThread = std::thread(ClientLoop);
-			clientThread.detach();
-		}
+int main() {
+	if (isServer) {
+		networkThread = std::thread(listenForClients);
+	} else {
+		networkThread = std::thread(ClientLoop);
 	}
 	
 	AssetLoader::preloadAssets();
-	renderer = new Renderer();
+	Renderer renderer;
 	std::unique_lock<std::mutex> lck(mtx);
-	std::thread renderThread = std::thread(&Renderer::RenderLoop, renderer);
+	std::thread renderThread = std::thread(&Renderer::RenderLoop, &renderer);
+	cv.wait(lck);
+	InputManager::registerInputCallbacks(window);
 
-	for (int i = 0;i < MAX_CLIENTS;i++) {
-
+	for (int i = 0; i <= MAX_CLIENTS; i++) {
 		Renderable *playerRenderable = new Renderable();
-		playerRenderable->metallic = 1.0f;
-		playerRenderable->position = glm::vec3(0.0, 1.0, i * 3.0);
+		playerRenderable->position = glm::vec3(10.0 * i - 15.0, 1.0, 5.0);
 		playerRenderable->scale = glm::vec3(2.0f);
-		playerRenderable->color = glm::vec4(1.000, 0.766, 0.336, 1.0);
-		playerRenderable->model = MODEL_SPHERE;
+		playerRenderable->color = glm::vec4(1.0, 0.25, 0.1, 1.0);
+		playerRenderable->model = MODEL_SUZANNE;
 		std::shared_ptr<Renderable> player_renderable_ptr(playerRenderable);
 		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player_renderable_ptr), false);
-
-		playerSharedPointers.push_back(player_renderable_ptr);
-		playerList.push_back(playerRenderable);
+		players.push_back(player_renderable_ptr);
 	}
 	
-	Renderable plastic_sphere;
-	plastic_sphere.metallic = 0.0f;
-	plastic_sphere.position = glm::vec3(-10.0, 1.0, 0.0);
-	plastic_sphere.scale = glm::vec3(2.0f);
-	plastic_sphere.color = glm::vec4(0.5, 1.0, 0.1, 1.0);
-	plastic_sphere.model = MODEL_SPHERE;
-	std::shared_ptr<Renderable> plastic_sphere_ptr(&plastic_sphere);
-	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(plastic_sphere_ptr), false);
-
-	Renderable gold_sphere;
-	gold_sphere.metallic = 1.0f;
-	gold_sphere.position = glm::vec3(0.0, 1.0, 0.0);
-	gold_sphere.scale = glm::vec3(2.0f);
-	gold_sphere.color = glm::vec4(1.000, 0.766, 0.336, 1.0);
-	gold_sphere.model = MODEL_SPHERE;
-	std::shared_ptr<Renderable> gold_sphere_ptr(&gold_sphere);
-	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(gold_sphere_ptr), false);
-	//tempPlayerPointer = &gold_sphere;
-
-	Renderable copper_sphere;
-	copper_sphere.metallic = 1.0f;
-	copper_sphere.position = glm::vec3(10.0, 1.0, 0.0);
-	copper_sphere.scale = glm::vec3(2.0f);
-	copper_sphere.color = glm::vec4(0.955, 0.637, 0.538, 1.0);
-	copper_sphere.model = MODEL_SPHERE;
-	std::shared_ptr<Renderable> copper_sphere_ptr(&copper_sphere);
-	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(copper_sphere_ptr), false);
-	
-
-
 	Renderable floor;
 	floor.roughness = 0.8;
 	floor.color = glm::vec4(0.25, 0.25, 0.25, 1.0);
@@ -266,36 +81,23 @@ int __cdecl main() {
 	std::shared_ptr<Renderable> ptr2(&floor);
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(ptr2), false);
 
+	renderer.light_direction.y = -0.5;
 
-	renderer->light_direction.y = -0.5;
-
-	cv.wait(lck);
-	inputHandler.setInputCallbacks(window, KeyCallback, mouse_button_callback);	//setup input handling
-
-	
-	for (int i = 0;; i++) { //temp network code, logic will be eventually moved elsewhere
-
+	for (int i = 0;; i++) {
 		Sleep(16);
+		renderer.light_direction.z = sin(i * 0.01);
+		renderer.light_direction.x = cos(i * 0.01);
 
-		
-		if (isNetworked) {
-
-			for (int id = 0;id < MAX_CLIENTS;id++) {
-
-				playerList[id]->position.x = serverPlayersData.players[id].x;
-				playerList[id]->position.z = serverPlayersData.players[id].z;
-				playerList[id]->model = (ModelEnum)(serverPlayersData.players[id].health % NUM_MODELS);
-
-			}
-
+		if (isServer) {
+			movePlayersBasedOnInput();
+			// send player positions to clients
+			sendToClients();
+		} else {
+			movePlayersBasedOnNetworking();
+			// send user input to server
+			sendToServer();
 		}
-
-		renderer->light_direction.z = sin(i * 0.01);
-		renderer->light_direction.x = cos(i * 0.01);
-		copper_sphere.model = (ModelEnum)( (i / 30) % NUM_MODELS);
 	}
 
-	std::cout << "goodbye world\n";
-	std::cin.get();
 	return 0;
 }
