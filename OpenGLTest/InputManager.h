@@ -8,13 +8,13 @@
 
 
 
-class Input {
+class InputManager {
 public:
 
 	using Callback = std::function<void()>;
 
-	Input();
-	~Input();
+	InputManager();
+	~InputManager();
 
 	void setInputCallbacks(GLFWwindow* window, GLFWkeyfun func, GLFWmousebuttonfun mouseFunc);
 

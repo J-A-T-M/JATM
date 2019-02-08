@@ -4,7 +4,7 @@
 #include "Renderer.h"
 #include "Renderable.h"
 #include "AssetLoader.h"
-#include "Input.h"
+#include "InputManager.h"
 
 #define GLEW_STATIC
 #include <GLEW/glew.h>
@@ -17,7 +17,7 @@ std::mutex mtx;
 std::condition_variable cv;
 
 Renderer *renderer;
-Input inputHandler;
+InputManager inputHandler;
 
 //Renderable *tempPlayerPointer;
 
