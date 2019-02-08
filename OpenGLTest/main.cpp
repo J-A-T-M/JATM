@@ -20,28 +20,30 @@ std::condition_variable cv;
 const bool isServer = true;
 std::thread networkThread;
 std::vector<std::shared_ptr<Renderable>> players;
-std::vector<InputSourceEnum> playerInputSources = { INPUT_LOCAL1, INPUT_CLIENT1, INPUT_CLIENT2, INPUT_CLIENT3 };
+std::vector<InputSourceEnum> playerInputSources = { INPUT_LOCAL1, INPUT_CLIENT1, INPUT_CLIENT2, INPUT_CLIENT3, INPUT_CLIENT4, INPUT_CLIENT5, INPUT_CLIENT6, INPUT_CLIENT7 };
 
 void movePlayersBasedOnInput() {
-	for (int j = 0; j < players.size() && j < playerInputSources.size(); j++) {
-		Input input = InputManager::getInput(playerInputSources[j]);
+	for (int i = 0; i < players.size() && i < playerInputSources.size(); i++) {
+		Input input = InputManager::getInput(playerInputSources[i]);
 		float xAxis = input.right - input.left;
 		float zAxis = input.down - input.up;
 		glm::vec3 movement = glm::vec3(xAxis, 0.0f, zAxis);
 		if (movement != glm::vec3(0)) {
 			movement = normalize(movement);
 		}
-		players[j]->position += movement * 0.5f;
+		players[i]->position += movement * 0.5f;
+	}
 
-		serverState.players[j].x = players[j]->position.x;
-		serverState.players[j].z = players[j]->position.z;
+	for (int i = 0; i < players.size(); i++) {
+		serverState.players[i].x = players[i]->position.x;
+		serverState.players[i].z = players[i]->position.z;
 	}
 }
 
 void movePlayersBasedOnNetworking() {
-	for (int id = 0; id < players.size(); id++) {
-		players[id]->position.x = serverState.players[id].x;
-		players[id]->position.z = serverState.players[id].z;
+	for (int i = 0; i < players.size(); i++) {
+		players[i]->position.x = serverState.players[i].x;
+		players[i]->position.z = serverState.players[i].z;
 	}
 }
 

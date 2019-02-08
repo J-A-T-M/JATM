@@ -5,7 +5,7 @@
 #define SERVER_IP_ADDRESS "127.0.0.1"
 #define DEFAULT_BUFLEN 512	//max buffer size oof 512 bytes
 #define DEFAULT_PORT "5055"
-#define MAX_CLIENTS 3
+#define MAX_CLIENTS 7
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
