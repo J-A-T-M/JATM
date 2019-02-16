@@ -1,3 +1,4 @@
+#include <chrono>
 #define GLEW_STATIC
 #include <GLEW/glew.h>
 #include <glm/glm.hpp>
@@ -12,6 +13,10 @@
 #include "Renderer.h"
 #include "Renderable.h"
 
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+using std::chrono::duration;
+
 GLFWwindow* window;
 std::mutex mtx;
 std::condition_variable cv;
@@ -22,7 +27,12 @@ std::thread networkThread;
 std::vector<std::shared_ptr<Renderable>> players;
 std::vector<InputSourceEnum> playerInputSources = { INPUT_LOCAL1, INPUT_LOCAL2, INPUT_CLIENT1, INPUT_CLIENT2, INPUT_CLIENT3, INPUT_CLIENT4, INPUT_CLIENT5, INPUT_CLIENT6 };
 
+const double FIXED_UPDATE_FREQUENCY = 60.0;
+const double FIXED_DELTA_TIME = 1.0 / FIXED_UPDATE_FREQUENCY;
+
 void movePlayersBasedOnInput() {
+	const float PLAYER_SPEED = 30.0;
+
 	for (int i = 0; i < players.size() && i < playerInputSources.size(); i++) {
 		Input input = InputManager::getInput(playerInputSources[i]);
 		float xAxis = input.right - input.left;
@@ -31,7 +41,7 @@ void movePlayersBasedOnInput() {
 		if (movement != glm::vec3(0)) {
 			movement = normalize(movement);
 		}
-		players[i]->position += movement * 0.5f;
+		players[i]->position += movement * PLAYER_SPEED * (float)FIXED_DELTA_TIME;
 	}
 
 	for (int i = 0; i < players.size(); i++) {
@@ -83,21 +93,34 @@ int main() {
 
 	renderer.light_direction.y = -0.5;
 
-	for (int i = 0;; i++) {
-		Sleep(16);
-		renderer.light_direction.z = sin(i * 0.01);
-		renderer.light_direction.x = cos(i * 0.01);
+	auto start = high_resolution_clock::now();
+	auto end = high_resolution_clock::now();
+	double time = 0.0;
+	double accumulator = 0.0;
 
-		if (isServer) {
-			movePlayersBasedOnInput();
-			// send player positions to clients
-			sendToClients();
-		} else {
-			movePlayersBasedOnNetworking();
-			// send user input to server
-			sendToServer();
-		}
-	}
+    while (true) {
+		start = high_resolution_clock::now();
+		accumulator += duration_cast<duration<double>>(start - end).count();
+        end = start;
+
+        while (accumulator >= FIXED_DELTA_TIME) {
+            accumulator -= FIXED_DELTA_TIME;
+            time += FIXED_DELTA_TIME;
+
+			renderer.light_direction.z = sin(time * 0.6);
+			renderer.light_direction.x = cos(time * 0.6);
+
+			if (isServer) {
+				movePlayersBasedOnInput();
+				// send player positions to clients
+				sendToClients();
+			} else {
+				movePlayersBasedOnNetworking();
+				// send user input to server
+				sendToServer();
+			}
+        }
+    }
 
 	return 0;
 }
