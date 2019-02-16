@@ -20,7 +20,7 @@ std::condition_variable cv;
 const bool isServer = true;
 std::thread networkThread;
 std::vector<std::shared_ptr<Renderable>> players;
-std::vector<InputSourceEnum> playerInputSources = { INPUT_LOCAL1, INPUT_CLIENT1, INPUT_CLIENT2, INPUT_CLIENT3, INPUT_CLIENT4, INPUT_CLIENT5, INPUT_CLIENT6, INPUT_CLIENT7 };
+std::vector<InputSourceEnum> playerInputSources = { INPUT_LOCAL1, INPUT_LOCAL2, INPUT_CLIENT1, INPUT_CLIENT2, INPUT_CLIENT3, INPUT_CLIENT4, INPUT_CLIENT5, INPUT_CLIENT6 };
 
 void movePlayersBasedOnInput() {
 	for (int i = 0; i < players.size() && i < playerInputSources.size(); i++) {
@@ -61,7 +61,7 @@ int main() {
 	cv.wait(lck);
 	InputManager::registerInputCallbacks(window);
 
-	for (int i = 0; i <= MAX_CLIENTS; i++) {
+	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
 		Renderable *playerRenderable = new Renderable();
 		playerRenderable->position = glm::vec3(10.0 * i - 15.0, 1.0, 5.0);
 		playerRenderable->scale = glm::vec3(2.0f);

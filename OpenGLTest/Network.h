@@ -5,7 +5,8 @@
 #define SERVER_IP_ADDRESS "127.0.0.1"
 #define DEFAULT_BUFLEN 512	//max buffer size oof 512 bytes
 #define DEFAULT_PORT "5055"
-#define MAX_CLIENTS 7
+#define MAX_CLIENTS 2
+#define NUM_LOCAL 2
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -30,7 +31,7 @@ struct PLAYER {
 };
 
 struct SERVERPACKET {
-	PLAYER players[MAX_CLIENTS + 1];
+	PLAYER players[MAX_CLIENTS + NUM_LOCAL];
 };
 
 typedef Input CLIENTPACKET;
@@ -162,7 +163,7 @@ int listenForClients() {
 		clients[i] = { i, INVALID_SOCKET };
 	}
 
-	for (int i = 0; i < MAX_CLIENTS; i++) {
+	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
 		serverState.players[i] = { 0.0f, 0.0f, 0.0f, 0.0f, 100 };
 	}
 
