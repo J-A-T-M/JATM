@@ -10,6 +10,7 @@
 
 class MainScene : public Scene{
 	public:
+		MainScene(bool isServer);
 		void Setup();
 		void Update(const float delta);
 		bool Done();
@@ -18,7 +19,7 @@ class MainScene : public Scene{
 		void movePlayersBasedOnInput(const float delta);
 		void movePlayersBasedOnNetworking();
 
-		const bool isServer = true;
+		const bool IS_SERVER;
 		float time;
 		std::vector<std::shared_ptr<Renderable>> players;
 		std::shared_ptr<Renderable> floor;

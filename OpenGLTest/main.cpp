@@ -12,7 +12,9 @@ using std::chrono::duration;
 int main() {
 	AssetLoader::preloadAssets();
 	Renderer* renderer = new Renderer();
-	Scene* scene = new MainScene();
+
+	bool isServer = true;
+	Scene* scene = new MainScene(isServer);
 	scene->Setup();
 
 	const double FIXED_UPDATE_FREQUENCY = 60.0;

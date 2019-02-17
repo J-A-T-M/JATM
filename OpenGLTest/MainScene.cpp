@@ -2,6 +2,8 @@
 #include "Network.h"
 #include <glm/glm.hpp>
 
+MainScene::MainScene(bool isServer) : IS_SERVER(isServer) {}
+
 void MainScene::movePlayersBasedOnInput(const float delta) {
 	const float PLAYER_SPEED = 30.0;
 
@@ -30,7 +32,7 @@ void MainScene::movePlayersBasedOnNetworking() {
 }
 
 void MainScene::Setup() {
-	if (isServer) {
+	if (IS_SERVER) {
 		networkThread = std::thread(listenForClients);
 	} else {
 		networkThread = std::thread(ClientLoop);
@@ -71,7 +73,7 @@ void MainScene::Setup() {
 void MainScene::Update(const float delta) {
 	time += delta;
 
-	if (isServer) {
+	if (IS_SERVER) {
 		movePlayersBasedOnInput(delta);
 		// send player positions to clients
 		sendToClients();
@@ -87,7 +89,7 @@ void MainScene::Update(const float delta) {
 }
 
 bool MainScene::Done() {
-	return time > 10.0f;
+	return false;
 }
 
 void MainScene::Cleanup() {
