@@ -12,6 +12,7 @@
 
 #include "Enums.h"
 #include "AssetLoader.h"
+#include "InputManager.h"
 
 enum {
 	UNIFORM_MODEL_MATRIX,
@@ -98,10 +99,10 @@ void Renderer::draw() {
 	// draw shadow stuff
 	glm::mat4 light_view = glm::lookAt(
 		glm::vec3(0, 0, 0),
-		light_direction,
+		directionalLight.direction,
 		glm::vec3(0.01, 1, 0)
 	);
-	glm::mat4 light_projection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, light_nearclip, light_farclip);
+	glm::mat4 light_projection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, directionalLight.nearclip, directionalLight.farclip);
 	glm::mat4 light_viewProjection = light_projection * light_view;
 	glUseProgram(shadowProgram);
 	glUniformMatrix4fv(uniforms[UNIFORM_SHADOW_LIGHTSPACE_MATRIX], 1, GL_FALSE, glm::value_ptr(light_viewProjection));
@@ -115,12 +116,12 @@ void Renderer::draw() {
 
 	// draw 3d stuff
 	glm::mat4 camera_view = glm::lookAt(
-		cameraPosition,
-		cameraTarget,
+		camera.position,
+		camera.target,
 		glm::vec3(0, 1, 0)
 	);
-	glm::mat4 camera_projection = glm::perspective(cameraFOV * (float)M_PI / 180.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, nearClip, farClip);
-	glm::vec3 camera_lightDir = camera_view * glm::vec4(light_direction, 0.0f);
+	glm::mat4 camera_projection = glm::perspective(camera.FOV * (float)M_PI / 180.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, camera.nearClip, camera.farClip);
+	glm::vec3 camera_lightDir = camera_view * glm::vec4(directionalLight.direction, 0.0f);
 	glm::vec3 camera_upDir = camera_view * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
 	glUseProgram(mainProgram);
 	glUniformMatrix4fv(uniforms[UNIFORM_VIEW_MATRIX], 1, GL_FALSE, glm::value_ptr(camera_view));
@@ -129,7 +130,7 @@ void Renderer::draw() {
 	glUniform3fv(uniforms[UNIFORM_UP], 1, glm::value_ptr(camera_upDir));
 	glUniform3fv(uniforms[UNIFORM_AMBIENT_COLOR_UP], 1, glm::value_ptr(glm::convertSRGBToLinear(ambient_color_up)));
 	glUniform3fv(uniforms[UNIFORM_AMBIENT_COLOR_DOWN], 1, glm::value_ptr(glm::convertSRGBToLinear(ambient_color_down)));
-	glUniform3fv(uniforms[UNIFORM_LIGHT_COLOR], 1, glm::value_ptr(glm::convertSRGBToLinear(light_color)));
+	glUniform3fv(uniforms[UNIFORM_LIGHT_COLOR], 1, glm::value_ptr(glm::convertSRGBToLinear(directionalLight.color)));
 	glUniform3fv(uniforms[UNIFORM_LIGHT_DIRECTION], 1, glm::value_ptr(camera_lightDir));
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
@@ -203,7 +204,6 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum se
 }
 
 int Renderer::RenderLoop() {
-	std::unique_lock<std::mutex> lck(mtx);
 
 	//Setup GLFW
 	glfwInit();
@@ -214,7 +214,8 @@ int Renderer::RenderLoop() {
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-	window = glfwCreateWindow(WIDTH, HEIGHT, "The Farmi Paradox", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "The Farmi Paradox", nullptr, nullptr);
+	InputManager::registerInputCallbacks(window);
 
 	//Ensure window was created
 	if (window == nullptr) {
@@ -318,12 +319,9 @@ int Renderer::RenderLoop() {
 
 	glClearColor(ambient_color_up.r, ambient_color_up.g, ambient_color_up.b, 1.0f);
 
-	lck.unlock();
-	cv.notify_all();
-
 	PreloadAssetBuffers();
 
-	while (!glfwWindowShouldClose(window)) {
+	while (!glfwWindowShouldClose(window) && !renderThreadShouldDie) {
 		//Check for events like key pressed, mouse moves, etc.
 		glfwPollEvents();
 
@@ -365,12 +363,17 @@ void Renderer::notify(EventName eventName, Param* params) {
 		}
 		
         case RENDERER_SET_CAMERA: {
-            TypeParam<glm::vec3> *p = dynamic_cast<TypeParam<glm::vec3> *>(params);
-            glm::vec3 pos = p->Param;
-            cameraPosition = pos;
-            cameraPosition.z /= std::tan(cameraFOV * M_PI / 360.0f);
+            TypeParam<Camera> *p = dynamic_cast<TypeParam<Camera> *>(params);
+            camera = p->Param;
             break;
         }
+
+		case RENDERER_SET_DIRECTIONAL_LIGHT: {
+			TypeParam<DirectionalLight> *p = dynamic_cast<TypeParam<DirectionalLight> *>(params);
+			directionalLight = p->Param;
+			break;
+		}
+
 		default:
 			break;
     }
@@ -379,13 +382,17 @@ void Renderer::notify(EventName eventName, Param* params) {
 
 
 Renderer::Renderer() {
+	renderThreadShouldDie = false;
+	renderThread = std::thread(&Renderer::RenderLoop, this);
     EventManager::subscribe(RENDERER_ADD_TO_RENDERABLES, this);
-    EventManager::subscribe(RENDERER_ADD_TO_UIRENDERABLES, this);
-    EventManager::subscribe(RENDERER_POPULATE_BUFFERS, this);
-    EventManager::subscribe(RENDERER_REPOPULATE_BUFFERS, this);
-    EventManager::subscribe(RENDERER_SET_CAMERA, this);
+	EventManager::subscribe(RENDERER_SET_CAMERA, this);
+	EventManager::subscribe(RENDERER_SET_DIRECTIONAL_LIGHT, this);
 }
 
 Renderer::~Renderer() {
-    
+	renderThreadShouldDie = true;
+	renderThread.join();
+	EventManager::unsubscribe(RENDERER_ADD_TO_RENDERABLES, this);
+	EventManager::unsubscribe(RENDERER_SET_CAMERA, this);
+	EventManager::unsubscribe(RENDERER_SET_DIRECTIONAL_LIGHT, this);
 }

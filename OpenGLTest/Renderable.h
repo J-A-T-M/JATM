@@ -9,6 +9,21 @@
 #include <glm/vec4.hpp>
 #include "Enums.h"
 
+struct Camera {
+	glm::vec3 position;
+	glm::vec3 target;
+	GLfloat FOV;
+	GLfloat nearClip;
+	GLfloat farClip;
+};
+
+struct DirectionalLight {
+	glm::vec3 direction;
+	glm::vec3 color;
+	GLfloat nearclip;
+	GLfloat	farclip;
+};
+
 struct Model {
 	std::vector<glm::vec3> positions;
 	std::vector<glm::vec3> normals;

@@ -43,6 +43,7 @@ void InputManager::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 	}
 
 	switch (key) {
+		// INPUT_LOCAL1
 		case GLFW_KEY_A:
 			inputs[INPUT_LOCAL1].left = action;
 			break;
@@ -54,6 +55,19 @@ void InputManager::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 			break;
 		case GLFW_KEY_S:
 			inputs[INPUT_LOCAL1].down = action;
+			break;
+		// INPUT_LOCAL2
+		case GLFW_KEY_LEFT:
+			inputs[INPUT_LOCAL2].left = action;
+			break;
+		case GLFW_KEY_RIGHT:
+			inputs[INPUT_LOCAL2].right = action;
+			break;
+		case GLFW_KEY_UP:
+			inputs[INPUT_LOCAL2].up = action;
+			break;
+		case GLFW_KEY_DOWN:
+			inputs[INPUT_LOCAL2].down = action;
 			break;
 		default:
 			break;
