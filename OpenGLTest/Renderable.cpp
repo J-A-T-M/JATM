@@ -5,6 +5,9 @@ Renderable::Renderable() {
 	texture = TEXTURE_NONE;
 	position = glm::vec3(0.0f);
 	rotation = glm::vec3(0.0f);
+	start_position = glm::vec3(0.0f);
+	end_position = glm::vec3(0.0f);
+	interpolated = false;
 	scale = glm::vec3(1.0f);
 	color = glm::vec4(1.0f);
 	fullBright = false;

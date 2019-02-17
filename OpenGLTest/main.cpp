@@ -17,7 +17,7 @@ int main() {
 	Scene* scene = new MainScene(isServer);
 	scene->Setup();
 
-	const double FIXED_UPDATE_FREQUENCY = 60.0;
+	const double FIXED_UPDATE_FREQUENCY = 20.0;
 	const double FIXED_DELTA_TIME = 1.0 / FIXED_UPDATE_FREQUENCY;
 
 	auto start = high_resolution_clock::now();

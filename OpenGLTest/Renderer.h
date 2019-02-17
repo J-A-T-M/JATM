@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #define GLEW_STATIC
 #include <GLEW/glew.h>
 #include <GLFW/glfw3.h>
@@ -27,6 +28,11 @@ class Renderer : public ISubscriber {
 		// Overrides ISubscriber::notify
         void notify(EventName eventName, Param* params); 
 		
+		float calculateInterpolationValue();
+		std::chrono::time_point<std::chrono::high_resolution_clock> interp_start;
+		float interp_duration;
+		float interp_value;
+
 		DirectionalLight directionalLight;
 		Camera camera;
 

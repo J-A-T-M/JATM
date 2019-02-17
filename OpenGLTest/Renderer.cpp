@@ -58,7 +58,12 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 	glBindTexture(GL_TEXTURE_2D, texture->loc);
 
 	glm::mat4 m = glm::mat4(1.0);
-	m = glm::translate(m, renderable->position);
+	if (renderable->interpolated) {
+		glm::vec3 interpolated_position = glm::mix(renderable->start_position, renderable->end_position, interp_value);
+		m = glm::translate(m, interpolated_position);
+	} else {
+		m = glm::translate(m, renderable->position);
+	}
 	m = glm::rotate(m, renderable->rotation.z * (float)M_PI / 180.0f, glm::vec3(0, 0, 1));
 	m = glm::rotate(m, renderable->rotation.y * (float)M_PI / 180.0f, glm::vec3(0, 1, 0));
 	m = glm::rotate(m, renderable->rotation.x * (float)M_PI / 180.0f, glm::vec3(1, 0, 0));
@@ -84,7 +89,12 @@ void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->elementLoc);
 
 	glm::mat4 m = glm::mat4(1.0);
-	m = glm::translate(m, renderable->position);
+	if (renderable->interpolated) {
+		glm::vec3 interpolated_position = glm::mix(renderable->start_position, renderable->end_position, interp_value);
+		m = glm::translate(m, interpolated_position);
+	} else {
+		m = glm::translate(m, renderable->position);
+	}
 	m = glm::rotate(m, renderable->rotation.z * (float)M_PI / 180.0f, glm::vec3(0, 0, 1));
 	m = glm::rotate(m, renderable->rotation.y * (float)M_PI / 180.0f, glm::vec3(0, 1, 0));
 	m = glm::rotate(m, renderable->rotation.x * (float)M_PI / 180.0f, glm::vec3(1, 0, 0));
@@ -201,6 +211,12 @@ void Renderer::CreateShaderProgram(GLuint &programLoc, const char* vertexShaderP
 
 void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
 	fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n", (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
+}
+
+float Renderer::calculateInterpolationValue() {
+	auto curr_time = std::chrono::high_resolution_clock::now();
+	float elapsed_time = std::chrono::duration_cast<std::chrono::duration<float>>(curr_time - interp_start).count();
+	return elapsed_time /= interp_duration;
 }
 
 int Renderer::RenderLoop() {
@@ -344,6 +360,7 @@ int Renderer::RenderLoop() {
 		renderables.remove(NULL);
 
 		//draw
+		interp_value = calculateInterpolationValue();
 		draw();
 		glfwSwapBuffers(window);
 	}
@@ -374,6 +391,13 @@ void Renderer::notify(EventName eventName, Param* params) {
 			break;
 		}
 
+		case FIXED_UPDATE_FINISHED: {
+			TypeParam<float> *p = dynamic_cast<TypeParam<float> *>(params);
+			interp_duration = p->Param;
+			interp_start = std::chrono::high_resolution_clock::now();
+			break;
+		}
+
 		default:
 			break;
     }
@@ -387,6 +411,7 @@ Renderer::Renderer() {
     EventManager::subscribe(RENDERER_ADD_TO_RENDERABLES, this);
 	EventManager::subscribe(RENDERER_SET_CAMERA, this);
 	EventManager::subscribe(RENDERER_SET_DIRECTIONAL_LIGHT, this);
+	EventManager::subscribe(FIXED_UPDATE_FINISHED, this);
 }
 
 Renderer::~Renderer() {
@@ -395,4 +420,5 @@ Renderer::~Renderer() {
 	EventManager::unsubscribe(RENDERER_ADD_TO_RENDERABLES, this);
 	EventManager::unsubscribe(RENDERER_SET_CAMERA, this);
 	EventManager::unsubscribe(RENDERER_SET_DIRECTIONAL_LIGHT, this);
+	EventManager::unsubscribe(FIXED_UPDATE_FINISHED, this);
 }
