@@ -38,6 +38,7 @@ typedef Input CLIENTPACKET;
 
 // state on or from the server
 SERVERPACKET serverState;
+bool networkThreadShouldDie = false;
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //
@@ -167,36 +168,47 @@ int listenForClients() {
 		serverState.players[i] = { 0.0f, 0.0f, 0.0f, 0.0f, 100 };
 	}
 
-	while (true) {
-		SOCKET incomingClientSocket = accept(listenSocket, NULL, NULL);
 
-		if (incomingClientSocket != INVALID_SOCKET) {
-			// check for empty spot
-			int empty_index = -1;
-			for (int i = 0; i < MAX_CLIENTS; i++) {
-				if (clients[i].socket == INVALID_SOCKET) {
-					empty_index = i;
-					break;
-				}
-			}
 
-			// if empty spot found
-			if (empty_index != -1) {
-				clients[empty_index].socket = incomingClientSocket;
-				std::cout << "Client #" << empty_index << " accepted" << std::endl;
-				std::string msg = std::to_string(clients[empty_index].id);
-				send(clients[empty_index].socket, msg.c_str(), strlen(msg.c_str()), 0);
-				// if possible join existing thread
-				if (threads[empty_index].joinable()) {
-					threads[empty_index].join();
-					std::cout << "Recieve thread for Client #" << empty_index << " joined" << std::endl;
+	while (!networkThreadShouldDie) {
+		timeval timeout;
+		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
+		fd_set readSet;
+		FD_ZERO(&readSet);
+		FD_SET(listenSocket, &readSet);
+		// if there's a client trying to connect
+		if (select(listenSocket, &readSet, NULL, NULL, &timeout) == 1) {
+			SOCKET incomingClientSocket = accept(listenSocket, NULL, NULL);
+
+			if (incomingClientSocket != INVALID_SOCKET) {
+				// check for empty spot
+				int empty_index = -1;
+				for (int i = 0; i < MAX_CLIENTS; i++) {
+					if (clients[i].socket == INVALID_SOCKET) {
+						empty_index = i;
+						break;
+					}
 				}
-				//Create a thread process for that client
-				threads[empty_index] = std::thread(recieveFromClient, std::ref(clients[empty_index]));
-			} else {
-				std::string msg = "Server is full";
-				send(incomingClientSocket, msg.c_str(), strlen(msg.c_str()), 0);
-				std::cout << "Server is full" << std::endl;
+
+				// if empty spot found
+				if (empty_index != -1) {
+					clients[empty_index].socket = incomingClientSocket;
+					std::cout << "Client #" << empty_index << " accepted" << std::endl;
+					std::string msg = std::to_string(clients[empty_index].id);
+					send(clients[empty_index].socket, msg.c_str(), strlen(msg.c_str()), 0);
+					// if possible join existing thread
+					if (threads[empty_index].joinable()) {
+						threads[empty_index].join();
+						std::cout << "Recieve thread for Client #" << empty_index << " joined" << std::endl;
+					}
+					//Create a thread process for that client
+					threads[empty_index] = std::thread(recieveFromClient, std::ref(clients[empty_index]));
+				} else {
+					std::string msg = "Server is full";
+					send(incomingClientSocket, msg.c_str(), strlen(msg.c_str()), 0);
+					std::cout << "Server is full" << std::endl;
+				}
 			}
 		}
 	}
@@ -207,10 +219,12 @@ int listenForClients() {
 
 	// close client sockets and threads
 	for (int i = 0; i < MAX_CLIENTS; i++) {	
-		closesocket(clients[i].socket);
-		clients[i].socket = INVALID_SOCKET;
-		threads[i].join();
-		std::cout << "Recieve thread for Client #" << i << " joined" << std::endl;
+		if (threads[i].joinable()) {
+			closesocket(clients[i].socket);
+			clients[i].socket = INVALID_SOCKET;
+			threads[i].join();
+			std::cout << "Recieve thread for Client #" << i << " joined" << std::endl;
+		}
 	}
 
 	WSACleanup();
@@ -247,7 +261,7 @@ void recieveFromServer() {
 
 	int iResult = 0;
 
-	while (clientSocket != INVALID_SOCKET) {
+	while (!networkThreadShouldDie && clientSocket != INVALID_SOCKET) {
 		SERVERPACKET packet;
 		iResult = recv(clientSocket, (char *)&packet, sizeof(SERVERPACKET), 0);
 		if (iResult == 0 || iResult == SOCKET_ERROR) {

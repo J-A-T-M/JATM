@@ -101,6 +101,7 @@
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MainScene.cpp" />
     <ClCompile Include="Network.cpp" />
     <ClCompile Include="Renderable.cpp" />
     <ClCompile Include="Renderer.cpp" />
@@ -120,9 +121,11 @@
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="EventName.h" />
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="MainScene.h" />
     <ClInclude Include="Renderable.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Network.h" />
+    <ClInclude Include="Scene.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="ISubscriber.h" />
   </ItemGroup>
