@@ -1,12 +1,7 @@
 #include <chrono>
-#define GLEW_STATIC
-#include <GLEW/glew.h>
-#include <glm/glm.hpp>
 #include <iostream>
 
 #include "AssetLoader.h"
-#include "InputManager.h"
-
 #include "Renderer.h"
 #include "MainScene.h"
 
@@ -22,10 +17,10 @@ int main() {
 
 	const double FIXED_UPDATE_FREQUENCY = 60.0;
 	const double FIXED_DELTA_TIME = 1.0 / FIXED_UPDATE_FREQUENCY;
+
 	auto start = high_resolution_clock::now();
 	auto end = high_resolution_clock::now();
 	double accumulator = 0.0;
-
     while (!scene->Done()) {
 		start = high_resolution_clock::now();
 		accumulator += duration_cast<duration<double>>(start - end).count();
@@ -35,9 +30,9 @@ int main() {
 			scene->Update(FIXED_DELTA_TIME);
         }
     }
-	scene->Cleanup();
 
+	scene->Cleanup();
 	delete scene;
 	delete renderer;
-	return 0;
+	return EXIT_SUCCESS;
 }
