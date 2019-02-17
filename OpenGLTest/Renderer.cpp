@@ -394,6 +394,7 @@ void Renderer::notify(EventName eventName, Param* params) {
 		case FIXED_UPDATE_FINISHED: {
 			TypeParam<float> *p = dynamic_cast<TypeParam<float> *>(params);
 			interp_duration = p->Param;
+			interp_value = 0.0f;
 			interp_start = std::chrono::high_resolution_clock::now();
 			break;
 		}
