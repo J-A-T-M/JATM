@@ -53,6 +53,10 @@ class Renderable {
 		glm::vec3 position;
 		glm::vec3 rotation;
 		glm::vec3 scale;
+		// stuff to allow renderer to interpolate positions
+		bool interpolated;
+		glm::vec3 start_position;
+		glm::vec3 end_position;
 
 		// material
 		glm::vec4 color;

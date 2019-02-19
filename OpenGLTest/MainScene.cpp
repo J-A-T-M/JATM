@@ -44,6 +44,7 @@ void MainScene::Setup() {
 		player->scale = glm::vec3(2.0f);
 		player->color = glm::vec4(1.0, 0.25, 0.1, 1.0);
 		player->model = MODEL_SUZANNE;
+		player->interpolated = true;
 		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player), false);
 		players.push_back(player);
 	}
@@ -72,6 +73,9 @@ void MainScene::Setup() {
 
 void MainScene::Update(const float delta) {
 	time += delta;
+	for (int i = 0; i < players.size(); i++) {
+		players[i]->start_position = players[i]->end_position;
+	}
 
 	if (IS_SERVER) {
 		movePlayersBasedOnInput(delta);
@@ -86,6 +90,11 @@ void MainScene::Update(const float delta) {
 	directionalLight.direction.x = sin(time * 0.6);
 	directionalLight.direction.z = cos(time * 0.6);
 	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight), false);
+
+	for (int i = 0; i < players.size(); i++) {
+		players[i]->end_position = players[i]->position;
+	}
+	EventManager::notify(FIXED_UPDATE_FINISHED, &TypeParam<float>(delta), false);
 }
 
 bool MainScene::Done() {
