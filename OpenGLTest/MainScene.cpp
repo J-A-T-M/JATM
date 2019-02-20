@@ -38,11 +38,15 @@ void MainScene::Setup() {
 		networkThread = std::thread(ClientLoop);
 	}
 
+	glm::vec4 color[] = { glm::vec4(1.0, 0.0, 0.3, 1.0), glm::vec4(1.0, 0.3, 0.0, 1.0), glm::vec4(1.0, 0.0, 0.3, 1.0) , glm::vec4(1.0, 0.3, 0.0, 1.0) };
+	float metallic[] = { 1.0f, 1.0f, 0.0f, 0.0f };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
 		std::shared_ptr<Renderable> player(new Renderable());
 		player->position = glm::vec3(10.0 * i - 15.0, 1.0, 5.0);
 		player->scale = glm::vec3(2.0f);
-		player->color = glm::vec4(1.0, 0.25, 0.1, 1.0);
+		player->color = color[i % 4];
+		player->roughness = 0.4f;
+		player->metallic = metallic[i];
 		player->model = MODEL_SUZANNE;
 		player->interpolated = true;
 		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player), false);
@@ -51,7 +55,7 @@ void MainScene::Setup() {
 
 	floor = std::make_shared<Renderable>();
 	floor->roughness = 0.8;
-	floor->color = glm::vec4(0.25, 0.25, 0.25, 1.0);
+	floor->color = glm::vec4(0.8, 0.6, 0.4, 1.0);
 	floor->scale = glm::vec3(64);
 	floor->position = glm::vec3(0, -33, 0);
 	floor->model = MODEL_CUBE;
@@ -64,11 +68,17 @@ void MainScene::Setup() {
 	camera.farClip = 1000.0f;
 	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera), false);
 
-	directionalLight.direction = glm::vec3(0.0f, -0.5f, 1.0f);
+	directionalLight.direction = glm::normalize(glm::vec3(1.0f, -0.5f, -0.25f));
 	directionalLight.color = glm::vec3(1.0f, 1.0f, 1.0f);
 	directionalLight.nearclip = -50.0f;
 	directionalLight.farclip = 50.0f;
 	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight), false);
+
+	glm::vec3 up_color = glm::vec3(0.25f, 0.15f, 0.1f);
+	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(up_color), false);
+
+	glm::vec3 down_color = glm::vec3(floor->color) * (up_color + -directionalLight.direction.y);
+	EventManager::notify(RENDERER_SET_AMBIENT_DOWN, &TypeParam<glm::vec3>(down_color), false);
 }
 
 void MainScene::Update(const float delta) {
@@ -86,10 +96,6 @@ void MainScene::Update(const float delta) {
 		// send user input to server
 		sendToServer();
 	}
-
-	directionalLight.direction.x = sin(time * 0.6);
-	directionalLight.direction.z = cos(time * 0.6);
-	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight), false);
 
 	for (int i = 0; i < players.size(); i++) {
 		players[i]->end_position = players[i]->position;

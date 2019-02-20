@@ -17,8 +17,6 @@ class Renderer : public ISubscriber {
 		int RenderLoop();
 		~Renderer();
 
-		glm::vec3 ambient_color_up = { 0.25, 0.25, 0.25 };
-		glm::vec3 ambient_color_down = { 0.0f, 0.0f, 0.0f };
 	private:
 		void draw();
 		void DrawRenderable(std::shared_ptr<Renderable> renderable);
@@ -34,6 +32,8 @@ class Renderer : public ISubscriber {
 		float interp_value;
 
 		DirectionalLight directionalLight;
+		glm::vec3 ambient_color_up;
+		glm::vec3 ambient_color_down;
 		Camera camera;
 
 		std::thread renderThread;
