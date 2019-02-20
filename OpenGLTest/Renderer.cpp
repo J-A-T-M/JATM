@@ -112,14 +112,14 @@ void Renderer::draw() {
 		directionalLight.direction,
 		glm::vec3(0.01, 1, 0)
 	);
-	glm::mat4 light_projection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, directionalLight.nearclip, directionalLight.farclip);
+	glm::mat4 light_projection = glm::ortho(-50.0f, 50.0f, -32.0f, 32.0f, directionalLight.nearclip, directionalLight.farclip);
 	glm::mat4 light_viewProjection = light_projection * light_view;
 	glUseProgram(shadowProgram);
 	glUniformMatrix4fv(uniforms[UNIFORM_SHADOW_LIGHTSPACE_MATRIX], 1, GL_FALSE, glm::value_ptr(light_viewProjection));
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glClear(GL_DEPTH_BUFFER_BIT);
-	glCullFace(GL_FRONT);
+	glCullFace(GL_BACK);
 	for (auto renderable : renderables) {
 		DrawRenderableDepthMap(renderable);
 	}
@@ -216,7 +216,7 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum se
 float Renderer::calculateInterpolationValue() {
 	auto curr_time = std::chrono::high_resolution_clock::now();
 	float elapsed_time = std::chrono::duration_cast<std::chrono::duration<float>>(curr_time - interp_start).count();
-	return elapsed_time /= interp_duration;
+	return elapsed_time / interp_duration;
 }
 
 int Renderer::RenderLoop() {
@@ -277,11 +277,12 @@ int Renderer::RenderLoop() {
 	glGenTextures(1, &depthMap);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	float borderColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
@@ -333,7 +334,8 @@ int Renderer::RenderLoop() {
 	// set opengl to swap framebuffer every # screen refreshes
 	glfwSwapInterval(1);
 
-	glClearColor(ambient_color_up.r, ambient_color_up.g, ambient_color_up.b, 1.0f);
+	glm::vec3 linear_ambient_color_up = glm::convertSRGBToLinear(ambient_color_up);
+	glClearColor(linear_ambient_color_up.r, linear_ambient_color_up.g, linear_ambient_color_up.b, 1.0f);
 
 	PreloadAssetBuffers();
 
@@ -391,6 +393,18 @@ void Renderer::notify(EventName eventName, Param* params) {
 			break;
 		}
 
+		case RENDERER_SET_AMBIENT_UP: {
+			TypeParam<glm::vec3> *p = dynamic_cast<TypeParam<glm::vec3> *>(params);
+			ambient_color_up = p->Param;
+			break;
+		}
+
+		case RENDERER_SET_AMBIENT_DOWN: {
+			TypeParam<glm::vec3> *p = dynamic_cast<TypeParam<glm::vec3> *>(params);
+			ambient_color_down = p->Param;
+			break;
+		}
+
 		case FIXED_UPDATE_FINISHED: {
 			TypeParam<float> *p = dynamic_cast<TypeParam<float> *>(params);
 			interp_duration = p->Param;
@@ -412,6 +426,8 @@ Renderer::Renderer() {
     EventManager::subscribe(RENDERER_ADD_TO_RENDERABLES, this);
 	EventManager::subscribe(RENDERER_SET_CAMERA, this);
 	EventManager::subscribe(RENDERER_SET_DIRECTIONAL_LIGHT, this);
+	EventManager::subscribe(RENDERER_SET_AMBIENT_UP, this);
+	EventManager::subscribe(RENDERER_SET_AMBIENT_DOWN, this);
 	EventManager::subscribe(FIXED_UPDATE_FINISHED, this);
 }
 
@@ -421,5 +437,7 @@ Renderer::~Renderer() {
 	EventManager::unsubscribe(RENDERER_ADD_TO_RENDERABLES, this);
 	EventManager::unsubscribe(RENDERER_SET_CAMERA, this);
 	EventManager::unsubscribe(RENDERER_SET_DIRECTIONAL_LIGHT, this);
+	EventManager::unsubscribe(RENDERER_SET_AMBIENT_UP, this);
+	EventManager::unsubscribe(RENDERER_SET_AMBIENT_DOWN, this);
 	EventManager::unsubscribe(FIXED_UPDATE_FINISHED, this);
 }
