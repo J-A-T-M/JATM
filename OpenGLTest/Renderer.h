@@ -14,18 +14,26 @@
 class Renderer : public ISubscriber {
 	public:
 		Renderer();
-		int RenderLoop();
+		bool Done();
 		~Renderer();
 
 	private:
-		void draw();
+		int RenderLoop();
+		int Init();
+		void CreateShaderProgram(GLuint & programLoc, const char * vertexShaderPath, const char * fragmentShaderPath);
+		void PreloadAssetBuffers();
+		void Draw();
 		void DrawRenderable(std::shared_ptr<Renderable> renderable);
 		void DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable);
-		void PreloadAssetBuffers();
-		void CreateShaderProgram(GLuint & programLoc, const char * vertexShaderPath, const char * fragmentShaderPath);
 		// Overrides ISubscriber::notify
-        void notify(EventName eventName, Param* params); 
-		
+		void notify(EventName eventName, Param* params);
+
+		GLFWwindow* window;
+		GLuint mainProgram, VAO;
+		int windowWidth = 1600;
+		int windowHeight = 900;
+
+		// stuff for renderable transform interpolation
 		float calculateInterpolationValue();
 		std::chrono::time_point<std::chrono::high_resolution_clock> interp_start;
 		float interp_duration;
@@ -37,15 +45,11 @@ class Renderer : public ISubscriber {
 		Camera camera;
 
 		std::thread renderThread;
-		bool renderThreadShouldDie;
+		bool renderThreadDone;
 
 		std::list<std::shared_ptr<Renderable>> renderables;
 		std::list<std::shared_ptr<Renderable>> renderables_waitList;
 		std::mutex renderables_waitList_mutex;
-
-		GLuint mainProgram, VAO;
-		const GLuint WIDTH = 1600;
-		const GLuint HEIGHT = 900;
 
 		GLuint shadowProgram, depthMap, depthMapFBO;
 		const GLuint SHADOW_WIDTH = 1024;

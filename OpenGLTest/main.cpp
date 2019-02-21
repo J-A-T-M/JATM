@@ -23,7 +23,7 @@ int main() {
 	auto start = high_resolution_clock::now();
 	auto end = high_resolution_clock::now();
 	double accumulator = 0.0;
-    while (!scene->Done()) {
+    while (!scene->Done() && !renderer->Done()) {
 		start = high_resolution_clock::now();
 		accumulator += duration_cast<duration<double>>(start - end).count();
         end = start;
