@@ -56,7 +56,7 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 	// scale -> yaw -> pitch -> roll -> translate
 	glm::mat4 m = glm::mat4(1.0);
 	if (renderable->interpolated) {
-		glm::vec3 interpolated_position = glm::mix(renderable->start_position, renderable->end_position, interp_value);
+		glm::vec3 interpolated_position = glm::mix(renderable->previousPosition, renderable->position, interp_value);
 		m = glm::translate(m, interpolated_position);
 	} else {
 		m = glm::translate(m, renderable->position);
@@ -64,7 +64,7 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 	m = glm::rotate(m, glm::radians(renderable->rotation.z), glm::vec3(0, 0, 1));
 	m = glm::rotate(m, glm::radians(renderable->rotation.x), glm::vec3(1, 0, 0));
 	m = glm::rotate(m, glm::radians(renderable->rotation.y), glm::vec3(0, 1, 0));
-	m = glm::scale(m, renderable->scale);
+	m = glm::scale(m, glm::vec3(renderable->scale));
 
 	glUniformMatrix4fv(uniforms[UNIFORM_MODEL_MATRIX], 1, GL_FALSE, glm::value_ptr(m));
 	glUniform4fv(uniforms[UNIFORM_MATERIAL_COLOR], 1, glm::value_ptr(glm::convertSRGBToLinear(renderable->color)));
@@ -87,7 +87,7 @@ void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
 	// scale -> yaw -> pitch -> roll -> translate
 	glm::mat4 m = glm::mat4(1.0);
 	if (renderable->interpolated) {
-		glm::vec3 interpolated_position = glm::mix(renderable->start_position, renderable->end_position, interp_value);
+		glm::vec3 interpolated_position = glm::mix(renderable->previousPosition, renderable->position, interp_value);
 		m = glm::translate(m, interpolated_position);
 	} else {
 		m = glm::translate(m, renderable->position);
@@ -95,7 +95,7 @@ void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
 	m = glm::rotate(m, glm::radians(renderable->rotation.z), glm::vec3(0, 0, 1));
 	m = glm::rotate(m, glm::radians(renderable->rotation.x), glm::vec3(1, 0, 0));
 	m = glm::rotate(m, glm::radians(renderable->rotation.y), glm::vec3(0, 1, 0));
-	m = glm::scale(m, renderable->scale);
+	m = glm::scale(m, glm::vec3(renderable->scale));
 
 	glUniformMatrix4fv(uniforms[UNIFORM_SHADOW_MODEL_MATRIX], 1, GL_FALSE, glm::value_ptr(m));
 

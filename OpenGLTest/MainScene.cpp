@@ -7,27 +7,28 @@ MainScene::MainScene(bool isServer) : IS_SERVER(isServer) {}
 void MainScene::movePlayersBasedOnInput(const float delta) {
 	const float PLAYER_SPEED = 30.0;
 
-	for (int i = 0; i < players.size() && i < playerInputSources.size(); i++) {
-		Input input = InputManager::getInput(playerInputSources[i]);
-		float xAxis = input.right - input.left;
-		float zAxis = input.down - input.up;
-		glm::vec3 movement = glm::vec3(xAxis, 0.0f, zAxis);
-		if (movement != glm::vec3(0)) {
-			movement = normalize(movement);
-		}
-		players[i]->position += movement * PLAYER_SPEED * delta;
-	}
-
 	for (int i = 0; i < players.size(); i++) {
-		serverState.players[i].x = players[i]->position.x;
-		serverState.players[i].z = players[i]->position.z;
+		glm::vec3 pos = players[i]->getLocalPosition();
+		if (i < playerInputSources.size()) {
+			Input input = InputManager::getInput(playerInputSources[i]);
+			float xAxis = input.right - input.left;
+			float zAxis = input.down - input.up;
+			glm::vec3 movement = glm::vec3(xAxis, 0.0f, zAxis);
+			if (movement != glm::vec3(0)) {
+				movement = normalize(movement);
+			}
+			pos += movement * PLAYER_SPEED * delta;
+			players[i]->setLocalPosition(pos);
+		}
+		serverState.players[i].x = pos.x;
+		serverState.players[i].z = pos.z;
 	}
 }
 
 void MainScene::movePlayersBasedOnNetworking() {
 	for (int i = 0; i < players.size(); i++) {
-		players[i]->position.x = serverState.players[i].x;
-		players[i]->position.z = serverState.players[i].z;
+		glm::vec2 pos = glm::vec2(serverState.players[i].x, serverState.players[i].z);
+		players[i]->setLocalPosition(pos);
 	}
 }
 
@@ -41,22 +42,18 @@ void MainScene::Setup() {
 	glm::vec4 color[] = { glm::vec4(1.0, 0.0, 0.3, 1.0), glm::vec4(1.0, 0.3, 0.0, 1.0), glm::vec4(1.0, 0.0, 0.3, 1.0) , glm::vec4(1.0, 0.3, 0.0, 1.0) };
 	float metallic[] = { 1.0f, 1.0f, 0.0f, 0.0f };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
-		std::shared_ptr<Renderable> player(new Renderable());
-		player->position = glm::vec3(10.0 * i - 15.0, 1.0, 5.0);
-		player->scale = glm::vec3(2.0f);
-		player->color = color[i % 4];
-		player->roughness = 0.4f;
-		player->metallic = metallic[i];
-		player->model = MODEL_SUZANNE;
-		player->interpolated = true;
-		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player), false);
+		Player* player = new Player();
+		player->setLocalPosition(glm::vec3(10.0 * i - 15.0, 1.0, 5.0));
+		player->renderable->color = color[i % 4];
+		player->renderable->metallic = metallic[i];
+		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player->renderable), false);
 		players.push_back(player);
 	}
 
 	floor = std::make_shared<Renderable>();
 	floor->roughness = 0.8;
 	floor->color = glm::vec4(0.8, 0.6, 0.4, 1.0);
-	floor->scale = glm::vec3(64);
+	floor->scale = 64.0f;
 	floor->position = glm::vec3(0, -33, 0);
 	floor->model = MODEL_CUBE;
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor), false);
@@ -83,9 +80,6 @@ void MainScene::Setup() {
 
 void MainScene::Update(const float delta) {
 	time += delta;
-	for (int i = 0; i < players.size(); i++) {
-		players[i]->start_position = players[i]->end_position;
-	}
 
 	if (IS_SERVER) {
 		movePlayersBasedOnInput(delta);
@@ -98,7 +92,7 @@ void MainScene::Update(const float delta) {
 	}
 
 	for (int i = 0; i < players.size(); i++) {
-		players[i]->end_position = players[i]->position;
+		players[i]->updateRenderableTransforms();
 	}
 	EventManager::notify(FIXED_UPDATE_FINISHED, &TypeParam<float>(delta), false);
 }
@@ -109,7 +103,7 @@ bool MainScene::Done() {
 
 void MainScene::Cleanup() {
 	for (auto &player : players) {
-		player.reset();
+		delete player;
 	}
 	floor.reset();
 
