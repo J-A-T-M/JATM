@@ -1,18 +1,17 @@
 #include "Renderer.h"
 
 #include <algorithm>
-#include <iostream>
-#define _USE_MATH_DEFINES
-#include <math.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/color_space.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <iostream>
 
-#include "Enums.h"
 #include "AssetLoader.h"
+#include "Enums.h"
 #include "InputManager.h"
+
+#define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 enum {
 	UNIFORM_MODEL_MATRIX,
@@ -44,19 +43,17 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 	Texture* texture = &AssetLoader::textures[renderable->texture];
 
 	glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
-
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
 	glBindBuffer(GL_ARRAY_BUFFER, model->UVLoc);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (GLvoid*)0);
-
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), BUFFER_OFFSET(0));
 	glBindBuffer(GL_ARRAY_BUFFER, model->normalLoc);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
-
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->elementLoc);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture->loc);
 
+	// scale -> yaw -> pitch -> roll -> translate
 	glm::mat4 m = glm::mat4(1.0);
 	if (renderable->interpolated) {
 		glm::vec3 interpolated_position = glm::mix(renderable->start_position, renderable->end_position, interp_value);
@@ -64,9 +61,9 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 	} else {
 		m = glm::translate(m, renderable->position);
 	}
-	m = glm::rotate(m, renderable->rotation.z * (float)M_PI / 180.0f, glm::vec3(0, 0, 1));
-	m = glm::rotate(m, renderable->rotation.y * (float)M_PI / 180.0f, glm::vec3(0, 1, 0));
-	m = glm::rotate(m, renderable->rotation.x * (float)M_PI / 180.0f, glm::vec3(1, 0, 0));
+	m = glm::rotate(m, glm::radians(renderable->rotation.z), glm::vec3(0, 0, 1));
+	m = glm::rotate(m, glm::radians(renderable->rotation.x), glm::vec3(1, 0, 0));
+	m = glm::rotate(m, glm::radians(renderable->rotation.y), glm::vec3(0, 1, 0));
 	m = glm::scale(m, renderable->scale);
 
 	glUniformMatrix4fv(uniforms[UNIFORM_MODEL_MATRIX], 1, GL_FALSE, glm::value_ptr(m));
@@ -76,7 +73,7 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 	glUniform1f(uniforms[UNIFORM_MATERIAL_METALLIC], renderable->metallic);
 	glUniform1f(uniforms[UNIFORM_MATERIAL_F0], renderable->f0);
 
-	glDrawElements(GL_TRIANGLES, model->elements.size(), GL_UNSIGNED_INT, (void*)0);
+	glDrawElements(GL_TRIANGLES, model->elements.size(), GL_UNSIGNED_INT, BUFFER_OFFSET(0));
 }
 
 void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
@@ -84,10 +81,10 @@ void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
 	Texture* texture = &AssetLoader::textures[renderable->texture];
 
 	glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
-
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->elementLoc);
 
+	// scale -> yaw -> pitch -> roll -> translate
 	glm::mat4 m = glm::mat4(1.0);
 	if (renderable->interpolated) {
 		glm::vec3 interpolated_position = glm::mix(renderable->start_position, renderable->end_position, interp_value);
@@ -95,17 +92,17 @@ void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
 	} else {
 		m = glm::translate(m, renderable->position);
 	}
-	m = glm::rotate(m, renderable->rotation.z * (float)M_PI / 180.0f, glm::vec3(0, 0, 1));
-	m = glm::rotate(m, renderable->rotation.y * (float)M_PI / 180.0f, glm::vec3(0, 1, 0));
-	m = glm::rotate(m, renderable->rotation.x * (float)M_PI / 180.0f, glm::vec3(1, 0, 0));
+	m = glm::rotate(m, glm::radians(renderable->rotation.z), glm::vec3(0, 0, 1));
+	m = glm::rotate(m, glm::radians(renderable->rotation.x), glm::vec3(1, 0, 0));
+	m = glm::rotate(m, glm::radians(renderable->rotation.y), glm::vec3(0, 1, 0));
 	m = glm::scale(m, renderable->scale);
 
 	glUniformMatrix4fv(uniforms[UNIFORM_SHADOW_MODEL_MATRIX], 1, GL_FALSE, glm::value_ptr(m));
 
-	glDrawElements(GL_TRIANGLES, model->elements.size(), GL_UNSIGNED_INT, (void*)0);
+	glDrawElements(GL_TRIANGLES, model->elements.size(), GL_UNSIGNED_INT, BUFFER_OFFSET(0));
 }
 
-void Renderer::draw() {
+void Renderer::Draw() {
 	// draw shadow stuff
 	glm::mat4 light_view = glm::lookAt(
 		glm::vec3(0, 0, 0),
@@ -116,8 +113,8 @@ void Renderer::draw() {
 	glm::mat4 light_viewProjection = light_projection * light_view;
 	glUseProgram(shadowProgram);
 	glUniformMatrix4fv(uniforms[UNIFORM_SHADOW_LIGHTSPACE_MATRIX], 1, GL_FALSE, glm::value_ptr(light_viewProjection));
-	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glCullFace(GL_BACK);
 	for (auto renderable : renderables) {
@@ -130,7 +127,7 @@ void Renderer::draw() {
 		camera.target,
 		glm::vec3(0, 1, 0)
 	);
-	glm::mat4 camera_projection = glm::perspective(camera.FOV * (float)M_PI / 180.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, camera.nearClip, camera.farClip);
+	glm::mat4 camera_projection = glm::perspective(glm::radians(camera.FOV), (GLfloat)windowWidth / (GLfloat)windowHeight, camera.nearClip, camera.farClip);
 	glm::vec3 camera_lightDir = camera_view * glm::vec4(directionalLight.direction, 0.0f);
 	glm::vec3 camera_upDir = camera_view * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
 	glUseProgram(mainProgram);
@@ -144,8 +141,8 @@ void Renderer::draw() {
 	glUniform3fv(uniforms[UNIFORM_LIGHT_DIRECTION], 1, glm::value_ptr(camera_lightDir));
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
-	glViewport(0, 0, WIDTH, HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, windowWidth, windowHeight);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glCullFace(GL_BACK);
 	for (auto renderable : renderables) {
@@ -219,8 +216,11 @@ float Renderer::calculateInterpolationValue() {
 	return elapsed_time / interp_duration;
 }
 
-int Renderer::RenderLoop() {
+bool Renderer::Done() {
+	return renderThreadDone;
+}
 
+int Renderer::Init() {
 	//Setup GLFW
 	glfwInit();
 
@@ -228,10 +228,10 @@ int Renderer::RenderLoop() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
+	glfwWindowHint(GLFW_SAMPLES, 8);
 
-	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "The Farmi Paradox", nullptr, nullptr);
-	InputManager::registerInputCallbacks(window);
+	window = glfwCreateWindow(windowWidth, windowHeight, "Rocks Fall, Everyone Dies", nullptr, nullptr);
 
 	//Ensure window was created
 	if (window == nullptr) {
@@ -239,10 +239,6 @@ int Renderer::RenderLoop() {
 		glfwTerminate();
 		return EXIT_FAILURE;
 	}
-
-	//Adjust width and height based on pixel density
-	int scrnWidth, scrnHeight;
-	glfwGetFramebufferSize(window, &scrnWidth, &scrnHeight);
 
 	glfwMakeContextCurrent(window);
 
@@ -274,6 +270,7 @@ int Renderer::RenderLoop() {
 
 	// shadow stuff
 	glGenFramebuffers(1, &depthMapFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glGenTextures(1, &depthMap);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
@@ -282,9 +279,8 @@ int Renderer::RenderLoop() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	float borderColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
 	glDrawBuffer(GL_NONE);
 	glReadBuffer(GL_NONE);
@@ -320,16 +316,19 @@ int Renderer::RenderLoop() {
 	// wireframe mode if we want to enable it for debugging
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	// convert linear fragment shader output to srgb automatically
+	// use GPU linear to SRGB conversion
 	glEnable(GL_FRAMEBUFFER_SRGB);
 
-	// don't draw polygons if they are behind other polygons
+	// use depth culling
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 
 	// use alpha for transperancy
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// use multisample anti-aliasing
+	glEnable(GL_MULTISAMPLE);
 
 	// set opengl to swap framebuffer every # screen refreshes
 	glfwSwapInterval(1);
@@ -338,11 +337,21 @@ int Renderer::RenderLoop() {
 	glClearColor(linear_ambient_color_up.r, linear_ambient_color_up.g, linear_ambient_color_up.b, 1.0f);
 
 	PreloadAssetBuffers();
+	InputManager::registerInputCallbacks(window);
 
-	while (!glfwWindowShouldClose(window) && !renderThreadShouldDie) {
+	return EXIT_SUCCESS;
+}
+
+int Renderer::RenderLoop() {
+	if (Init() == EXIT_FAILURE) {
+		return EXIT_FAILURE;
+	}
+
+	while (!glfwWindowShouldClose(window) && !renderThreadDone) {
 		//Check for events like key pressed, mouse moves, etc.
 		glfwPollEvents();
 
+		// add renderables from waitList
 		renderables_waitList_mutex.lock();
 		while (renderables_waitList.size() != 0) {
 			renderables.push_back(renderables_waitList.back());
@@ -350,24 +359,24 @@ int Renderer::RenderLoop() {
 		}
 		renderables_waitList_mutex.unlock();
 
-		for (std::shared_ptr<Renderable> &renderable : renderables) {
-			if (renderable.use_count() == 1) {
-				// set unused renderable to null while itterating
-				// but don't remove them yet because deletion while itterating is spooky
-				renderable = NULL;
+		// remove renderables referenced only by renderables
+		for (auto it = renderables.begin(); it != renderables.end();) {
+			if (it->use_count() == 1) {
+				it = renderables.erase(it);
+			} else {
+				++it;
 			}
 		}
 
-		// remove unused renderables
-		renderables.remove(NULL);
-
 		//draw
 		interp_value = calculateInterpolationValue();
-		draw();
+		glfwGetWindowSize(window, &windowWidth, &windowHeight);
+		Draw();
 		glfwSwapBuffers(window);
 	}
 
 	glfwTerminate();
+	renderThreadDone = true;
 	return EXIT_SUCCESS;
 }
 
@@ -421,7 +430,7 @@ void Renderer::notify(EventName eventName, Param* params) {
 
 
 Renderer::Renderer() {
-	renderThreadShouldDie = false;
+	renderThreadDone = false;
 	renderThread = std::thread(&Renderer::RenderLoop, this);
     EventManager::subscribe(RENDERER_ADD_TO_RENDERABLES, this);
 	EventManager::subscribe(RENDERER_SET_CAMERA, this);
@@ -432,7 +441,7 @@ Renderer::Renderer() {
 }
 
 Renderer::~Renderer() {
-	renderThreadShouldDie = true;
+	renderThreadDone = true;
 	renderThread.join();
 	EventManager::unsubscribe(RENDERER_ADD_TO_RENDERABLES, this);
 	EventManager::unsubscribe(RENDERER_SET_CAMERA, this);
