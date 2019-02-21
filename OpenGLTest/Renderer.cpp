@@ -371,7 +371,9 @@ int Renderer::RenderLoop() {
 		//draw
 		interp_value = calculateInterpolationValue();
 		glfwGetWindowSize(window, &windowWidth, &windowHeight);
-		Draw();
+		if (windowWidth != 0 && windowHeight != 0) {
+			Draw();
+		}
 		glfwSwapBuffers(window);
 	}
 
