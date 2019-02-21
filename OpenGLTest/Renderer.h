@@ -25,6 +25,7 @@ class Renderer : public ISubscriber {
 		void Draw();
 		void DrawRenderable(std::shared_ptr<Renderable> renderable);
 		void DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable);
+		glm::mat4 CalculateModelMatrix(std::shared_ptr<Renderable> renderable);
 		// Overrides ISubscriber::notify
 		void notify(EventName eventName, Param* params);
 
@@ -48,8 +49,7 @@ class Renderer : public ISubscriber {
 		bool renderThreadDone;
 
 		std::list<std::shared_ptr<Renderable>> renderables;
-		std::list<std::shared_ptr<Renderable>> renderables_waitList;
-		std::mutex renderables_waitList_mutex;
+		std::mutex renderables_mutex;
 
 		GLuint shadowProgram, depthMap, depthMapFBO;
 		const GLuint SHADOW_WIDTH = 1024;

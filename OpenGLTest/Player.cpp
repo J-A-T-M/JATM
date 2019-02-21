@@ -1,12 +1,12 @@
 #include "Player.h"
 
 Player::Player() {
+	setLocalScale(2.0f);
+	_radius = 2.0f;
 	addRenderable();
 	renderable->roughness = 0.4f;
 	renderable->model = MODEL_SUZANNE;
 	renderable->interpolated = true;
-	renderable->scale = 2.0f;
-	_radius = 2.0f;
 }
 
 Player::~Player() {}

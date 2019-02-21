@@ -39,6 +39,8 @@ void MainScene::Setup() {
 		networkThread = std::thread(ClientLoop);
 	}
 
+	root = new GameObject();
+
 	glm::vec4 color[] = { glm::vec4(1.0, 0.0, 0.3, 1.0), glm::vec4(1.0, 0.3, 0.0, 1.0), glm::vec4(1.0, 0.0, 0.3, 1.0) , glm::vec4(1.0, 0.3, 0.0, 1.0) };
 	float metallic[] = { 1.0f, 1.0f, 0.0f, 0.0f };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
@@ -46,17 +48,23 @@ void MainScene::Setup() {
 		player->setLocalPosition(glm::vec3(10.0 * i - 15.0, 1.0, 5.0));
 		player->renderable->color = color[i % 4];
 		player->renderable->metallic = metallic[i];
+		player->renderable->interpolated = true;
 		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player->renderable), false);
 		players.push_back(player);
+		root->addChild(player);
 	}
 
-	floor = std::make_shared<Renderable>();
-	floor->roughness = 0.8;
-	floor->color = glm::vec4(0.8, 0.6, 0.4, 1.0);
-	floor->scale = 64.0f;
-	floor->position = glm::vec3(0, -33, 0);
-	floor->model = MODEL_CUBE;
-	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor), false);
+	GameObject* floor = new GameObject();
+	floor->setLocalScale(64.0f);
+	floor->setLocalPosition(glm::vec3(0, -33, 0));
+	floor->addRenderable();
+	floor->renderable->roughness = 0.8;
+	floor->renderable->color = glm::vec4(0.8, 0.6, 0.4, 1.0);
+	floor->renderable->model = MODEL_CUBE;
+	floor->renderable->interpolated = true;
+	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor->renderable), false);
+
+	root->addChild(floor);
 
 	camera.position = glm::vec3(0.0f, 64.0f, 100.0f);
 	camera.target = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -74,7 +82,7 @@ void MainScene::Setup() {
 	glm::vec3 up_color = glm::vec3(0.25f, 0.15f, 0.1f);
 	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(up_color), false);
 
-	glm::vec3 down_color = glm::vec3(floor->color) * (up_color + -directionalLight.direction.y);
+	glm::vec3 down_color = glm::vec3(floor->renderable->color) * (up_color + -directionalLight.direction.y);
 	EventManager::notify(RENDERER_SET_AMBIENT_DOWN, &TypeParam<glm::vec3>(down_color), false);
 }
 
@@ -92,9 +100,13 @@ void MainScene::Update(const float delta) {
 	}
 
 	for (int i = 0; i < players.size(); i++) {
-		players[i]->updateRenderableTransforms();
+		players[i]->setLocalRotation(glm::vec3(0.0f, 0.0f, time));
 	}
-	EventManager::notify(FIXED_UPDATE_FINISHED, &TypeParam<float>(delta), false);
+	root->setLocalRotation(glm::vec3(0.25f * cos(time), 0.0f, 0.25f * sin(time)));
+
+	EventManager::notify(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, NULL, false);
+	root->updateRenderableTransforms();
+	EventManager::notify(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, &TypeParam<float>(delta), false);
 }
 
 bool MainScene::Done() {
@@ -102,10 +114,7 @@ bool MainScene::Done() {
 }
 
 void MainScene::Cleanup() {
-	for (auto &player : players) {
-		delete player;
-	}
-	floor.reset();
+	delete root;
 
 	networkThreadShouldDie = true;
 	networkThread.join();

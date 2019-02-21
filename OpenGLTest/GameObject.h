@@ -1,10 +1,8 @@
 #pragma once
 
 #include <glm/gtc/quaternion.hpp>
-#include <glm/mat3x3.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
 #include <memory>
 #include <vector>
 
@@ -17,21 +15,36 @@ class GameObject {
 
 		glm::vec3 getPosition();
 		glm::vec3 getLocalPosition();
-
 		void setLocalPosition(glm::vec2 xz);
 		void setLocalPosition(glm::vec3 position);
 		void setParentPosition(glm::vec3 position);
 
+		glm::vec3 getLocalRotation();
+		void setLocalRotation(glm::vec3 rotation);
+		void setParentRotation(glm::quat rotation);
+
+		float getScale();
+		float getLocalScale();
+		void setLocalScale(float scale);
+		void setParentScale(float scale);
+
 		void addRenderable();
-		void addChild(GameObject* gameObject);
+		void addChild(GameObject* child);
 		void updateRenderableTransforms();
 
 		std::shared_ptr<Renderable> renderable;
+		std::vector<GameObject*> children;
 	protected:
-
-		glm::vec3 _parentPosition;
-		glm::vec3 _position;
 		glm::vec3 _localPosition;
+		glm::vec3 _position;
+		glm::vec3 _parentPosition;
 
-		std::vector<GameObject*> _children;
+		glm::quat _localRotation;
+		glm::vec3 _localRotationEuler;
+		glm::quat _rotation;
+		glm::quat _parentRotation;
+
+		float _localScale;
+		float _scale;
+		float _parentScale;
 };
