@@ -3,7 +3,11 @@
 
 #include <vector>
 
-#include <GLEW/glew.h>
+typedef unsigned char GLubyte;
+typedef unsigned int GLuint;
+typedef float GLfloat;
+#include <glm/gtc/quaternion.hpp>
+#include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -51,12 +55,13 @@ class Renderable {
 
 		// transform
 		glm::vec3 position;
-		glm::vec3 rotation;
-		glm::vec3 scale;
+		glm::quat rotation;
+		float scale;
 		// stuff to allow renderer to interpolate positions
 		bool interpolated;
-		glm::vec3 start_position;
-		glm::vec3 end_position;
+		glm::vec3 previousPosition;
+		glm::quat previousRotation;
+		float previousScale;
 
 		// material
 		glm::vec4 color;

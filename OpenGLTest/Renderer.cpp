@@ -38,6 +38,23 @@ enum {
 };
 GLuint uniforms[NUM_UNIFORMS];
 
+glm::mat4 Renderer::CalculateModelMatrix(std::shared_ptr<Renderable> renderable) {
+	glm::mat4 m = glm::mat4(1.0);
+	if (renderable->interpolated) {
+		glm::vec3 interpolated_position = glm::mix(renderable->previousPosition, renderable->position, interp_value);
+		glm::quat interpolated_rotation = glm::mix(renderable->previousRotation, renderable->rotation, interp_value);
+		float interpolated_scale = glm::mix(renderable->previousScale, renderable->scale, interp_value);
+		m = glm::translate(m, interpolated_position);
+		m = m * (glm::mat4)interpolated_rotation;
+		m = glm::scale(m, glm::vec3(interpolated_scale));
+	} else {
+		m = glm::translate(m, renderable->position);
+		m = m * (glm::mat4)renderable->rotation;
+		m = glm::scale(m, glm::vec3(renderable->scale));
+	}
+	return m;
+}
+
 void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 	Model* model = &AssetLoader::models[renderable->model];
 	Texture* texture = &AssetLoader::textures[renderable->texture];
@@ -53,19 +70,7 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture->loc);
 
-	// scale -> yaw -> pitch -> roll -> translate
-	glm::mat4 m = glm::mat4(1.0);
-	if (renderable->interpolated) {
-		glm::vec3 interpolated_position = glm::mix(renderable->start_position, renderable->end_position, interp_value);
-		m = glm::translate(m, interpolated_position);
-	} else {
-		m = glm::translate(m, renderable->position);
-	}
-	m = glm::rotate(m, glm::radians(renderable->rotation.z), glm::vec3(0, 0, 1));
-	m = glm::rotate(m, glm::radians(renderable->rotation.x), glm::vec3(1, 0, 0));
-	m = glm::rotate(m, glm::radians(renderable->rotation.y), glm::vec3(0, 1, 0));
-	m = glm::scale(m, renderable->scale);
-
+	glm::mat4 m = CalculateModelMatrix(renderable);
 	glUniformMatrix4fv(uniforms[UNIFORM_MODEL_MATRIX], 1, GL_FALSE, glm::value_ptr(m));
 	glUniform4fv(uniforms[UNIFORM_MATERIAL_COLOR], 1, glm::value_ptr(glm::convertSRGBToLinear(renderable->color)));
 	glUniform1i(uniforms[UNIFORM_MATERIAL_FULLBRIGHT], renderable->fullBright);
@@ -84,19 +89,7 @@ void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->elementLoc);
 
-	// scale -> yaw -> pitch -> roll -> translate
-	glm::mat4 m = glm::mat4(1.0);
-	if (renderable->interpolated) {
-		glm::vec3 interpolated_position = glm::mix(renderable->start_position, renderable->end_position, interp_value);
-		m = glm::translate(m, interpolated_position);
-	} else {
-		m = glm::translate(m, renderable->position);
-	}
-	m = glm::rotate(m, glm::radians(renderable->rotation.z), glm::vec3(0, 0, 1));
-	m = glm::rotate(m, glm::radians(renderable->rotation.x), glm::vec3(1, 0, 0));
-	m = glm::rotate(m, glm::radians(renderable->rotation.y), glm::vec3(0, 1, 0));
-	m = glm::scale(m, renderable->scale);
-
+	glm::mat4 m = CalculateModelMatrix(renderable);
 	glUniformMatrix4fv(uniforms[UNIFORM_SHADOW_MODEL_MATRIX], 1, GL_FALSE, glm::value_ptr(m));
 
 	glDrawElements(GL_TRIANGLES, model->elements.size(), GL_UNSIGNED_INT, BUFFER_OFFSET(0));
@@ -351,15 +344,8 @@ int Renderer::RenderLoop() {
 		//Check for events like key pressed, mouse moves, etc.
 		glfwPollEvents();
 
-		// add renderables from waitList
-		renderables_waitList_mutex.lock();
-		while (renderables_waitList.size() != 0) {
-			renderables.push_back(renderables_waitList.back());
-			renderables_waitList.pop_back();
-		}
-		renderables_waitList_mutex.unlock();
-
-		// remove renderables referenced only by renderables
+		renderables_mutex.lock();
+		// remove renderables referenced only by renderables list
 		for (auto it = renderables.begin(); it != renderables.end();) {
 			if (it->use_count() == 1) {
 				it = renderables.erase(it);
@@ -371,7 +357,11 @@ int Renderer::RenderLoop() {
 		//draw
 		interp_value = calculateInterpolationValue();
 		glfwGetWindowSize(window, &windowWidth, &windowHeight);
-		Draw();
+		if (windowWidth != 0 && windowHeight != 0) {
+			Draw();
+		}
+		renderables_mutex.unlock();
+
 		glfwSwapBuffers(window);
 	}
 
@@ -384,9 +374,9 @@ void Renderer::notify(EventName eventName, Param* params) {
     switch (eventName) {
 		case RENDERER_ADD_TO_RENDERABLES: {
 			TypeParam<std::shared_ptr<Renderable>> *p = dynamic_cast<TypeParam<std::shared_ptr<Renderable>> *>(params);
-			renderables_waitList_mutex.lock();
-			renderables_waitList.push_back(p->Param);
-			renderables_waitList_mutex.unlock();
+			renderables_mutex.lock();
+			renderables.push_back(p->Param);
+			renderables_mutex.unlock();
 			break;
 		}
 		
@@ -414,11 +404,16 @@ void Renderer::notify(EventName eventName, Param* params) {
 			break;
 		}
 
-		case FIXED_UPDATE_FINISHED: {
+		case FIXED_UPDATE_STARTED_UPDATING_RENDERABLES: {
+			renderables_mutex.lock();
+			break;
+		}
+
+		case FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES: {
 			TypeParam<float> *p = dynamic_cast<TypeParam<float> *>(params);
 			interp_duration = p->Param;
-			interp_value = 0.0f;
 			interp_start = std::chrono::high_resolution_clock::now();
+			renderables_mutex.unlock();
 			break;
 		}
 
@@ -426,8 +421,6 @@ void Renderer::notify(EventName eventName, Param* params) {
 			break;
     }
 }
-
-
 
 Renderer::Renderer() {
 	renderThreadDone = false;
@@ -437,7 +430,8 @@ Renderer::Renderer() {
 	EventManager::subscribe(RENDERER_SET_DIRECTIONAL_LIGHT, this);
 	EventManager::subscribe(RENDERER_SET_AMBIENT_UP, this);
 	EventManager::subscribe(RENDERER_SET_AMBIENT_DOWN, this);
-	EventManager::subscribe(FIXED_UPDATE_FINISHED, this);
+	EventManager::subscribe(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, this);
+	EventManager::subscribe(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, this);
 }
 
 Renderer::~Renderer() {
@@ -448,5 +442,6 @@ Renderer::~Renderer() {
 	EventManager::unsubscribe(RENDERER_SET_DIRECTIONAL_LIGHT, this);
 	EventManager::unsubscribe(RENDERER_SET_AMBIENT_UP, this);
 	EventManager::unsubscribe(RENDERER_SET_AMBIENT_DOWN, this);
-	EventManager::unsubscribe(FIXED_UPDATE_FINISHED, this);
+	EventManager::unsubscribe(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, this);
+	EventManager::unsubscribe(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, this);
 }
