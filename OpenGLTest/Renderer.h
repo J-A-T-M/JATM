@@ -51,9 +51,13 @@ class Renderer : public ISubscriber {
 		std::list<std::shared_ptr<Renderable>> renderables;
 		std::mutex renderables_mutex;
 
-		GLuint shadowProgram, depthMap, depthMapFBO;
+		GLuint depthMapProgram;
+		GLuint shadowMap, shadowMapFBO;
 		const GLuint SHADOW_WIDTH = 1024;
 		const GLuint SHADOW_HEIGHT = 1024;
+
+		GLuint depthMap, depthMapFBO;
+		std::vector<glm::vec3> ssaoKernel;
 
 		GLuint uiProgram;
 };

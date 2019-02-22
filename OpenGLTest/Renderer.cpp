@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <random>
 
 #include "AssetLoader.h"
 #include "Enums.h"
@@ -29,11 +30,14 @@ enum {
 	UNIFORM_LIGHT_COLOR,
 	UNIFORM_LIGHT_DIRECTION,
 	UNIFORM_SHADOWMAP_SAMPLER,
+	UNIFORM_DEPTHMAP_SAMPLER,
 	UNIFORM_SHADOW_MODEL_MATRIX,
 	UNIFORM_SHADOW_LIGHTSPACE_MATRIX,
 	UNIFORM_UI_VIEWPROJECTION_MATRIX,
 	UNIFORM_UI_MODEL_MATRIX,
 	UNIFORM_UI_MATERIAL_COLOR,
+	UNIFORM_SAMPLES,
+	UNIFORM_NUM_SAMPLES,
 	NUM_UNIFORMS
 };
 GLuint uniforms[NUM_UNIFORMS];
@@ -104,9 +108,9 @@ void Renderer::Draw() {
 	);
 	glm::mat4 light_projection = glm::ortho(-50.0f, 50.0f, -32.0f, 32.0f, directionalLight.nearclip, directionalLight.farclip);
 	glm::mat4 light_viewProjection = light_projection * light_view;
-	glUseProgram(shadowProgram);
+	glUseProgram(depthMapProgram);
 	glUniformMatrix4fv(uniforms[UNIFORM_SHADOW_LIGHTSPACE_MATRIX], 1, GL_FALSE, glm::value_ptr(light_viewProjection));
-	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glCullFace(GL_BACK);
@@ -121,6 +125,19 @@ void Renderer::Draw() {
 		glm::vec3(0, 1, 0)
 	);
 	glm::mat4 camera_projection = glm::perspective(glm::radians(camera.FOV), (GLfloat)windowWidth / (GLfloat)windowHeight, camera.nearClip, camera.farClip);
+	glm::mat4 camera_viewProjection = camera_projection * camera_view;
+	glUseProgram(depthMapProgram);
+	glUniformMatrix4fv(uniforms[UNIFORM_SHADOW_LIGHTSPACE_MATRIX], 1, GL_FALSE, glm::value_ptr(camera_viewProjection));
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glViewport(0, 0, windowWidth, windowHeight);
+	glClear(GL_DEPTH_BUFFER_BIT);
+	glCullFace(GL_BACK);
+	for (auto renderable : renderables) {
+		DrawRenderableDepthMap(renderable);
+	}
+
 	glm::vec3 camera_lightDir = camera_view * glm::vec4(directionalLight.direction, 0.0f);
 	glm::vec3 camera_upDir = camera_view * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
 	glUseProgram(mainProgram);
@@ -133,6 +150,8 @@ void Renderer::Draw() {
 	glUniform3fv(uniforms[UNIFORM_LIGHT_COLOR], 1, glm::value_ptr(glm::convertSRGBToLinear(directionalLight.color)));
 	glUniform3fv(uniforms[UNIFORM_LIGHT_DIRECTION], 1, glm::value_ptr(camera_lightDir));
 	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, shadowMap);
+	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, windowWidth, windowHeight);
@@ -251,7 +270,7 @@ int Renderer::Init() {
 	glEnable(GL_DEBUG_OUTPUT);
 
 	CreateShaderProgram(mainProgram, "./Standard", "./Standard");
-	CreateShaderProgram(shadowProgram, "./ShadowMap", "./ShadowMap");
+	CreateShaderProgram(depthMapProgram, "./ShadowMap", "./ShadowMap");
 	CreateShaderProgram(uiProgram, "./UI", "./UI");
 
 	glGenVertexArrays(1, &VAO);
@@ -262,10 +281,10 @@ int Renderer::Init() {
 	glEnableVertexAttribArray(2);
 
 	// shadow stuff
-	glGenFramebuffers(1, &depthMapFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-	glGenTextures(1, &depthMap);
-	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glGenFramebuffers(1, &shadowMapFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+	glGenTextures(1, &shadowMap);
+	glBindTexture(GL_TEXTURE_2D, shadowMap);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -274,6 +293,20 @@ int Renderer::Init() {
 	float borderColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+
+	// ssao stuff
+	glGenFramebuffers(1, &depthMapFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
 	glDrawBuffer(GL_NONE);
 	glReadBuffer(GL_NONE);
@@ -295,8 +328,12 @@ int Renderer::Init() {
 	uniforms[UNIFORM_LIGHT_DIRECTION] = glGetUniformLocation(mainProgram, "u_lightDirection");
 	uniforms[UNIFORM_LIGHT_COLOR] = glGetUniformLocation(mainProgram, "u_lightColor");
 	// uniforms for shadow mapping
-	uniforms[UNIFORM_SHADOW_MODEL_MATRIX] = glGetUniformLocation(shadowProgram, "model");
-	uniforms[UNIFORM_SHADOW_LIGHTSPACE_MATRIX] = glGetUniformLocation(shadowProgram, "viewProjection");
+	uniforms[UNIFORM_SHADOW_MODEL_MATRIX] = glGetUniformLocation(depthMapProgram, "model");
+	uniforms[UNIFORM_SHADOW_LIGHTSPACE_MATRIX] = glGetUniformLocation(depthMapProgram, "viewProjection");
+	// uniforms for SSAO
+	uniforms[UNIFORM_DEPTHMAP_SAMPLER] = glGetUniformLocation(mainProgram, "u_depthMapSampler");
+	uniforms[UNIFORM_SAMPLES] = glGetUniformLocation(mainProgram, "u_samples");
+	uniforms[UNIFORM_NUM_SAMPLES] = glGetUniformLocation(mainProgram, "u_numSamples");
 	// uniforms for 2d stuff
 	uniforms[UNIFORM_UI_MODEL_MATRIX] = glGetUniformLocation(uiProgram, "model");
 	uniforms[UNIFORM_UI_VIEWPROJECTION_MATRIX] = glGetUniformLocation(uiProgram, "viewProjection");
@@ -305,6 +342,30 @@ int Renderer::Init() {
 	glUseProgram(mainProgram);
 	// binds UNIFORM_SHADOWMAP_SAMPLER to GL_TEXTURE1
 	glUniform1i(uniforms[UNIFORM_SHADOWMAP_SAMPLER], 1);
+	// binds UNIFORM_DEPTHMAP_SAMPLER to GL_TEXTURE2
+	glUniform1i(uniforms[UNIFORM_DEPTHMAP_SAMPLER], 2);
+	// binds SSAO kern
+	std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+	std::default_random_engine generator;
+	generator.seed(2);
+	int num_samples = 8;
+	for (unsigned int i = 0; i < num_samples; ++i) {
+		glm::vec3 sample(
+			randomFloats(generator) * 2.0 - 1.0,
+			randomFloats(generator) * 2.0 - 1.0,
+			randomFloats(generator)
+		);
+		sample = glm::normalize(sample);
+		if (sample.z > 0.25) {
+			float scale = (float)i / (float)num_samples;
+			scale = glm::mix(0.1f, 1.0f, scale * scale);
+			ssaoKernel.push_back(sample * scale);
+		} else {
+			--i;
+		}
+	}
+	glUniform3fv(uniforms[UNIFORM_SAMPLES], num_samples, glm::value_ptr(ssaoKernel[0]));
+	glUniform1i(uniforms[UNIFORM_NUM_SAMPLES], num_samples);
 
 	// wireframe mode if we want to enable it for debugging
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

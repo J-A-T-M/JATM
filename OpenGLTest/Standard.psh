@@ -1,5 +1,6 @@
 #version 330 core
 #define M_PI 3.1415926535897932384626433832795
+#define MAX_SAMPLES 64
 
 in vec2 v_texCoord;
 in vec3 v_position;
@@ -19,6 +20,11 @@ uniform vec3 u_ambientColorUp;
 uniform vec3 u_ambientColorDown;
 uniform vec3 u_lightDirection;
 uniform vec3 u_lightColor;
+
+uniform mat4 projection;
+uniform sampler2D u_depthMapSampler;
+uniform int u_numSamples;
+uniform vec3 u_samples[MAX_SAMPLES];
 
 out vec4 o_fragColor;
 
@@ -76,6 +82,52 @@ float visibility(vec4 lightSpace_position) {
 	return visibility;
 }
 
+float linearize_depth(float d, float zNear, float zFar) {
+	return zNear * zFar / (zFar + d * (zNear - zFar));
+}
+
+#define HASHSCALE3 vec3(.1031, .1030, .0973)
+vec2 hash22(vec2 p) {
+	vec3 p3 = fract(vec3(p.xyx) * HASHSCALE3);
+	p3 += dot(p3, p3.yzx + 19.19);
+	return fract((p3.xx + p3.yz) * p3.zy);
+}
+
+float ssao(vec3 N) {
+	vec3 rvec = vec3(hash22(gl_FragCoord.xy), 0.0);
+	vec3 tangent = normalize(rvec - N * dot(rvec, N));
+	vec3 bitangent = cross(N, tangent);
+	mat3 tbn = mat3(tangent, bitangent, N);
+
+	float originDepth = linearize_depth(gl_FragCoord.z, 0.1, 1000.0);
+	vec3 origin = v_position;
+
+	float bias = 0.0;
+	float radius = 5;
+	float occlusion = 0;
+	for (int i = 0; i < u_numSamples; ++i) {
+		// get sample position:
+		vec3 sample = tbn * u_samples[i];
+		sample = sample * radius + origin;
+
+		// project sample position:
+		vec4 offset = vec4(sample, 1.0);
+		offset = projection * offset;
+		offset.xy /= offset.w;
+		offset.xy = offset.xy * 0.5 + 0.5;
+
+		// get sample depth:
+		float sampleDepth = texture(u_depthMapSampler, offset.xy).r;
+		sampleDepth = linearize_depth(sampleDepth, 0.1, 1000.0);
+
+		// range check & accumulate:
+		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(originDepth - sampleDepth));
+		occlusion += (bias + sampleDepth < -sample.z ? 1.0 : 0.0) * rangeCheck;
+	}
+
+	return 1.0 - (occlusion / u_numSamples);
+}
+
 // Hash without Sine
 // stolen from here https://www.shadertoy.com/view/4djSRW
 #define HASHSCALE1 .1031
@@ -112,7 +164,7 @@ void main() {
 	float visibility = visibility(v_lightSpace_position);
 
 	vec4 ret = color;
-	ret.xyz *= mix(u_ambientColorDown, u_ambientColorUp, dot(u_up, N) * 0.5 + 0.5);
+	ret.xyz *= mix(u_ambientColorDown, u_ambientColorUp, dot(u_up, N) * 0.5 + 0.5) * ssao(N);
 	ret.xyz += (diffuse * color.xyz + specular) * u_lightColor * visibility;
 
 	o_fragColor = dither(ret);
