@@ -106,6 +106,9 @@ void MainScene::Update(const float delta) {
 
 	EventManager::notify(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, NULL, false);
 	root->updateRenderableTransforms();
+	for (Hazard* hazard : hazards) {
+		root->updateRenderableTransforms();
+	}
 	EventManager::notify(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, &TypeParam<float>(delta), false);
 }
 
@@ -115,7 +118,9 @@ bool MainScene::Done() {
 
 void MainScene::Cleanup() {
 	delete root;
-
+	for (Hazard* hazard : hazards) {
+		delete hazard;
+	}
 	networkThreadShouldDie = true;
 	networkThread.join();
 

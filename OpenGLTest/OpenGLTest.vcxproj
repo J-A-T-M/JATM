@@ -100,6 +100,7 @@
     <ClCompile Include="AssetLoader.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="Hazard.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainScene.cpp" />
@@ -123,6 +124,7 @@
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="EventName.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="Hazard.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="MainScene.h" />
     <ClInclude Include="Player.h" />
