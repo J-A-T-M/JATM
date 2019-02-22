@@ -9,6 +9,7 @@
 #include "GameObject.h"
 #include "Player.h"
 #include "Renderable.h"
+#include "Hazard.h"
 
 class MainScene : public Scene{
 	public:
@@ -24,6 +25,7 @@ class MainScene : public Scene{
 		const bool IS_SERVER;
 		float time;
 		std::vector<Player*> players;
+		std::vector<Hazard*> hazards;
 		GameObject* root;
 		std::vector<InputSourceEnum> playerInputSources = { INPUT_LOCAL1, INPUT_LOCAL2, INPUT_CLIENT1, INPUT_CLIENT2, INPUT_CLIENT3, INPUT_CLIENT4, INPUT_CLIENT5, INPUT_CLIENT6 };
 		std::thread networkThread;
