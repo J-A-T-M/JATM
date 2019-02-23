@@ -70,6 +70,7 @@ Texture AssetLoader::loadTexture(std::string const & path) {
 
 void AssetLoader::preloadAssets() {
 	models[MODEL_CUBE] = loadModel("../assets/models/cube.obj");
+	models[MODEL_CUBE_BEVEL] = loadModel("../assets/models/cube_bevel.obj");
 	models[MODEL_SPHERE] = loadModel("../assets/models/sphere.obj");
 	models[MODEL_SUZANNE] = loadModel("../assets/models/suzanne.obj");
 	textures[TEXTURE_UV_GRID] = loadTexture("../assets/textures/UV Grid.png");
