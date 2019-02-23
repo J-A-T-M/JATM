@@ -55,7 +55,7 @@ void MainScene::Setup() {
 	}
 
 	GameObject* floor = new GameObject();
-	floor->setLocalScale(64.0f);
+	floor->setLocalScale(32.0f);
 	floor->setLocalPosition(glm::vec3(0, -33, 0));
 	floor->addRenderable();
 	floor->renderable->roughness = 0.8;
