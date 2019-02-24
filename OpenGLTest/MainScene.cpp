@@ -3,7 +3,9 @@
 #include <glm/glm.hpp>
 
 MainScene::MainScene(bool isServer) : IS_SERVER(isServer) {}
-
+float x, y, z;
+bool q, mov ;
+int h;
 void MainScene::movePlayersBasedOnInput(const float delta) {
 	const float PLAYER_SPEED = 30.0;
 
@@ -33,6 +35,9 @@ void MainScene::movePlayersBasedOnNetworking() {
 }
 
 void MainScene::Setup() {
+	q = true;
+	mov = false;
+	h = 0;
 	if (IS_SERVER) {
 		networkThread = std::thread(listenForClients);
 	} else {
@@ -88,6 +93,37 @@ void MainScene::Setup() {
 
 void MainScene::Update(const float delta) {
 	time += delta;
+
+	if (q) {
+		x = rand() % 58 + (-29);
+		y = 15;
+		z = rand() % 58 + (-29);
+		//std::cout << "(" << x << ", " << y << ", " << z << ")" << std::endl;
+		Hazard* hazard = new Hazard();
+		hazard->setLocalScale(5.0f);
+		hazard->setLocalPosition(glm::vec3(x, y, z));
+		hazard->addRenderable();
+		hazard->renderable->roughness = 0.0;
+		hazard->renderable->color = glm::vec4(1.0, 1.0, 1.0, 1.0);
+		hazard->renderable->model = MODEL_CUBE;
+		hazard->renderable->interpolated = true;
+		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(hazard->renderable), false);
+		hazards.push_back(hazard);
+		root->addChild(hazard);
+		q = false;
+		mov = true;
+	}
+
+	if (mov) {
+		y -= 0.1;
+		hazards[h]->setLocalPosition(glm::vec3(x, y, z));
+	}
+
+	if (y < 1) {
+		mov = false;
+		q = true;
+		h++;
+	}
 
 	if (IS_SERVER) {
 		movePlayersBasedOnInput(delta);
