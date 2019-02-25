@@ -121,6 +121,10 @@ void GameObject::addRenderable() {
 
 void GameObject::addChild(GameObject* child) {
 	children.push_back(child);
+	child->setParentPosition(_position);
+	child->setParentRotation(_rotation);
+	child->setParentScale(_scale);
+	child->updateRenderableTransforms();
 }
 
 void GameObject::updateRenderableTransforms() {
