@@ -95,13 +95,16 @@ void MainScene::Update(const float delta) {
 	time += delta;
 
 	if (q) {
-		x = rand() % 58 + (-29);
-		y = 15;
-		z = rand() % 58 + (-29);
+		
+	y = 15; 
 		//std::cout << "(" << x << ", " << y << ", " << z << ")" << std::endl;
 		Hazard* hazard = new Hazard();
+		hazard->setX(rand() % 58 + (-29));
+		hazard->setY(15);
+		hazard->setZ(rand() % 58 + (-29));
+
 		hazard->setLocalScale(5.0f);
-		hazard->setLocalPosition(glm::vec3(x, y, z));
+		hazard->setLocalPosition(glm::vec3(&hazard->getX, &hazard->getY, &hazard->getZ));
 		hazard->addRenderable();
 		hazard->renderable->roughness = 0.0;
 		hazard->renderable->color = glm::vec4(1.0, 1.0, 1.0, 1.0);
@@ -115,8 +118,8 @@ void MainScene::Update(const float delta) {
 	}
 
 	if (mov) {
-		y -= 0.1;
-		hazards[h]->setLocalPosition(glm::vec3(x, y, z));
+		hazards[h]->setY(&hazards[h]->getY - 0.1);
+		hazards[h]->setLocalPosition(glm::vec3(&hazards[h]->getX, &hazards[h]->getY, &hazards[h]->getZ));
 	}
 
 	if (y < 1) {
@@ -143,7 +146,7 @@ void MainScene::Update(const float delta) {
 	EventManager::notify(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, NULL, false);
 	root->updateRenderableTransforms();
 	for (Hazard* hazard : hazards) {
-		root->updateRenderableTransforms();
+		hazard->updateRenderableTransforms();
 	}
 	EventManager::notify(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, &TypeParam<float>(delta), false);
 }
