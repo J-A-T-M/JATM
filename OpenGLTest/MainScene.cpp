@@ -3,9 +3,7 @@
 #include <glm/glm.hpp>
 
 MainScene::MainScene(bool isServer) : IS_SERVER(isServer) {}
-float x, y, z;
-bool q, mov ;
-int h;
+
 void MainScene::movePlayersBasedOnInput(const float delta) {
 	const float PLAYER_SPEED = 30.0;
 
@@ -35,9 +33,6 @@ void MainScene::movePlayersBasedOnNetworking() {
 }
 
 void MainScene::Setup() {
-	q = true;
-	mov = false;
-	h = 0;
 	if (IS_SERVER) {
 		networkThread = std::thread(listenForClients);
 	} else {
@@ -50,7 +45,7 @@ void MainScene::Setup() {
 	float metallic[] = { 1.0f, 1.0f, 0.0f, 0.0f };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
 		Player* player = new Player();
-		player->setLocalPosition(glm::vec3(10.0 * i - 15.0, 1.0, 5.0));
+		player->setLocalPosition(glm::vec3(10.0 * i - 15.0, 2.0, 5.0));
 		player->renderable->color = color[i % 4];
 		player->renderable->metallic = metallic[i];
 		player->renderable->interpolated = true;
@@ -61,7 +56,7 @@ void MainScene::Setup() {
 
 	GameObject* floor = new GameObject();
 	floor->setLocalScale(32.0f);
-	floor->setLocalPosition(glm::vec3(0, -33, 0));
+	floor->setLocalPosition(glm::vec3(0, -32, 0));
 	floor->addRenderable();
 	floor->renderable->roughness = 0.8;
 	floor->renderable->color = glm::vec4(0.8, 0.6, 0.4, 1.0);
@@ -94,39 +89,15 @@ void MainScene::Setup() {
 void MainScene::Update(const float delta) {
 	time += delta;
 
-	if (q) {
-		
-	y = 15; 
-		//std::cout << "(" << x << ", " << y << ", " << z << ")" << std::endl;
-		Hazard* hazard = new Hazard();
-		hazard->setX(rand() % 58 + (-29));
-		hazard->setY(15);
-		hazard->setZ(rand() % 58 + (-29));
-
-		hazard->setLocalScale(5.0f);
-		hazard->setLocalPosition(glm::vec3(&hazard->getX, &hazard->getY, &hazard->getZ));
-		hazard->addRenderable();
-		hazard->renderable->roughness = 0.0;
-		hazard->renderable->color = glm::vec4(1.0, 1.0, 1.0, 1.0);
-		hazard->renderable->model = MODEL_CUBE;
-		hazard->renderable->interpolated = true;
-		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(hazard->renderable), false);
-		hazards.push_back(hazard);
-		root->addChild(hazard);
-		q = false;
-		mov = true;
+	if (activeHazard == nullptr || activeHazard->grounded()) {
+		activeHazard = new Hazard();
+		activeHazard->fallSpeed = 5.0f;
+		activeHazard->setLocalPosition(glm::vec3(rand() % 58 + (-29), 15, rand() % 58 + (-29)));
+		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(activeHazard->renderable), false);
+		hazards.push_back(activeHazard);
+		root->addChild(activeHazard);
 	}
-
-	if (mov) {
-		hazards[h]->setY(&hazards[h]->getY - 0.1);
-		hazards[h]->setLocalPosition(glm::vec3(&hazards[h]->getX, &hazards[h]->getY, &hazards[h]->getZ));
-	}
-
-	if (y < 1) {
-		mov = false;
-		q = true;
-		h++;
-	}
+	activeHazard->update(delta);
 
 	if (IS_SERVER) {
 		movePlayersBasedOnInput(delta);
@@ -145,9 +116,6 @@ void MainScene::Update(const float delta) {
 
 	EventManager::notify(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, NULL, false);
 	root->updateRenderableTransforms();
-	for (Hazard* hazard : hazards) {
-		hazard->updateRenderableTransforms();
-	}
 	EventManager::notify(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, &TypeParam<float>(delta), false);
 }
 
@@ -157,9 +125,6 @@ bool MainScene::Done() {
 
 void MainScene::Cleanup() {
 	delete root;
-	for (Hazard* hazard : hazards) {
-		delete hazard;
-	}
 	networkThreadShouldDie = true;
 	networkThread.join();
 

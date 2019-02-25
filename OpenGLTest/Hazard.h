@@ -1,23 +1,13 @@
 #pragma once
 #include "GameObject.h"
-class Hazard :
-	public GameObject
-{
-private:
-	float x;
-	float y;
-	float z;
+class Hazard : public GameObject {
+	public:
+		Hazard();
+		~Hazard();
 
-public:
-	Hazard();
-	float getX();
-	float getY();
-	float getZ();
+		void update(float delta);
+		bool grounded();
 
-	void setX(float* a);
-	void setY(float* a);
-	void setZ(float* a);
-	~Hazard();
-
+		float fallSpeed;
 };
 
