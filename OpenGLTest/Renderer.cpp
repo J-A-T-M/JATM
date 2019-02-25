@@ -78,7 +78,7 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 	glUniformMatrix4fv(uniforms[UNIFORM_MODEL_MATRIX], 1, GL_FALSE, glm::value_ptr(m));
 	glUniform4fv(uniforms[UNIFORM_MATERIAL_COLOR], 1, glm::value_ptr(glm::convertSRGBToLinear(renderable->color)));
 	glUniform1i(uniforms[UNIFORM_MATERIAL_FULLBRIGHT], renderable->fullBright);
-	glUniform1f(uniforms[UNIFORM_MATERIAL_ROUGHNESS], renderable->roughness);
+	glUniform1f(uniforms[UNIFORM_MATERIAL_ROUGHNESS], glm::max(renderable->roughness, 0.01f));
 	glUniform1f(uniforms[UNIFORM_MATERIAL_METALLIC], renderable->metallic);
 	glUniform1f(uniforms[UNIFORM_MATERIAL_F0], renderable->f0);
 
