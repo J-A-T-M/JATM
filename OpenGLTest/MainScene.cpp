@@ -11,7 +11,7 @@ void MainScene::movePlayersBasedOnInput(const float delta) {
 			Input input = InputManager::getInput(playerInputSources[i]);
 			float xAxis = input.right - input.left;
 			float zAxis = input.down - input.up;
-			players[i]->setThrust(glm::vec3(xAxis, 0.0f, zAxis));
+			players[i]->setForce(glm::vec3(xAxis, 0.0f, zAxis));
 		}
 	}
 }
@@ -103,9 +103,11 @@ void MainScene::Update(const float delta) {
 		sendToServer();
 	}
 
+	/*
 	for (int i = 0; i < players.size(); i++) {
 		players[i]->setLocalRotation(glm::vec3(0.0f, 0.0f, time));
 	}
+	*/
 	root->setLocalRotation(glm::vec3(0.25f * cos(time), 0.0f, 0.25f * sin(time)));
 
 	EventManager::notify(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, NULL, false);

@@ -13,11 +13,11 @@ class Player : public GameObject {
 		glm::vec3 getForce();
 		void setForce(glm::vec3 force);
 
-		glm::vec3 getThrust();
-		void setThrust(glm::vec3 thrust);
+		glm::vec3 getVelocity();
+		void setVelocity(glm::vec3 thrust);
 	protected:
 		float _radius;
 		glm::vec3 _force;
-		glm::vec3 _thrust;
+		glm::vec3 _velocity;
 };
 

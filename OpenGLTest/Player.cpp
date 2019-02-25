@@ -4,7 +4,7 @@ Player::Player() {
 	setLocalScale(2.0f);
 	_radius = 2.0f;
 	_force = glm::vec3(0.0f, 0.0f, 0.0f);
-	_thrust = glm::vec3(0.0f, 0.0f, 0.0f);
+	_velocity = glm::vec3(0.0f, 0.0f, 0.0f);
 	addRenderable();
 	renderable->roughness = 0.4f;
 	renderable->model = MODEL_SUZANNE;
@@ -31,12 +31,12 @@ void Player::setForce(glm::vec3 force)
 	_force = force;
 }
 
-glm::vec3 Player::getThrust()
+glm::vec3 Player::getVelocity()
 {
-	return _thrust;
+	return _velocity;
 }
 
-void Player::setThrust(glm::vec3 thrust)
+void Player::setVelocity(glm::vec3 velocity)
 {
-	_thrust = thrust;
+	_velocity = velocity;
 }
