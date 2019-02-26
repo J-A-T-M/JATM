@@ -46,7 +46,7 @@ glm::mat4 Renderer::CalculateModelMatrix(std::shared_ptr<Renderable> renderable)
 	glm::mat4 m = glm::mat4(1.0);
 	if (renderable->interpolated) {
 		glm::vec3 interpolated_position = glm::mix(renderable->previousPosition, renderable->position, interp_value);
-		glm::quat interpolated_rotation = glm::mix(renderable->previousRotation, renderable->rotation, interp_value);
+		glm::quat interpolated_rotation = glm::slerp(renderable->previousRotation, renderable->rotation, interp_value);
 		float interpolated_scale = glm::mix(renderable->previousScale, renderable->scale, interp_value);
 		m = glm::translate(m, interpolated_position);
 		m = m * (glm::mat4)interpolated_rotation;

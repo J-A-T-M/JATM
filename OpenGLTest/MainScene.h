@@ -10,6 +10,7 @@
 #include "Player.h"
 #include "Renderable.h"
 #include "Hazard.h"
+#include "PhysicsManager.h"
 
 class MainScene : public Scene{
 	public:
@@ -20,6 +21,7 @@ class MainScene : public Scene{
 		void Cleanup();
 	private:
 		void movePlayersBasedOnInput(const float delta);
+		void setServerState();
 		void movePlayersBasedOnNetworking();
 
 		const bool IS_SERVER;
