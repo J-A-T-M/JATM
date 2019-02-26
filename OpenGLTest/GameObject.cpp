@@ -33,11 +33,27 @@ glm::vec3 GameObject::getPosition() {
 	return _position;
 }
 
+float GameObject::getLocalPositionY() {
+	return _localPosition.y;
+}
+
+glm::vec2 GameObject::getLocalPositionXZ() {
+	return glm::vec2(_localPosition.x, _localPosition.z);
+}
+
 glm::vec3 GameObject::getLocalPosition() {
 	return _localPosition;
 }
 
-void GameObject::setLocalPosition(glm::vec2 xz) {
+void GameObject::setLocalPositionY(float y) {
+	_localPosition.y = y;
+	_position = _parentPosition + _parentRotation * _localPosition * _parentScale;
+	for (GameObject* child : children) {
+		child->setParentPosition(_position);
+	}
+}
+
+void GameObject::setLocalPositionXZ(glm::vec2 xz) {
 	_localPosition.x = xz.x;
 	_localPosition.z = xz.y;
 	_position = _parentPosition + _parentRotation * _localPosition * _parentScale;

@@ -28,7 +28,7 @@ void MainScene::setServerState()
 void MainScene::movePlayersBasedOnNetworking() {
 	for (int i = 0; i < players.size(); i++) {
 		glm::vec2 pos = glm::vec2(serverState.players[i].x, serverState.players[i].z);
-		players[i]->setLocalPosition(pos);
+		players[i]->setLocalPositionXZ(pos);
 	}
 }
 

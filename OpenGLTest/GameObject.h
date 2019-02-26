@@ -14,8 +14,11 @@ class GameObject {
 		~GameObject();
 
 		glm::vec3 getPosition();
+		float getLocalPositionY();
+		glm::vec2 getLocalPositionXZ();
 		glm::vec3 getLocalPosition();
-		void setLocalPosition(glm::vec2 xz);
+		void setLocalPositionY(float y);
+		void setLocalPositionXZ(glm::vec2 xz);
 		void setLocalPosition(glm::vec3 position);
 		void setParentPosition(glm::vec3 position);
 
