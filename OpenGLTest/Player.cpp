@@ -5,6 +5,7 @@ Player::Player() {
 	_radius = 2.0f;
 	_force = glm::vec3(0.0f, 0.0f, 0.0f);
 	_velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+	_bounceUp = false;
 	addRenderable();
 	renderable->roughness = 0.4f;
 	renderable->model = MODEL_SUZANNE;
@@ -39,4 +40,14 @@ glm::vec3 Player::getVelocity()
 void Player::setVelocity(glm::vec3 velocity)
 {
 	_velocity = velocity;
+}
+
+bool Player::getBounceUp()
+{
+	return _bounceUp;
+}
+
+void Player::setBounceUp(bool flag)
+{
+	_bounceUp = flag;
 }

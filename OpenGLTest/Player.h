@@ -15,9 +15,13 @@ class Player : public GameObject {
 
 		glm::vec3 getVelocity();
 		void setVelocity(glm::vec3 thrust);
+
+		bool getBounceUp();
+		void setBounceUp(bool flag);
 	protected:
 		float _radius;
 		glm::vec3 _force;
 		glm::vec3 _velocity;
+		bool _bounceUp;
 };
 
