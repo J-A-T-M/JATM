@@ -98,8 +98,8 @@ void PhysicsManager::Update(std::vector<Player*> &players, const float delta)
 				*/
 				glm::vec3 avg_pos = (posA + posB) * 0.5f;
 				float avg_radius = (radiusA + radiusB) * 0.5f;
-				posA = avg_pos + normal * avg_radius + velocityB * delta;
-				posB = avg_pos - normal * avg_radius + velocityA * delta;
+				posA = avg_pos + normal * avg_radius;
+				posB = avg_pos - normal * avg_radius;
 				players[i]->setLocalPosition(posA);
 				players[j]->setLocalPosition(posB);
 			}
