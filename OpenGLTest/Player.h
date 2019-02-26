@@ -10,10 +10,18 @@ class Player : public GameObject {
 		float getRadius();
 		void setRadius(float radius);
 
+		float getForceY();
+		glm::vec2 getForceXZ();
 		glm::vec3 getForce();
+		void setForceY(float y);
+		void setForceXZ(glm::vec2 xz);
 		void setForce(glm::vec3 force);
 
+		float getVelocityY();
+		glm::vec2 getVelocityXZ();
 		glm::vec3 getVelocity();
+		void setVelocityY(float y);
+		void setVelocityXZ(glm::vec2 xz);
 		void setVelocity(glm::vec3 velocity);
 
 		bool getBounceUp();

@@ -28,6 +28,7 @@ class MainScene : public Scene{
 		float time;
 		std::vector<Player*> players;
 		std::vector<Hazard*> hazards;
+		Hazard* activeHazard;
 		GameObject* root;
 		std::vector<InputSourceEnum> playerInputSources = { INPUT_LOCAL1, INPUT_LOCAL2, INPUT_CLIENT1, INPUT_CLIENT2, INPUT_CLIENT3, INPUT_CLIENT4, INPUT_CLIENT5, INPUT_CLIENT6 };
 		std::thread networkThread;
