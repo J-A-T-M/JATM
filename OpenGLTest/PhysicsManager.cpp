@@ -4,7 +4,7 @@
 
 void PhysicsManager::Update(std::vector<Player*> &players, const float delta)
 {
-	const float PLAYER_ACCELERATION = 30.0;
+	const float PLAYER_ACCELERATION = 90.0;
 	const float PLAYER_MAX_SPEED = 30.0;
 
 	const float PLAYER_BOUNCE_MAX = 1.0;
@@ -30,7 +30,7 @@ void PhysicsManager::Update(std::vector<Player*> &players, const float delta)
 		if (velocity.z < -PLAYER_MAX_SPEED) velocity.z = -PLAYER_MAX_SPEED;
 		else if (velocity.z > PLAYER_MAX_SPEED) velocity.z = PLAYER_MAX_SPEED;
 
-		if (velocity != glm::vec3(0)) {
+		if (glm::length(velocity) > PLAYER_MAX_SPEED) {
 			velocity = normalize(velocity) * PLAYER_MAX_SPEED;
 		}
 		players[i]->setVelocity(velocity);
