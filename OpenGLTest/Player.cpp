@@ -22,9 +22,26 @@ void Player::setRadius(float radius) {
 	_radius = radius;
 }
 
+float Player::getForceY() {
+	return _force.y;
+}
+
+glm::vec2 Player::getForceXZ() {
+	return glm::vec2(_force.x, _force.z);
+}
+
 glm::vec3 Player::getForce()
 {
 	return _force;
+}
+
+void Player::setForceY(float y) {
+	_force.y = y;
+}
+
+void Player::setForceXZ(glm::vec2 xz) {
+	_force.x = xz.x;
+	_force.z = xz.y;
 }
 
 void Player::setForce(glm::vec3 force)
@@ -32,9 +49,26 @@ void Player::setForce(glm::vec3 force)
 	_force = force;
 }
 
+float Player::getVelocityY() {
+	return _velocity.y;
+}
+
+glm::vec2 Player::getVelocityXZ() {
+	return glm::vec2(_velocity.x, _velocity.z);
+}
+ 
 glm::vec3 Player::getVelocity()
 {
 	return _velocity;
+}
+
+void Player::setVelocityY(float y) {
+	_velocity.y = y;
+}
+
+void Player::setVelocityXZ(glm::vec2 xz) {
+	_velocity.x = xz.x;
+	_velocity.z = xz.y;
 }
 
 void Player::setVelocity(glm::vec3 velocity)
