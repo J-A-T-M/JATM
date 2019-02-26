@@ -9,7 +9,7 @@ void PhysicsManager::Update(std::vector<Player*> &players, const float delta)
 
 	const float PLAYER_BOUNCE_MAX = 1.0;
 	const float PLAYER_BOUNCE_INCREMENT = 10.0;
-	const float PLAYER_BASE_HEIGHT = 1.0;
+	const float PLAYER_BASE_HEIGHT = 2.0;
 
 	for (int i = 0; i < players.size(); ++i) {
 		glm::vec3 pos = players[i]->getLocalPosition();
