@@ -72,17 +72,14 @@ void PhysicsManager::Update(std::vector<Player*> &players, const float delta)
 	// collision detection
 	for (int i = 0; i < players.size(); ++i) {
 		for (int j = i + 1; j < players.size(); ++j) {
-			glm::vec3 posA = players[i]->getLocalPosition();
-			glm::vec3 posB = players[j]->getLocalPosition();
+			glm::vec2 posA = players[i]->getLocalPositionXZ();
+			glm::vec2 posB = players[j]->getLocalPositionXZ();
 			glm::vec3 velocityA = players[i]->getVelocity();
 			glm::vec3 velocityB = players[j]->getVelocity();
 			float radiusA = players[i]->getRadius();
 			float radiusB = players[j]->getRadius();
 
-			glm::vec3 normal = posA - posB;
-
-			// todo: a positionXZ getter
-			normal.y = 0;
+			glm::vec2 normal = posA - posB;
 
 			float dist = glm::length(normal);
 			normal /= dist;
@@ -96,12 +93,12 @@ void PhysicsManager::Update(std::vector<Player*> &players, const float delta)
 				normal *= abs(normal);
 				normal = normalize(normal);
 				*/
-				glm::vec3 avg_pos = (posA + posB) * 0.5f;
+				glm::vec2 avg_pos = (posA + posB) * 0.5f;
 				float avg_radius = (radiusA + radiusB) * 0.5f;
 				posA = avg_pos + normal * avg_radius;
 				posB = avg_pos - normal * avg_radius;
-				players[i]->setLocalPosition(posA);
-				players[j]->setLocalPosition(posB);
+				players[i]->setLocalPositionXZ(posA);
+				players[j]->setLocalPositionXZ(posB);
 			}
 		}
 	}
