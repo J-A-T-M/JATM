@@ -5,21 +5,21 @@
 MainScene::MainScene(bool isServer) : IS_SERVER(isServer) {}
 
 void MainScene::movePlayersBasedOnInput(const float delta) {
-	const float PLAYER_SPEED = 30.0;
-
 	for (int i = 0; i < players.size(); i++) {
 		glm::vec3 pos = players[i]->getLocalPosition();
 		if (i < playerInputSources.size()) {
 			Input input = InputManager::getInput(playerInputSources[i]);
 			float xAxis = input.right - input.left;
 			float zAxis = input.down - input.up;
-			glm::vec3 movement = glm::vec3(xAxis, 0.0f, zAxis);
-			if (movement != glm::vec3(0)) {
-				movement = normalize(movement);
-			}
-			pos += movement * PLAYER_SPEED * delta;
-			players[i]->setLocalPosition(pos);
+			players[i]->setForce(glm::vec3(xAxis, 0.0f, zAxis));
 		}
+	}
+}
+
+void MainScene::setServerState()
+{
+	for (int i = 0; i < players.size(); i++) {
+		glm::vec3 pos = players[i]->getLocalPosition();
 		serverState.players[i].x = pos.x;
 		serverState.players[i].z = pos.z;
 	}
@@ -101,6 +101,10 @@ void MainScene::Update(const float delta) {
 
 	if (IS_SERVER) {
 		movePlayersBasedOnInput(delta);
+		// check collisions
+		PhysicsManager::Update(players, delta);
+		// set server states
+		setServerState();
 		// send player positions to clients
 		sendToClients();
 	} else {
@@ -109,9 +113,11 @@ void MainScene::Update(const float delta) {
 		sendToServer();
 	}
 
+	/*
 	for (int i = 0; i < players.size(); i++) {
 		players[i]->setLocalRotation(glm::vec3(0.0f, 0.0f, time));
 	}
+	*/
 	root->setLocalRotation(glm::vec3(0.25f * cos(time), 0.0f, 0.25f * sin(time)));
 
 	EventManager::notify(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, NULL, false);
