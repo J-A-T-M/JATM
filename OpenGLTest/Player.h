@@ -14,7 +14,7 @@ class Player : public GameObject {
 		void setForce(glm::vec3 force);
 
 		glm::vec3 getVelocity();
-		void setVelocity(glm::vec3 thrust);
+		void setVelocity(glm::vec3 velocity);
 
 		bool getBounceUp();
 		void setBounceUp(bool flag);

@@ -3,8 +3,8 @@
 Player::Player() {
 	setLocalScale(2.0f);
 	_radius = 2.0f;
-	_force = glm::vec3(0.0f, 0.0f, 0.0f);
-	_velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+	_force = glm::vec3(0);
+	_velocity = glm::vec3(0);
 	_bounceUp = false;
 	addRenderable();
 	renderable->roughness = 0.4f;
