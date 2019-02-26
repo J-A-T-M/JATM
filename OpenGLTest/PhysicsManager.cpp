@@ -4,7 +4,9 @@
 
 void PhysicsManager::Update(std::vector<Player*> &players, const float delta)
 {
-	const float PLAYER_ACCELERATION = 30.0;
+	const float PLAYER_ACCELERATION = 90.0;
+	const float PLAYER_MAX_SPEED = 30.0;
+
 	const float PLAYER_BOUNCE_MAX = 1.0;
 	const float PLAYER_BOUNCE_INCREMENT = 20.0;
 	const float PLAYER_BASE_HEIGHT = 1.0;
@@ -18,22 +20,22 @@ void PhysicsManager::Update(std::vector<Player*> &players, const float delta)
 			velocity.x += force.x * PLAYER_ACCELERATION * delta;
 		else
 			velocity.x = 0;
-		if (velocity.x < -PLAYER_ACCELERATION) velocity.x = -PLAYER_ACCELERATION;
-		else if (velocity.x > PLAYER_ACCELERATION) velocity.x = PLAYER_ACCELERATION;
+		if (velocity.x < -PLAYER_MAX_SPEED) velocity.x = -PLAYER_MAX_SPEED;
+		else if (velocity.x > PLAYER_MAX_SPEED) velocity.x = PLAYER_MAX_SPEED;
 
 		if (force.z != 0)
 			velocity.z += force.z * PLAYER_ACCELERATION * delta;
 		else
 			velocity.z = 0;
-		if (velocity.z < -PLAYER_ACCELERATION) velocity.z = -PLAYER_ACCELERATION;
-		else if (velocity.z > PLAYER_ACCELERATION) velocity.z = PLAYER_ACCELERATION;
+		if (velocity.z < -PLAYER_MAX_SPEED) velocity.z = -PLAYER_MAX_SPEED;
+		else if (velocity.z > PLAYER_MAX_SPEED) velocity.z = PLAYER_MAX_SPEED;
 
+		if (glm::length(velocity) > PLAYER_MAX_SPEED) {
+			velocity = normalize(velocity) * PLAYER_MAX_SPEED;
+		}
 		players[i]->setVelocity(velocity);
 
-		glm::vec3 movement = glm::vec3(velocity.x, 0.0f, velocity.z);
-		if (movement != glm::vec3(0)) {
-			movement = normalize(movement);
-		}
+		glm::vec3 movement = glm::vec3(velocity.x, 0.0f, velocity.z) * delta;
 		pos += movement;
 
 		float jumpHeight = pos.y - PLAYER_BASE_HEIGHT;
@@ -96,8 +98,8 @@ void PhysicsManager::Update(std::vector<Player*> &players, const float delta)
 				*/
 				glm::vec3 avg_pos = (posA + posB) * 0.5f;
 				float avg_radius = (radiusA + radiusB) * 0.5f;
-				posA = avg_pos + normal * avg_radius + velocityB * delta;
-				posB = avg_pos - normal * avg_radius + velocityA * delta;
+				posA = avg_pos + normal * avg_radius;
+				posB = avg_pos - normal * avg_radius;
 				players[i]->setLocalPosition(posA);
 				players[j]->setLocalPosition(posB);
 			}
