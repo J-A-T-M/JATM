@@ -74,8 +74,8 @@ void PhysicsManager::Update(std::vector<Player*> &players, const float delta)
 		for (int j = i + 1; j < players.size(); ++j) {
 			glm::vec2 posA = players[i]->getLocalPositionXZ();
 			glm::vec2 posB = players[j]->getLocalPositionXZ();
-			glm::vec3 velocityA = players[i]->getVelocity();
-			glm::vec3 velocityB = players[j]->getVelocity();
+			glm::vec2 velocityA = players[i]->getVelocityXZ();
+			glm::vec2 velocityB = players[j]->getVelocityXZ();
 			float radiusA = players[i]->getRadius();
 			float radiusB = players[j]->getRadius();
 
