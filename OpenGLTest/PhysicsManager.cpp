@@ -8,7 +8,7 @@ void PhysicsManager::Update(std::vector<Player*> &players, const float delta)
 	const float PLAYER_MAX_SPEED = 30.0;
 
 	const float PLAYER_BOUNCE_MAX = 1.0;
-	const float PLAYER_BOUNCE_INCREMENT = 20.0;
+	const float PLAYER_BOUNCE_INCREMENT = 10.0;
 	const float PLAYER_BASE_HEIGHT = 1.0;
 
 	for (int i = 0; i < players.size(); ++i) {
