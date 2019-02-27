@@ -2,7 +2,15 @@
 #include "Network.h"
 #include <glm/glm.hpp>
 
-MainScene::MainScene(bool isServer) : IS_SERVER(isServer) {}
+
+
+MainScene::MainScene(bool isServer) : IS_SERVER(isServer) { 
+	EventManager::subscribe(SPAWN_HAZARD, this);
+}
+
+MainScene::~MainScene() {
+	EventManager::unsubscribe(SPAWN_HAZARD, this);
+}
 
 void MainScene::movePlayersBasedOnInput(const float delta) {
 	for (int i = 0; i < players.size(); i++) {
@@ -79,10 +87,37 @@ void MainScene::Setup() {
 	EventManager::notify(RENDERER_SET_AMBIENT_DOWN, &TypeParam<glm::vec3>(down_color), false);
 }
 
+
+void MainScene::SpawnHazard() {
+
+	if (IS_SERVER)  sendToClients(PACKET_HAZARD);
+	printf("got here\n");
+	activeHazard = new Hazard();
+	activeHazard->fallSpeed = 5.0f;
+	activeHazard->setLocalPosition(glm::vec3(rand() % 58 + (-29), 15, rand() % 58 + (-29)));
+	activeHazard->clearRenderablePreviousTransforms();
+	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(activeHazard->renderable), false);
+	hazards.push_back(activeHazard);
+
+}
+
 void MainScene::Update(const float delta) {
 	time += delta;
 
-	
+	if (IS_SERVER) {
+
+		if (activeHazard == nullptr || activeHazard->grounded())
+			SpawnHazard();
+
+		activeHazard->update(delta);
+	}
+	else {
+		if (activeHazard != nullptr) activeHazard->update(delta);
+	}
+
+
+
+	/*
 	if (activeHazard == nullptr || activeHazard->grounded()) {
 		activeHazard = new Hazard();
 		activeHazard->fallSpeed = 5.0f;
@@ -91,9 +126,7 @@ void MainScene::Update(const float delta) {
 		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(activeHazard->renderable), false);
 		hazards.push_back(activeHazard);
 		if (IS_SERVER) sendToClients(HAZARD);
-	}
-	activeHazard->update(delta);
-	
+	}*/
 
 
 	if (IS_SERVER) {
@@ -103,7 +136,7 @@ void MainScene::Update(const float delta) {
 		// set server states
 		setServerState();
 		// send player positions to clients
-		sendToClients(GAME_STATE);
+		sendToClients(PACKET_GAME_STATE);
 	} else {
 		movePlayersBasedOnNetworking();
 		// send user input to server
@@ -139,4 +172,20 @@ void MainScene::Cleanup() {
 	networkThread.join();
 
 	std::cout << "MainScene cleaned up" << std::endl;
+}
+
+
+
+void MainScene::notify(EventName eventName, Param* params) {
+	switch (eventName) {
+
+	case SPAWN_HAZARD: {
+		//std::cout << "spawning hazard" << std::endl;
+		SpawnHazard();
+		break;
+	}
+
+	default:
+		break;
+	}
 }

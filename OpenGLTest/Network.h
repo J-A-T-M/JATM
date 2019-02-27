@@ -18,6 +18,7 @@
 
 #include "InputManager.h"
 
+
 struct CLIENT {
 	int id;
 	SOCKET socket;
@@ -33,6 +34,11 @@ struct PLAYER {
 
 struct SERVERPACKET {
 	PLAYER players[MAX_CLIENTS + NUM_LOCAL];
+};
+
+struct HAZARDPACKET {
+	glm::vec3 spawnPos;
+	float time;
 };
 
 typedef Input CLIENTPACKET;
@@ -68,15 +74,37 @@ void sendToClients(ServerPacketType type) {
 				std::cout << "Client send failed, with error: " << WSAGetLastError() << std::endl;
 			}
 
-			iResult = send(clients[i].socket, (char*)&serverState, sizeof(SERVERPACKET), 0);
 
-			// if send failed print reason
-			if (iResult == 0) {
-				std::cout << "Client #" << clients[i].id << " send failed, client shutdown connection" << std::endl;
+			switch (type) {
+			case  PACKET_GAME_STATE:
+				iResult = send(clients[i].socket, (char*)&serverState, sizeof(SERVERPACKET), 0);
+
+				// if send failed print reason
+				if (iResult == 0) {
+					std::cout << "Client #" << clients[i].id << " send failed, client shutdown connection" << std::endl;
+				}
+				else if (iResult == SOCKET_ERROR) {
+					std::cout << "Client send failed, with error: " << WSAGetLastError() << std::endl;
+				}
+
+				break;
+
+			case PACKET_HAZARD:
+
+				HAZARDPACKET hazardPacket = { glm::vec3(0) , 0.0f};
+				iResult = send(clients[i].socket, (char*)&hazardPacket, sizeof(HAZARDPACKET), 0);
+
+				// if send failed print reason
+				if (iResult == 0) {
+					std::cout << "Client #" << clients[i].id << " send failed, client shutdown connection" << std::endl;
+				}
+				else if (iResult == SOCKET_ERROR) {
+					std::cout << "Client send failed, with error: " << WSAGetLastError() << std::endl;
+				}
+				break;
 			}
-			else if (iResult == SOCKET_ERROR) {
-				std::cout << "Client send failed, with error: " << WSAGetLastError() << std::endl;
-			}
+
+			
 
 			/*
 			//correct old version///
@@ -308,12 +336,36 @@ void recieveFromServer() {
 		ServerPacketType type;
 		iResult = recv(clientSocket, (char *)&type, sizeof(ServerPacketType), 0);
 
-		SERVERPACKET packet;
-		iResult = recv(clientSocket, (char *)&packet, sizeof(SERVERPACKET), 0);
-		if (iResult == 0 || iResult == SOCKET_ERROR) {
-			break;
+		switch (type) {
+				case  PACKET_GAME_STATE:
+				{
+					SERVERPACKET packet;
+					iResult = recv(clientSocket, (char *)&packet, sizeof(SERVERPACKET), 0);
+					if (iResult == 0 || iResult == SOCKET_ERROR) {
+						break;
+					}
+					serverState = packet;
+				}
+
+				break;
+
+				case PACKET_HAZARD:
+				{
+					//std::cout << "received hazard packet" << std::endl;
+					HAZARDPACKET packet;
+					iResult = recv(clientSocket, (char *)&packet, sizeof(HAZARDPACKET), 0);
+					if (iResult == 0 || iResult == SOCKET_ERROR) {
+						break;
+					}
+
+					//do something with packet
+					EventManager::notify(SPAWN_HAZARD, NULL, false);
+				}
+
+				break;
 		}
-		serverState = packet;
+
+
 		/*
 		//old working ver
 		SERVERPACKET packet;
