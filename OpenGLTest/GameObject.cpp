@@ -133,6 +133,7 @@ void GameObject::setParentScale(float scale) {
 void GameObject::addRenderable() {
 	renderable.reset();
 	renderable = std::make_shared<Renderable>();
+	clearRenderablePreviousTransforms();
 }
 
 void GameObject::addChild(GameObject* child) {
@@ -156,5 +157,21 @@ void GameObject::updateRenderableTransforms() {
 
 	for (GameObject* child : children) {
 		child->updateRenderableTransforms();
+	}
+}
+
+void GameObject::clearRenderablePreviousTransforms() {
+	if (renderable != nullptr) {
+		renderable->previousPosition = _position;
+		renderable->previousRotation = _rotation;
+		renderable->previousScale = _scale;
+
+		renderable->position = _position;
+		renderable->rotation = _rotation;
+		renderable->scale = _scale;
+	}
+
+	for (GameObject* child : children) {
+		child->clearRenderablePreviousTransforms();
 	}
 }

@@ -34,6 +34,7 @@ class GameObject {
 		void addRenderable();
 		void addChild(GameObject* child);
 		void updateRenderableTransforms();
+		void clearRenderablePreviousTransforms();
 
 		std::shared_ptr<Renderable> renderable;
 		std::vector<GameObject*> children;

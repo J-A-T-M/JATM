@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-void PhysicsManager::Update(std::vector<Player*> &players, const float delta)
+void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> &hazards, const float delta)
 {
 	const float PLAYER_ACCELERATION = 90.0;
 	const float PLAYER_MAX_SPEED = 30.0;

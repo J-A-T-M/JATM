@@ -39,8 +39,6 @@ void MainScene::Setup() {
 		networkThread = std::thread(ClientLoop);
 	}
 
-	root = new GameObject();
-
 	glm::vec4 color[] = { glm::vec4(1.0, 0.0, 0.3, 1.0), glm::vec4(1.0, 0.3, 0.0, 1.0), glm::vec4(1.0, 0.0, 0.3, 1.0) , glm::vec4(1.0, 0.3, 0.0, 1.0) };
 	float metallic[] = { 1.0f, 1.0f, 0.0f, 0.0f };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
@@ -51,7 +49,6 @@ void MainScene::Setup() {
 		player->renderable->interpolated = true;
 		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player->renderable), false);
 		players.push_back(player);
-		root->addChild(player);
 	}
 
 	GameObject* floor = new GameObject();
@@ -61,10 +58,7 @@ void MainScene::Setup() {
 	floor->renderable->roughness = 0.8;
 	floor->renderable->color = glm::vec4(0.8, 0.6, 0.4, 1.0);
 	floor->renderable->model = MODEL_CUBE;
-	floor->renderable->interpolated = true;
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor->renderable), false);
-
-	root->addChild(floor);
 
 	camera.position = glm::vec3(0.0f, 64.0f, 100.0f);
 	camera.target = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -93,16 +87,16 @@ void MainScene::Update(const float delta) {
 		activeHazard = new Hazard();
 		activeHazard->fallSpeed = 5.0f;
 		activeHazard->setLocalPosition(glm::vec3(rand() % 58 + (-29), 15, rand() % 58 + (-29)));
+		activeHazard->clearRenderablePreviousTransforms();
 		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(activeHazard->renderable), false);
 		hazards.push_back(activeHazard);
-		root->addChild(activeHazard);
 	}
 	activeHazard->update(delta);
 
 	if (IS_SERVER) {
 		movePlayersBasedOnInput(delta);
 		// check collisions
-		PhysicsManager::Update(players, delta);
+		PhysicsManager::Update(players, hazards, delta);
 		// set server states
 		setServerState();
 		// send player positions to clients
@@ -113,15 +107,13 @@ void MainScene::Update(const float delta) {
 		sendToServer();
 	}
 
-	/*
-	for (int i = 0; i < players.size(); i++) {
-		players[i]->setLocalRotation(glm::vec3(0.0f, 0.0f, time));
-	}
-	*/
-	root->setLocalRotation(glm::vec3(0.25f * cos(time), 0.0f, 0.25f * sin(time)));
-
 	EventManager::notify(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, NULL, false);
-	root->updateRenderableTransforms();
+	for (GameObject* gameObject : players) {
+		gameObject->updateRenderableTransforms();
+	}
+	for (GameObject* gameObject : hazards) {
+		gameObject->updateRenderableTransforms();
+	}
 	EventManager::notify(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, &TypeParam<float>(delta), false);
 }
 
@@ -130,7 +122,16 @@ bool MainScene::Done() {
 }
 
 void MainScene::Cleanup() {
-	delete root;
+	for (GameObject* gameObject : players) {
+		if (gameObject != nullptr) {
+			delete gameObject;
+		}
+	}
+	for (GameObject* gameObject : hazards) {
+		if (gameObject != nullptr) {
+			delete gameObject;
+		}
+	}
 	networkThreadShouldDie = true;
 	networkThread.join();
 
