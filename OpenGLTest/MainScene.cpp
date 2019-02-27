@@ -82,6 +82,7 @@ void MainScene::Setup() {
 void MainScene::Update(const float delta) {
 	time += delta;
 
+	
 	if (activeHazard == nullptr || activeHazard->grounded()) {
 		activeHazard = new Hazard();
 		activeHazard->fallSpeed = 5.0f;
@@ -89,8 +90,11 @@ void MainScene::Update(const float delta) {
 		activeHazard->clearRenderablePreviousTransforms();
 		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(activeHazard->renderable), false);
 		hazards.push_back(activeHazard);
+		if (IS_SERVER) sendToClients(HAZARD);
 	}
 	activeHazard->update(delta);
+	
+
 
 	if (IS_SERVER) {
 		movePlayersBasedOnInput(delta);
@@ -99,7 +103,7 @@ void MainScene::Update(const float delta) {
 		// set server states
 		setServerState();
 		// send player positions to clients
-		sendToClients();
+		sendToClients(GAME_STATE);
 	} else {
 		movePlayersBasedOnNetworking();
 		// send user input to server

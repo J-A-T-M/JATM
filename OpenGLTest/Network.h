@@ -3,7 +3,7 @@
 #pragma comment (lib, "Ws2_32.lib") // Needed to link with Ws2_32.lib
 
 #define SERVER_IP_ADDRESS "127.0.0.1"
-#define DEFAULT_BUFLEN 512	//max buffer size oof 512 bytes
+#define DEFAULT_BUFLEN 512	//max buffer size of 512 bytes
 #define DEFAULT_PORT "5055"
 #define MAX_CLIENTS 2
 #define NUM_LOCAL 2
@@ -51,18 +51,46 @@ bool networkThreadShouldDie = false;
 std::thread threads[MAX_CLIENTS];
 std::vector<CLIENT> clients(MAX_CLIENTS);
 
-void sendToClients() {
+void sendToClients(ServerPacketType type) {
 	int iResult = 0;
 
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		if (clients[i].socket != INVALID_SOCKET) {
+
+			//char sendBuf[DEFAULT_BUFLEN];memcpy(sendBuf, &type, sizeof(ServerPacketType));memcpy(sendBuf + sizeof(ServerPacketType), &serverState, sizeof(serverState));iResult = send(clients[i].socket, sendBuf, sizeof(sendBuf), 0); //another working implementation, though horrible looking
+			
+			iResult = send(clients[i].socket, (char*)&type, sizeof(ServerPacketType), 0);
+
+			if (iResult == 0) {
+				std::cout << "Client #" << clients[i].id << " send failed, client shutdown connection" << std::endl;
+			}
+			else if (iResult == SOCKET_ERROR) {
+				std::cout << "Client send failed, with error: " << WSAGetLastError() << std::endl;
+			}
+
 			iResult = send(clients[i].socket, (char*)&serverState, sizeof(SERVERPACKET), 0);
+
+			// if send failed print reason
+			if (iResult == 0) {
+				std::cout << "Client #" << clients[i].id << " send failed, client shutdown connection" << std::endl;
+			}
+			else if (iResult == SOCKET_ERROR) {
+				std::cout << "Client send failed, with error: " << WSAGetLastError() << std::endl;
+			}
+
+			/*
+			//correct old version///
+			iResult = send(clients[i].socket, (char*)&serverState, sizeof(SERVERPACKET), 0);
+
 			// if send failed print reason
 			if (iResult == 0) {
 				std::cout << "Client #" << clients[i].id << " send failed, client shutdown connection" << std::endl;
 			} else if (iResult == SOCKET_ERROR) {
 				std::cout << "Client send failed, with error: " << WSAGetLastError() << std::endl;
 			}
+			*/
+
+
 		}
 	}
 }
@@ -263,6 +291,31 @@ void recieveFromServer() {
 	int iResult = 0;
 
 	while (!networkThreadShouldDie && clientSocket != INVALID_SOCKET) {
+
+		/* working implementation
+		char recvBuf[DEFAULT_BUFLEN];
+		iResult = recv(clientSocket, recvBuf, sizeof(recvBuf), 0);
+		if (iResult == 0 || iResult == SOCKET_ERROR) break;
+
+		ServerPacketType type;
+		memcpy(&type, recvBuf,  sizeof(ServerPacketType));
+
+		SERVERPACKET packet;
+		memcpy(&packet, recvBuf + sizeof(ServerPacketType), sizeof(SERVERPACKET));
+		serverState = packet;
+		*/
+
+		ServerPacketType type;
+		iResult = recv(clientSocket, (char *)&type, sizeof(ServerPacketType), 0);
+
+		SERVERPACKET packet;
+		iResult = recv(clientSocket, (char *)&packet, sizeof(SERVERPACKET), 0);
+		if (iResult == 0 || iResult == SOCKET_ERROR) {
+			break;
+		}
+		serverState = packet;
+		/*
+		//old working ver
 		SERVERPACKET packet;
 		iResult = recv(clientSocket, (char *)&packet, sizeof(SERVERPACKET), 0);
 		if (iResult == 0 || iResult == SOCKET_ERROR) {
@@ -270,6 +323,8 @@ void recieveFromServer() {
 		}
 		// do something with server packet
 		serverState = packet;
+		*/
+		
 	}
 
 	// print server disconnect reason
@@ -300,7 +355,7 @@ SOCKET initializeClientSocket() {
 	addrinfo hints = {};
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_protocol = IPPROTO_TCP; 
 
 	// Resolve client address and port
 	addrinfo *addressInfo = NULL;

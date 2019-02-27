@@ -83,7 +83,7 @@ void InputManager::mouseButtonCallback(GLFWwindow* window, int button, int actio
 	}
 	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE) {
 		//std::cout << "RMB RELEASE [" << xpos << ',' << ypos << ']' << std::endl;
-		std::cout << "Ore" << std::endl;
+		//std::cout << "Ore" << std::endl;
 	}
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		std::cout << "LMB PRESS [" << xpos << ',' << ypos << ']' << std::endl;
