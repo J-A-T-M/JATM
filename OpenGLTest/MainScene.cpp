@@ -19,16 +19,15 @@ void MainScene::movePlayersBasedOnInput(const float delta) {
 void MainScene::setServerState()
 {
 	for (int i = 0; i < players.size(); i++) {
-		glm::vec3 pos = players[i]->getLocalPosition();
-		serverState.players[i].x = pos.x;
-		serverState.players[i].z = pos.z;
+		serverState.players[i].position = players[i]->getLocalPosition();
+		serverState.players[i].rotation = players[i]->getLocalRotation();
 	}
 }
 
 void MainScene::movePlayersBasedOnNetworking() {
 	for (int i = 0; i < players.size(); i++) {
-		glm::vec2 pos = glm::vec2(serverState.players[i].x, serverState.players[i].z);
-		players[i]->setLocalPositionXZ(pos);
+		players[i]->setLocalPosition(serverState.players[i].position);
+		players[i]->setLocalRotation(serverState.players[i].rotation);
 	}
 }
 

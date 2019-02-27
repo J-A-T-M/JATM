@@ -14,6 +14,7 @@
 #include <string>
 #include <thread>  
 #include <vector>
+#include <glm/vec3.hpp>
 
 #include "InputManager.h"
 
@@ -23,8 +24,8 @@ struct CLIENT {
 };
 
 struct PLAYER {
-	float x;
-	float z;
+	glm::vec3 position;
+	glm::vec3 rotation;
 	float velocityX;
 	float velocityZ;
 	int health;
@@ -165,7 +166,7 @@ int listenForClients() {
 	}
 
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
-		serverState.players[i] = { 0.0f, 0.0f, 0.0f, 0.0f, 100 };
+		serverState.players[i] = { glm::vec3(0), glm::vec3(0), 0.0f, 0.0f, 100 };
 	}
 
 
