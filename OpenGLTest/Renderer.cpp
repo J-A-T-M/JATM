@@ -269,9 +269,9 @@ int Renderer::Init() {
 	glDebugMessageCallback(MessageCallback, 0);
 	glEnable(GL_DEBUG_OUTPUT);
 
-	CreateShaderProgram(mainProgram, "./Standard", "./Standard");
-	CreateShaderProgram(depthMapProgram, "./ShadowMap", "./ShadowMap");
-	CreateShaderProgram(uiProgram, "./UI", "./UI");
+	CreateShaderProgram(mainProgram, "../assets/shaders/Standard", "../assets/shaders/Standard");
+	CreateShaderProgram(depthMapProgram, "../assets/shaders/ShadowMap", "../assets/shaders/ShadowMap");
+	CreateShaderProgram(uiProgram, "../assets/shaders/UI", "../assets/shaders/UI");
 
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
