@@ -2,7 +2,7 @@
 #include "GameObject.h"
 class Hazard : public GameObject {
 	public:
-		Hazard();
+		Hazard(glm::vec3 spawnPosition, float fallSpeed);
 		~Hazard();
 
 		void update(float delta);

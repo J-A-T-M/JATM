@@ -9,11 +9,16 @@ using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
 using std::chrono::duration;
 
+
 int main() {
+
+	std::cout << "Enter 1 for server, 0 for client" << std::endl;
+	char c = std::cin.get();
+
 	AssetLoader::preloadAssets();
 	Renderer* renderer = new Renderer();
 
-	bool isServer = true;
+	bool isServer = (c == '1') ? true: false;
 	Scene* scene = new MainScene(isServer);
 	scene->Setup();
 
