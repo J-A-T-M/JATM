@@ -24,27 +24,33 @@ struct CLIENT {
 	SOCKET socket;
 };
 
-struct PLAYER {
+struct PLAYER_TRANSFORM {
 	glm::vec3 position;
 	glm::vec3 rotation;
-	float velocityX;
-	float velocityZ;
 	int health;
 };
 
-struct SERVERPACKET {
-	PLAYER players[MAX_CLIENTS + NUM_LOCAL];
+struct PlayerTransformPacket {
+	PLAYER_TRANSFORM playerTransforms[MAX_CLIENTS + NUM_LOCAL];
 };
 
-struct HAZARDPACKET {
-	glm::vec3 spawnPos;
-	float time;
+struct HazardSpawnPacket {
+	glm::vec3 spawnPosition;
+	float fallSpeed;
+};
+
+struct ServerPacket {
+	ServerPacketType type;
+	union {
+		PlayerTransformPacket playerTransformPacket;
+		HazardSpawnPacket hazardSpawnPacket;
+	};
 };
 
 typedef Input CLIENTPACKET;
 
 // state on or from the server
-SERVERPACKET serverState;
+PlayerTransformPacket serverState;
 bool networkThreadShouldDie = false;
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -57,68 +63,18 @@ bool networkThreadShouldDie = false;
 std::thread threads[MAX_CLIENTS];
 std::vector<CLIENT> clients(MAX_CLIENTS);
 
-void sendToClients(ServerPacketType type) {
+void sendToClients(ServerPacket packet) {
 	int iResult = 0;
 
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		if (clients[i].socket != INVALID_SOCKET) {
-
-			//char sendBuf[DEFAULT_BUFLEN];memcpy(sendBuf, &type, sizeof(ServerPacketType));memcpy(sendBuf + sizeof(ServerPacketType), &serverState, sizeof(serverState));iResult = send(clients[i].socket, sendBuf, sizeof(sendBuf), 0); //another working implementation, though horrible looking
-			
-			iResult = send(clients[i].socket, (char*)&type, sizeof(ServerPacketType), 0);
-
-			if (iResult == 0) {
-				std::cout << "Client #" << clients[i].id << " send failed, client shutdown connection" << std::endl;
-			}
-			else if (iResult == SOCKET_ERROR) {
-				std::cout << "Client send failed, with error: " << WSAGetLastError() << std::endl;
-			}
-
-
-			switch (type) {
-			case  PACKET_GAME_STATE:
-				iResult = send(clients[i].socket, (char*)&serverState, sizeof(SERVERPACKET), 0);
-
-				// if send failed print reason
-				if (iResult == 0) {
-					std::cout << "Client #" << clients[i].id << " send failed, client shutdown connection" << std::endl;
-				}
-				else if (iResult == SOCKET_ERROR) {
-					std::cout << "Client send failed, with error: " << WSAGetLastError() << std::endl;
-				}
-
-				break;
-
-			case PACKET_HAZARD:
-
-				HAZARDPACKET hazardPacket = { glm::vec3(0) , 0.0f};
-				iResult = send(clients[i].socket, (char*)&hazardPacket, sizeof(HAZARDPACKET), 0);
-
-				// if send failed print reason
-				if (iResult == 0) {
-					std::cout << "Client #" << clients[i].id << " send failed, client shutdown connection" << std::endl;
-				}
-				else if (iResult == SOCKET_ERROR) {
-					std::cout << "Client send failed, with error: " << WSAGetLastError() << std::endl;
-				}
-				break;
-			}
-
-			
-
-			/*
-			//correct old version///
-			iResult = send(clients[i].socket, (char*)&serverState, sizeof(SERVERPACKET), 0);
-
+			iResult = send(clients[i].socket, (char*)&packet, sizeof(ServerPacket), 0);
 			// if send failed print reason
 			if (iResult == 0) {
 				std::cout << "Client #" << clients[i].id << " send failed, client shutdown connection" << std::endl;
 			} else if (iResult == SOCKET_ERROR) {
 				std::cout << "Client send failed, with error: " << WSAGetLastError() << std::endl;
 			}
-			*/
-
-
 		}
 	}
 }
@@ -222,10 +178,8 @@ int listenForClients() {
 	}
 
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
-		serverState.players[i] = { glm::vec3(0), glm::vec3(0), 0.0f, 0.0f, 100 };
+		serverState.playerTransforms[i] = { glm::vec3(0), glm::vec3(0), 100 };
 	}
-
-
 
 	while (!networkThreadShouldDie) {
 		timeval timeout;
@@ -319,64 +273,26 @@ void recieveFromServer() {
 	int iResult = 0;
 
 	while (!networkThreadShouldDie && clientSocket != INVALID_SOCKET) {
-
-		/* working implementation
-		char recvBuf[DEFAULT_BUFLEN];
-		iResult = recv(clientSocket, recvBuf, sizeof(recvBuf), 0);
-		if (iResult == 0 || iResult == SOCKET_ERROR) break;
-
-		ServerPacketType type;
-		memcpy(&type, recvBuf,  sizeof(ServerPacketType));
-
-		SERVERPACKET packet;
-		memcpy(&packet, recvBuf + sizeof(ServerPacketType), sizeof(SERVERPACKET));
-		serverState = packet;
-		*/
-
-		ServerPacketType type;
-		iResult = recv(clientSocket, (char *)&type, sizeof(ServerPacketType), 0);
-
-		switch (type) {
-				case  PACKET_GAME_STATE:
-				{
-					SERVERPACKET packet;
-					iResult = recv(clientSocket, (char *)&packet, sizeof(SERVERPACKET), 0);
-					if (iResult == 0 || iResult == SOCKET_ERROR) {
-						break;
-					}
-					serverState = packet;
-				}
-
-				break;
-
-				case PACKET_HAZARD:
-				{
-					//std::cout << "received hazard packet" << std::endl;
-					HAZARDPACKET packet;
-					iResult = recv(clientSocket, (char *)&packet, sizeof(HAZARDPACKET), 0);
-					if (iResult == 0 || iResult == SOCKET_ERROR) {
-						break;
-					}
-
-					//do something with packet
-					EventManager::notify(SPAWN_HAZARD, NULL, false);
-				}
-
-				break;
-		}
-
-
-		/*
-		//old working ver
-		SERVERPACKET packet;
-		iResult = recv(clientSocket, (char *)&packet, sizeof(SERVERPACKET), 0);
+		ServerPacket packet;
+		iResult = recv(clientSocket, (char *)&packet, sizeof(ServerPacket), 0);
 		if (iResult == 0 || iResult == SOCKET_ERROR) {
 			break;
 		}
-		// do something with server packet
-		serverState = packet;
-		*/
-		
+		switch (packet.type) {
+			case PACKET_PLAYER_TRANSFORM: {
+				serverState = packet.playerTransformPacket;
+				break;
+			}
+			case PACKET_HAZARD_SPAWN: {
+				Hazard* hazard = new Hazard(
+					packet.hazardSpawnPacket.spawnPosition, 
+					packet.hazardSpawnPacket.fallSpeed
+				);
+				hazard->clearRenderablePreviousTransforms();
+				EventManager::notify(SPAWN_HAZARD, &TypeParam<Hazard*>(hazard), false);
+				break;
+			}
+		}
 	}
 
 	// print server disconnect reason

@@ -2,9 +2,7 @@
 #include "Network.h"
 #include <glm/glm.hpp>
 
-
-
-MainScene::MainScene(bool isServer) : IS_SERVER(isServer) { 
+MainScene::MainScene(bool isServer) : IS_SERVER(isServer) {
 	EventManager::subscribe(SPAWN_HAZARD, this);
 }
 
@@ -24,18 +22,20 @@ void MainScene::movePlayersBasedOnInput(const float delta) {
 	}
 }
 
-void MainScene::setServerState()
-{
+void MainScene::sendPlayerTransforms() {
+	ServerPacket packet;
+	packet.type = PACKET_PLAYER_TRANSFORM;
 	for (int i = 0; i < players.size(); i++) {
-		serverState.players[i].position = players[i]->getLocalPosition();
-		serverState.players[i].rotation = players[i]->getLocalRotation();
+		packet.playerTransformPacket.playerTransforms[i].position = players[i]->getLocalPosition();
+		packet.playerTransformPacket.playerTransforms[i].rotation = players[i]->getLocalRotation();
 	}
+	sendToClients(packet);
 }
 
 void MainScene::movePlayersBasedOnNetworking() {
 	for (int i = 0; i < players.size(); i++) {
-		players[i]->setLocalPosition(serverState.players[i].position);
-		players[i]->setLocalRotation(serverState.players[i].rotation);
+		players[i]->setLocalPosition(serverState.playerTransforms[i].position);
+		players[i]->setLocalRotation(serverState.playerTransforms[i].rotation);
 	}
 }
 
@@ -87,56 +87,47 @@ void MainScene::Setup() {
 	EventManager::notify(RENDERER_SET_AMBIENT_DOWN, &TypeParam<glm::vec3>(down_color), false);
 }
 
-
 void MainScene::SpawnHazard() {
+	glm::vec3 pos = glm::vec3(rand() % 58 - 29, 10 + rand() % 10, rand() % 58 - 29);
+	float fallSpeed = 5.0f;
 
-	if (IS_SERVER)  sendToClients(PACKET_HAZARD);
-	printf("got here\n");
-	activeHazard = new Hazard();
-	activeHazard->fallSpeed = 5.0f;
-	activeHazard->setLocalPosition(glm::vec3(rand() % 58 + (-29), 15, rand() % 58 + (-29)));
-	activeHazard->clearRenderablePreviousTransforms();
-	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(activeHazard->renderable), false);
-	hazards.push_back(activeHazard);
+	Hazard* hazard = new Hazard(pos, fallSpeed);
+	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(hazard->renderable), false);
+	hazards.push_back(hazard);
 
+	ServerPacket packet;
+	packet.type = PACKET_HAZARD_SPAWN;
+	packet.hazardSpawnPacket.spawnPosition = pos;
+	packet.hazardSpawnPacket.fallSpeed = fallSpeed;
+	sendToClients(packet);
 }
 
 void MainScene::Update(const float delta) {
 	time += delta;
 
-	if (IS_SERVER) {
+	auto it = hazards.begin();
+	while (it != hazards.end()) {
+		if ((*it)->grounded()) {
+			delete (*it);
+			it = hazards.erase(it);
+		} else {
+			++it;
+		}
+	}
 
-		if (activeHazard == nullptr || activeHazard->grounded())
+	for (Hazard* hazard : hazards) {
+		hazard->update(delta);
+	}
+
+	if (IS_SERVER) {
+		if (hazards.size() <= 5) {
 			SpawnHazard();
-
-		activeHazard->update(delta);
-	}
-	else {
-		if (activeHazard != nullptr) activeHazard->update(delta);
-	}
-
-
-
-	/*
-	if (activeHazard == nullptr || activeHazard->grounded()) {
-		activeHazard = new Hazard();
-		activeHazard->fallSpeed = 5.0f;
-		activeHazard->setLocalPosition(glm::vec3(rand() % 58 + (-29), 15, rand() % 58 + (-29)));
-		activeHazard->clearRenderablePreviousTransforms();
-		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(activeHazard->renderable), false);
-		hazards.push_back(activeHazard);
-		if (IS_SERVER) sendToClients(HAZARD);
-	}*/
-
-
-	if (IS_SERVER) {
+		}
 		movePlayersBasedOnInput(delta);
 		// check collisions
 		PhysicsManager::Update(players, hazards, delta);
 		// set server states
-		setServerState();
-		// send player positions to clients
-		sendToClients(PACKET_GAME_STATE);
+		sendPlayerTransforms();
 	} else {
 		movePlayersBasedOnNetworking();
 		// send user input to server
@@ -174,18 +165,18 @@ void MainScene::Cleanup() {
 	std::cout << "MainScene cleaned up" << std::endl;
 }
 
-
-
 void MainScene::notify(EventName eventName, Param* params) {
 	switch (eventName) {
+		case SPAWN_HAZARD: {
+			TypeParam<Hazard*> *p = dynamic_cast<TypeParam<Hazard*> *>(params);
+			Hazard* hazard = p->Param;
+			EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(hazard->renderable), false);
+			hazards.push_back(hazard);
+			break;
+		}
 
-	case SPAWN_HAZARD: {
-		//std::cout << "spawning hazard" << std::endl;
-		SpawnHazard();
-		break;
-	}
-
-	default:
-		break;
+		default: {
+			break;
+		}
 	}
 }

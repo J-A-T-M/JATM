@@ -30,6 +30,6 @@ enum InputSourceEnum {
 };
 
 enum ServerPacketType {
-	PACKET_GAME_STATE,
-	PACKET_HAZARD
+	PACKET_PLAYER_TRANSFORM,
+	PACKET_HAZARD_SPAWN
 };
