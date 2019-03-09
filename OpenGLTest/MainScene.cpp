@@ -38,6 +38,7 @@ void MainScene::sendPlayerTransforms() {
 	for (int i = 0; i < players.size(); i++) {
 		packet.playerTransformPacket.playerTransforms[i].position = players[i]->getLocalPosition();
 		packet.playerTransformPacket.playerTransforms[i].rotation = players[i]->getLocalRotation();
+		packet.playerTransformPacket.playerTransforms[i].health = players[i]->getHealth();
 	}
 	sendToClients(packet);
 }
@@ -46,6 +47,7 @@ void MainScene::movePlayersBasedOnNetworking() {
 	for (int i = 0; i < players.size(); i++) {
 		players[i]->setLocalPosition(serverState.playerTransforms[i].position);
 		players[i]->setLocalRotation(serverState.playerTransforms[i].rotation);
+		players[i]->setHealth(serverState.playerTransforms[i].health);
 	}
 }
 
