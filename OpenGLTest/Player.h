@@ -28,10 +28,14 @@ class Player : public GameObject {
 		void setBounceUp(bool flag);
 
 		int getHealth();
+		void damageHealth(int damage);
 		void setHealth(int health);
+		void update();
 
 		const static int STARTING_HEALTH = 100;
+		const static int MAX_INVULN_FRAMES = 10;
 	protected:
+		int _invulnFrames;
 		float _radius;
 		glm::vec3 _force;
 		glm::vec3 _velocity;

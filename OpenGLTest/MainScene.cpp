@@ -135,8 +135,9 @@ void MainScene::Update(const float delta) {
 	}
 
 	EventManager::notify(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, NULL, false);
-	for (GameObject* gameObject : players) {
-		gameObject->updateRenderableTransforms();
+	for (Player* player : players) {
+		player->update();
+		player->updateRenderableTransforms();
 	}
 	for (GameObject* gameObject : hazards) {
 		gameObject->updateRenderableTransforms();

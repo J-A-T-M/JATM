@@ -2,6 +2,18 @@
 
 #include <glm/glm.hpp>
 
+bool intersects(glm::vec2 distance, float radius, float size) {
+	if (distance.x > (size + radius)) { return false; }
+	if (distance.y > (size + radius)) { return false; }
+
+	if (distance.x <= size) { return true; }
+	if (distance.y <= size) { return true; }
+
+	glm::vec2 cornerDistance = distance - size;
+	float cornerDistance_sq = glm::dot(cornerDistance * cornerDistance, glm::vec2(1.0));
+	return (cornerDistance_sq <= (radius * radius));
+}
+
 void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> &hazards, const float delta)
 {
 	const float PLAYER_ACCELERATION = 90.0;
@@ -15,6 +27,10 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 		glm::vec3 pos = players[i]->getLocalPosition();
 		glm::vec3 force = players[i]->getForce();
 		glm::vec3 velocity = players[i]->getVelocity();
+
+		if (players[i]->getHealth() == 0) {
+			force = glm::vec3(0);
+		}
 
 		if (force.x != 0)
 			velocity.x += force.x * PLAYER_ACCELERATION * delta;
@@ -100,6 +116,22 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 				posB = avg_pos - normal * avg_radius;
 				players[i]->setLocalPositionXZ(posA);
 				players[j]->setLocalPositionXZ(posB);
+			}
+		}
+	}
+	for (int i = 0; i < players.size(); ++i) {
+		for (int j = 0; j < hazards.size(); ++j) {
+			glm::vec2 playerPosition = players[i]->getLocalPositionXZ();
+			glm::vec2 hazardPosition = hazards[j]->getLocalPositionXZ();
+			glm::vec2 distance = glm::abs(playerPosition - hazardPosition);
+			float radius = players[i]->getRadius();
+			float size = hazards[j]->getLocalScale();
+			float playerHeight = players[i]->getLocalPositionY();
+			float hazardHeight = hazards[j]->getLocalPositionY();
+			if (hazardHeight <= playerHeight + size + radius) {
+				if (intersects(distance, radius, size)) {
+					players[i]->damageHealth(25);
+				}
 			}
 		}
 	}
