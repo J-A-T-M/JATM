@@ -2,7 +2,6 @@
 
 #pragma comment (lib, "Ws2_32.lib") // Needed to link with Ws2_32.lib
 
-#define SERVER_IP_ADDRESS ""
 #define DEFAULT_BUFLEN 512	//max buffer size of 512 bytes
 #define DEFAULT_PORT "5055"
 #define MAX_CLIENTS 2
