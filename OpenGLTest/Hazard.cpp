@@ -5,7 +5,7 @@ Hazard::Hazard() {
 	addRenderable();
 	renderable->roughness = 0.25;
 	renderable->color = glm::vec4(0.75, 0.75, 0.75, 1.0);
-	renderable->model = MODEL_CUBE_BEVEL;
+	renderable->model = HazardModel();
 	renderable->interpolated = true;
 }
 
@@ -23,4 +23,20 @@ void Hazard::update(float delta) {
 
 bool Hazard::grounded() {
 	return (getLocalPosition().y == getLocalScale());
+}
+
+ModelEnum Hazard::HazardModel() {
+	int q = rand() % 2;
+	switch (q){
+	case 0:
+		return MODEL_CUBE_BEVEL;
+		break;
+	case 1:
+		return MODEL_CUBE;
+		break;
+	default:
+		return MODEL_SPHERE;
+		break;
+	}
+
 }

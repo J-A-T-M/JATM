@@ -7,6 +7,7 @@ class Hazard : public GameObject {
 
 		void update(float delta);
 		bool grounded();
+		ModelEnum HazardModel();
 
 		float fallSpeed;
 };

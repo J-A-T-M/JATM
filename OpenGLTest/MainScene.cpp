@@ -31,7 +31,7 @@ void MainScene::movePlayersBasedOnNetworking() {
 		players[i]->setLocalPositionXZ(pos);
 	}
 }
-
+int Q, R;
 void MainScene::Setup() {
 	if (IS_SERVER) {
 		networkThread = std::thread(listenForClients);
@@ -60,6 +60,10 @@ void MainScene::Setup() {
 	floor->renderable->model = MODEL_CUBE;
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor->renderable), false);
 
+	Q = floor->getScale() - 3;
+	R = Q + Q;
+	std::cout << "Q = " << Q << std::endl;
+	std::cout << "R = " << R << std::endl;
 	camera.position = glm::vec3(0.0f, 64.0f, 100.0f);
 	camera.target = glm::vec3(0.0f, 0.0f, 0.0f);
 	camera.FOV = 25.0f;
@@ -78,20 +82,36 @@ void MainScene::Setup() {
 
 	glm::vec3 down_color = glm::vec3(floor->renderable->color) * (up_color + -directionalLight.direction.y * directionalLight.color);
 	EventManager::notify(RENDERER_SET_AMBIENT_DOWN, &TypeParam<glm::vec3>(down_color), false);
+	
 }
-
+int h = 0, g = 0;
+float timeTwo;
 void MainScene::Update(const float delta) {
 	time += delta;
-
+	
 	if (activeHazard == nullptr || activeHazard->grounded()) {
 		activeHazard = new Hazard();
 		activeHazard->fallSpeed = 5.0f;
-		activeHazard->setLocalPosition(glm::vec3(rand() % 58 + (-29), 15, rand() % 58 + (-29)));
+		
+		activeHazard->setLocalPosition(glm::vec3(rand() % R + (-Q), 15, rand() % R + (-Q)));
 		activeHazard->clearRenderablePreviousTransforms();
 		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(activeHazard->renderable), false);
 		hazards.push_back(activeHazard);
 	}
 	activeHazard->update(delta);
+
+	if (hazards[h]->grounded()) {
+		timeTwo += delta;
+
+		std::cout << timeTwo << std::endl;
+
+		if (timeTwo > 5) {
+			hazards[h]->renderable->color = glm::vec4(0.0, 0.0, 0.0, 0.0);
+			hazards[h]->setLocalScale(0.01);
+			h++;
+			timeTwo = 0;
+		}		
+	}
 
 	if (IS_SERVER) {
 		movePlayersBasedOnInput(delta);
