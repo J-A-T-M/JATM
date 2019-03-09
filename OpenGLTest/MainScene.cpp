@@ -57,6 +57,7 @@ void MainScene::movePlayersBasedOnNetworking() {
 }
 
 void MainScene::Setup() {
+	initNetwork();
 	if (IS_SERVER) {
 		networkThread = std::thread(listenForClients);
 	} else {

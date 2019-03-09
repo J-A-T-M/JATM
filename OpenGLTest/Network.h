@@ -52,6 +52,12 @@ typedef Input CLIENTPACKET;
 PlayerTransformPacket serverState;
 bool networkThreadShouldDie = false;
 
+void initNetwork() {
+	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
+		serverState.playerTransforms[i] = { glm::vec3(0), glm::vec3(0), 100 };
+	}
+}
+
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //
 //    Server code
@@ -174,10 +180,6 @@ int listenForClients() {
 
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		clients[i] = { i, INVALID_SOCKET };
-	}
-
-	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
-		serverState.playerTransforms[i] = { glm::vec3(0), glm::vec3(0), 100 };
 	}
 
 	while (!networkThreadShouldDie) {
