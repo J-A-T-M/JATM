@@ -26,10 +26,16 @@ class Player : public GameObject {
 
 		bool getBounceUp();
 		void setBounceUp(bool flag);
+
+		int getHealth();
+		void setHealth(int health);
+
+		const static int STARTING_HEALTH = 100;
 	protected:
 		float _radius;
 		glm::vec3 _force;
 		glm::vec3 _velocity;
 		bool _bounceUp;
+		int _health;
 };
 

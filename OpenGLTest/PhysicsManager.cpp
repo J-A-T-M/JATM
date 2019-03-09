@@ -38,7 +38,8 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 		glm::vec3 movement = glm::vec3(velocity.x, 0.0f, velocity.z) * delta;
 		pos += movement;
 
-		float jumpHeight = pos.y - PLAYER_BASE_HEIGHT;
+		float baseHeight = PLAYER_BASE_HEIGHT * (((float)players[i]->getHealth() / (float)Player::STARTING_HEALTH) * 2.0f - 1.0f);
+		float jumpHeight = glm::max(pos.y - baseHeight, 0.0f);
 		if (force.x != 0 || force.z != 0)
 		{
 			// rotation
@@ -61,10 +62,10 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 			if (jumpHeight < 0) jumpHeight = 0;
 		}
 
-		pos.y = PLAYER_BASE_HEIGHT + jumpHeight;
+		pos.y = baseHeight + jumpHeight;
 
-		if (jumpHeight == 0) players[i]->setBounceUp(true);
-		if (jumpHeight == PLAYER_BOUNCE_MAX || (force.x == 0 && force.z == 0)) players[i]->setBounceUp(false);
+		if (jumpHeight <= 0) players[i]->setBounceUp(true);
+		if (jumpHeight >= PLAYER_BOUNCE_MAX || (force.x == 0 && force.z == 0)) players[i]->setBounceUp(false);
 
 		players[i]->setLocalPosition(pos);
 	}

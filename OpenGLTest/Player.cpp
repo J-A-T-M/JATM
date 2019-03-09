@@ -1,4 +1,5 @@
 #include "Player.h"
+#include <algorithm>
 
 Player::Player() {
 	setLocalScale(2.0f);
@@ -6,6 +7,7 @@ Player::Player() {
 	_force = glm::vec3(0);
 	_velocity = glm::vec3(0);
 	_bounceUp = false;
+	_health = STARTING_HEALTH;
 	addRenderable();
 	renderable->roughness = 0.4f;
 	renderable->model = MODEL_SUZANNE;
@@ -84,4 +86,16 @@ bool Player::getBounceUp()
 void Player::setBounceUp(bool flag)
 {
 	_bounceUp = flag;
+}
+
+int Player::getHealth() {
+	return _health;
+}
+
+void Player::setHealth(int health) {
+	if (health >= 0) {
+		_health = health;
+	} else {
+		_health = 0;
+	}
 }
