@@ -10,6 +10,16 @@ MainScene::~MainScene() {
 	EventManager::unsubscribe(SPAWN_HAZARD, this);
 }
 
+bool MainScene::checkDone() {
+	int count = 0;
+	for (Player* player : players) {
+		if (player->getHealth() != 0) {
+			++count;
+		}
+	}
+	return (count <= 1);
+}
+
 void MainScene::movePlayersBasedOnInput(const float delta) {
 	for (int i = 0; i < players.size(); i++) {
 		glm::vec3 pos = players[i]->getLocalPosition();
@@ -134,6 +144,8 @@ void MainScene::Update(const float delta) {
 		sendToServer();
 	}
 
+	_done = checkDone();
+
 	EventManager::notify(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, NULL, false);
 	for (Player* player : players) {
 		player->update();
@@ -146,7 +158,7 @@ void MainScene::Update(const float delta) {
 }
 
 bool MainScene::Done() {
-	return false;
+	return _done;
 }
 
 void MainScene::Cleanup() {

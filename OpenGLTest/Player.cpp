@@ -94,7 +94,7 @@ int Player::getHealth() {
 }
 
 void Player::damageHealth(int damage) {
-	if (_invulnFrames == 0) {
+	if (_invulnFrames == 0 && _health != 0) {
 		_invulnFrames = MAX_INVULN_FRAMES;
 		Player::setHealth(_health - damage);
 	}

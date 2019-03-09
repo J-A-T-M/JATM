@@ -24,6 +24,8 @@ class MainScene : public Scene, ISubscriber{
 		void SpawnHazard();
 
 	private:
+		bool _done;
+		bool checkDone();
 		void movePlayersBasedOnInput(const float delta);
 		void sendPlayerTransforms();
 		void movePlayersBasedOnNetworking();
