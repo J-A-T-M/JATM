@@ -2,7 +2,7 @@
 #include "Network.h"
 #include <glm/glm.hpp>
 
-MainScene::MainScene(bool isServer) : IS_SERVER(isServer) {
+MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer), SERVER_IP(serverIP){
 	EventManager::subscribe(SPAWN_HAZARD, this);
 }
 
@@ -43,7 +43,7 @@ void MainScene::Setup() {
 	if (IS_SERVER) {
 		networkThread = std::thread(listenForClients);
 	} else {
-		networkThread = std::thread(ClientLoop);
+		networkThread = std::thread(ClientLoop, this->SERVER_IP);
 	}
 
 	glm::vec4 color[] = { glm::vec4(1.0, 0.0, 0.3, 1.0), glm::vec4(1.0, 0.3, 0.0, 1.0), glm::vec4(1.0, 0.0, 0.3, 1.0) , glm::vec4(1.0, 0.3, 0.0, 1.0) };

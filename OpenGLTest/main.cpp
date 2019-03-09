@@ -15,11 +15,22 @@ int main() {
 	std::cout << "Enter 1 for server, 0 for client" << std::endl;
 	char c = std::cin.get();
 
+	bool isServer = (c == '1');
+
+	std::string serverIP;
+
+	if (!isServer) {
+		std::cin.ignore();
+		std::cout << "Enter IP: ";
+		std::getline(std::cin, serverIP);
+	}
+
+
 	AssetLoader::preloadAssets();
 	Renderer* renderer = new Renderer();
 
-	bool isServer = (c == '1') ? true: false;
-	Scene* scene = new MainScene(isServer);
+	
+	Scene* scene = new MainScene(isServer, serverIP);
 	scene->Setup();
 
 	const double FIXED_UPDATE_FREQUENCY = 20.0;

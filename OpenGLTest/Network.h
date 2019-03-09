@@ -2,7 +2,6 @@
 
 #pragma comment (lib, "Ws2_32.lib") // Needed to link with Ws2_32.lib
 
-#define SERVER_IP_ADDRESS "127.0.0.1"
 #define DEFAULT_BUFLEN 512	//max buffer size of 512 bytes
 #define DEFAULT_PORT "5055"
 #define MAX_CLIENTS 2
@@ -307,7 +306,7 @@ void recieveFromServer() {
 	std::cout << "Recieve thread for server ended" << std::endl;
 }
 
-SOCKET initializeClientSocket() {
+SOCKET initializeClientSocket(std::string serverIP) {
 	std::cout << "Initializing client socket" << std::endl;
 
 	int iResult;
@@ -327,7 +326,7 @@ SOCKET initializeClientSocket() {
 
 	// Resolve client address and port
 	addrinfo *addressInfo = NULL;
-	iResult = getaddrinfo(static_cast<PCSTR>(SERVER_IP_ADDRESS), DEFAULT_PORT, &hints, &addressInfo); // Resolve the server address and port
+	iResult = getaddrinfo(serverIP.c_str(), DEFAULT_PORT, &hints, &addressInfo); // Resolve the server address and port  //static_cast<PCSTR>(SERVER_IP_ADDRESS)
 	if (iResult != 0) {
 		std::cout << "getaddrinfo failed with error: " << iResult << std::endl;
 		return INVALID_SOCKET;
@@ -366,8 +365,8 @@ SOCKET initializeClientSocket() {
 	return clientSocket;
 }
 
-int ClientLoop() {
-	clientSocket = initializeClientSocket();
+int ClientLoop(std::string SERVER_IP) {
+	clientSocket = initializeClientSocket(SERVER_IP);
 	if (clientSocket == INVALID_SOCKET) {
 		WSACleanup();
 		return EXIT_FAILURE;
