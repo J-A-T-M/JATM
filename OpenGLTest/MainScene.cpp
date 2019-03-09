@@ -47,7 +47,12 @@ void MainScene::movePlayersBasedOnNetworking() {
 	for (int i = 0; i < players.size(); i++) {
 		players[i]->setLocalPosition(serverState.playerTransforms[i].position);
 		players[i]->setLocalRotation(serverState.playerTransforms[i].rotation);
-		players[i]->setHealth(serverState.playerTransforms[i].health);
+		// horrible hackjob by markus
+		// find a better way to send this
+		int damage = players[i]->getHealth() - serverState.playerTransforms[i].health;
+		if (damage != 0) {
+			players[i]->damageHealth(damage);
+		}
 	}
 }
 
