@@ -10,6 +10,16 @@ MainScene::~MainScene() {
 	EventManager::unsubscribe(SPAWN_HAZARD, this);
 }
 
+bool MainScene::checkDone() {
+	int count = 0;
+	for (Player* player : players) {
+		if (player->getHealth() != 0) {
+			++count;
+		}
+	}
+	return (count <= 1);
+}
+
 void MainScene::movePlayersBasedOnInput(const float delta) {
 	for (int i = 0; i < players.size(); i++) {
 		glm::vec3 pos = players[i]->getLocalPosition();
@@ -28,6 +38,7 @@ void MainScene::sendPlayerTransforms() {
 	for (int i = 0; i < players.size(); i++) {
 		packet.playerTransformPacket.playerTransforms[i].position = players[i]->getLocalPosition();
 		packet.playerTransformPacket.playerTransforms[i].rotation = players[i]->getLocalRotation();
+		packet.playerTransformPacket.playerTransforms[i].health = players[i]->getHealth();
 	}
 	sendToClients(packet);
 }
@@ -36,6 +47,12 @@ void MainScene::movePlayersBasedOnNetworking() {
 	for (int i = 0; i < players.size(); i++) {
 		players[i]->setLocalPosition(serverState.playerTransforms[i].position);
 		players[i]->setLocalRotation(serverState.playerTransforms[i].rotation);
+		// horrible hackjob by markus
+		// find a better way to send this
+		int damage = players[i]->getHealth() - serverState.playerTransforms[i].health;
+		if (damage != 0) {
+			players[i]->damageHealth(damage);
+		}
 	}
 }
 
@@ -134,9 +151,12 @@ void MainScene::Update(const float delta) {
 		sendToServer();
 	}
 
+	_done = checkDone();
+
 	EventManager::notify(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, NULL, false);
-	for (GameObject* gameObject : players) {
-		gameObject->updateRenderableTransforms();
+	for (Player* player : players) {
+		player->update();
+		player->updateRenderableTransforms();
 	}
 	for (GameObject* gameObject : hazards) {
 		gameObject->updateRenderableTransforms();
@@ -145,7 +165,7 @@ void MainScene::Update(const float delta) {
 }
 
 bool MainScene::Done() {
-	return false;
+	return _done;
 }
 
 void MainScene::Cleanup() {

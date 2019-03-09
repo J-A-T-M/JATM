@@ -1,4 +1,5 @@
 #include "Player.h"
+#include <algorithm>
 
 Player::Player() {
 	setLocalScale(2.0f);
@@ -6,6 +7,8 @@ Player::Player() {
 	_force = glm::vec3(0);
 	_velocity = glm::vec3(0);
 	_bounceUp = false;
+	_health = STARTING_HEALTH;
+	_invulnFrames = 0;
 	addRenderable();
 	renderable->roughness = 0.4f;
 	renderable->model = MODEL_SUZANNE;
@@ -84,4 +87,31 @@ bool Player::getBounceUp()
 void Player::setBounceUp(bool flag)
 {
 	_bounceUp = flag;
+}
+
+int Player::getHealth() {
+	return _health;
+}
+
+void Player::damageHealth(int damage) {
+	if (_invulnFrames == 0 && _health != 0) {
+		_invulnFrames = MAX_INVULN_FRAMES;
+		Player::setHealth(_health - damage);
+	}
+}
+
+void Player::setHealth(int health) {
+	if (health >= 0) {
+		_health = health;
+	} else {
+		_health = 0;
+	}
+}
+
+void Player::update() {
+	renderable->fullBright = _invulnFrames % 2;
+
+	if (_invulnFrames > 0) {
+		--_invulnFrames;
+	}
 }
