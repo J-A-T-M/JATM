@@ -15,7 +15,7 @@
 
 class MainScene : public Scene, ISubscriber{
 	public:
-		MainScene(bool isServer);
+		MainScene(bool isServer, std::string serverIP);
 		~MainScene();
 		void Setup();
 		void Update(const float delta);
@@ -30,6 +30,7 @@ class MainScene : public Scene, ISubscriber{
 		// Overrides ISubscriber::notify
 		void notify(EventName eventName, Param* params);
 		const bool IS_SERVER;
+		const std::string SERVER_IP;
 		float time;
 		std::vector<Hazard*> hazards;
 		std::vector<Player*> players;
