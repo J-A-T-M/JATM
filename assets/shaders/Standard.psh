@@ -11,7 +11,6 @@ uniform vec3 u_color;
 uniform bool u_fullBright;
 uniform float u_roughness;
 uniform float u_metallic;
-uniform float u_f0;
 uniform sampler2D u_textureSampler;
 uniform sampler2DShadow u_shadowMapSampler;
 
@@ -155,7 +154,7 @@ void main() {
 	vec3 R = reflect(-V, N);
 	float dotNV = max(dot(N, V), 0.0);
 	float dotNL = max(dot(N, L), 0.0);
-	vec3 F0 = mix(vec3(u_f0), color, u_metallic);
+	vec3 F0 = mix(vec3(0.04), color, u_metallic);
 
 	vec3 ambient = vec3(0);
 	ambient += color * mix(u_ambientColorDown, u_ambientColorUp, dot(u_up, N) * 0.5 + 0.5) * (1.0 - u_metallic);
@@ -163,7 +162,7 @@ void main() {
 	ambient *= occlusion(N);
 
 	vec3 direct = vec3(0);
-	direct += color * dotNL * (1.0 - schlick(u_f0, dotNL)) * (1.0 - u_metallic);
+	direct += color * dotNL * (1.0 - schlick(0.04, dotNL)) * (1.0 - u_metallic);
 	direct += GGX(N, V, L, u_roughness, F0);
 	direct *= u_lightColor * shadow(v_lightSpace_position);
 
