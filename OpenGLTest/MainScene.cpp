@@ -64,7 +64,7 @@ void MainScene::Setup() {
 		networkThread = std::thread(ClientLoop, this->SERVER_IP);
 	}
 
-	glm::vec4 color[] = { glm::vec4(1.0, 0.0, 0.3, 1.0), glm::vec4(1.0, 0.3, 0.0, 1.0), glm::vec4(1.0, 0.0, 0.3, 1.0) , glm::vec4(1.0, 0.3, 0.0, 1.0) };
+	glm::vec3 color[] = { glm::vec3(1.0, 0.0, 0.3), glm::vec3(1.0, 0.3, 0.0), glm::vec3(1.0, 0.0, 0.3) , glm::vec3(1.0, 0.3, 0.0) };
 	float metallic[] = { 1.0f, 1.0f, 0.0f, 0.0f };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
 		Player* player = new Player();
@@ -81,7 +81,7 @@ void MainScene::Setup() {
 	floor->setLocalPosition(glm::vec3(0, -32, 0));
 	floor->addRenderable();
 	floor->renderable->roughness = 0.8;
-	floor->renderable->color = glm::vec4(0.8, 0.6, 0.4, 1.0);
+	floor->renderable->color = glm::vec3(0.8, 0.6, 0.4);
 	floor->renderable->model = MODEL_CUBE;
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor->renderable), false);
 
@@ -101,7 +101,7 @@ void MainScene::Setup() {
 	glm::vec3 up_color = glm::vec3(0.25f, 0.15f, 0.1f);
 	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(up_color), false);
 
-	glm::vec3 down_color = glm::vec3(floor->renderable->color) * (up_color + -directionalLight.direction.y * directionalLight.color);
+	glm::vec3 down_color = floor->renderable->color * (up_color + -directionalLight.direction.y * directionalLight.color);
 	EventManager::notify(RENDERER_SET_AMBIENT_DOWN, &TypeParam<glm::vec3>(down_color), false);
 }
 

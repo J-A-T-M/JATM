@@ -7,7 +7,7 @@ in vec3 v_position;
 in vec3 v_normal;
 in vec4 v_lightSpace_position;
 
-uniform vec4 u_color;
+uniform vec3 u_color;
 uniform bool u_fullBright;
 uniform float u_roughness;
 uniform float u_metallic;
@@ -138,7 +138,7 @@ float occlusion(vec3 N) {
 }
 
 void main() {
-	vec3 color = u_color.xyz;
+	vec3 color = u_color;
 
 	if (textureSize(u_textureSampler, 0).x > 1) { // check if texture is bound
 		color *= texture(u_textureSampler, v_texCoord).xyz;
