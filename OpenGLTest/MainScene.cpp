@@ -93,7 +93,7 @@ void MainScene::Setup() {
 	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera), false);
 
 	directionalLight.direction = glm::normalize(glm::vec3(1.0f, -0.5f, -0.25f));
-	directionalLight.color = glm::vec3(1.0f, 1.0f, 1.0f);
+	directionalLight.color = glm::vec3(0.9f, 0.8f, 0.7f);
 	directionalLight.nearclip = -50.0f;
 	directionalLight.farclip = 50.0f;
 	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight), false);
@@ -101,8 +101,7 @@ void MainScene::Setup() {
 	glm::vec3 up_color = glm::vec3(0.25f, 0.15f, 0.1f);
 	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(up_color), false);
 
-	glm::vec3 down_color = floor->renderable->color * (up_color + -directionalLight.direction.y * directionalLight.color);
-	EventManager::notify(RENDERER_SET_AMBIENT_DOWN, &TypeParam<glm::vec3>(down_color), false);
+	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color), false);
 }
 
 void MainScene::SpawnHazard() {

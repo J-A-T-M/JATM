@@ -41,7 +41,7 @@ class Renderer : public ISubscriber {
 		float interp_duration;
 		float interp_value;
 
-		DirectionalLight directionalLight;
+		glm::vec3 floor_color;
 		glm::vec3 ambient_color_up;
 		glm::vec3 ambient_color_down;
 		Camera camera;
@@ -52,7 +52,9 @@ class Renderer : public ISubscriber {
 		std::list<std::shared_ptr<Renderable>> renderables;
 		std::mutex renderables_mutex;
 
-		GLuint shadowMap, shadowMapFBO;
+		static const int NUM_LIGHTS = 2;
+		DirectionalLight directionalLight[NUM_LIGHTS];
+		GLuint shadowMap[NUM_LIGHTS], shadowMapFBO[NUM_LIGHTS];
 		const GLuint SHADOW_SIZE = 1024;
 
 		GLuint depthMap, depthMapFBO;

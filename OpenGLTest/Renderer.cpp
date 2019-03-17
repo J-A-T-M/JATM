@@ -68,24 +68,38 @@ void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
 }
 
 void Renderer::Draw() {
-	glm::mat4 light_view = glm::lookAt(glm::vec3(0, 0, 0), directionalLight.direction, glm::vec3(0.01, 1, 0));
-	glm::mat4 light_projection = glm::ortho(-50.0f, 50.0f, -32.0f, 32.0f, directionalLight.nearclip, directionalLight.farclip);
-	glm::mat4 light_viewProjection = light_projection * light_view;
+	ambient_color_down = glm::convertSRGBToLinear(ambient_color_up);
+	for (int i = 0; i < NUM_LIGHTS; ++i) {
+		glm::vec3 L = glm::normalize(directionalLight[i].direction);
+		ambient_color_down += -L.y * glm::convertSRGBToLinear(directionalLight[i].color);
+	}
+	ambient_color_down *= glm::convertSRGBToLinear(floor_color);
+
 	glm::mat4 camera_view = glm::lookAt(camera.position, camera.target, glm::vec3(0, 1, 0));
 	glm::mat4 camera_projection = glm::perspective(glm::radians(camera.FOV), (GLfloat)windowWidth / (GLfloat)windowHeight, camera.nearClip, camera.farClip);
 	glm::mat4 camera_viewProjection = camera_projection * camera_view;
-	glm::vec3 camera_lightDir = camera_view * glm::vec4(directionalLight.direction, 0.0f);
 	glm::vec3 camera_upDir = camera_view * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
 
-	depthMapShader->use();
-	// draw light depthmap
-	depthMapShader->setMat4("viewProjection", light_viewProjection);
-	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
-	glViewport(0, 0, SHADOW_SIZE, SHADOW_SIZE);
-	glClear(GL_DEPTH_BUFFER_BIT);
-	for (auto renderable : renderables) {
-		DrawRenderableDepthMap(renderable);
+	for (int i = 0; i < NUM_LIGHTS; ++i) {
+		glm::mat4 light_view = glm::lookAt(glm::vec3(0, 0, 0), directionalLight[i].direction, glm::vec3(0.01, 1, 0));
+		glm::mat4 light_projection = glm::ortho(-50.0f, 50.0f, -32.0f, 32.0f, directionalLight[i].nearclip, directionalLight[i].farclip);
+		glm::mat4 light_viewProjection = light_projection * light_view;
+		glm::vec3 camera_lightDir = camera_view * glm::vec4(directionalLight[i].direction, 0.0f);
+		depthMapShader->use();
+		depthMapShader->setMat4("viewProjection", light_viewProjection);
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO[i]);
+		glViewport(0, 0, SHADOW_SIZE, SHADOW_SIZE);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		for (auto renderable : renderables) {
+			DrawRenderableDepthMap(renderable);
+		}
+		standardShader->use();
+		standardShader->setMat4("lightSpace[" + std::to_string(i) + "]", light_viewProjection);
+		standardShader->setVec3("u_lightDirection[" + std::to_string(i) + "]", camera_lightDir);
+		standardShader->setVec3("u_lightColor[" + std::to_string(i) + "]", glm::convertSRGBToLinear(directionalLight[i].color));
 	}
+
+	depthMapShader->use();
 	// draw camera depthmap
 	depthMapShader->setMat4("viewProjection", camera_viewProjection);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
@@ -101,15 +115,14 @@ void Renderer::Draw() {
 	standardShader->use();
 	standardShader->setMat4("view", camera_view);
 	standardShader->setMat4("projection", camera_projection);
-	standardShader->setMat4("lightSpace", light_viewProjection);
 	standardShader->setVec3("u_up", camera_upDir);
 	standardShader->setVec3("u_ambientColorUp", glm::convertSRGBToLinear(ambient_color_up));
-	standardShader->setVec3("u_ambientColorDown", glm::convertSRGBToLinear(ambient_color_down));
-	standardShader->setVec3("u_lightDirection", camera_lightDir);
-	standardShader->setVec3("u_lightColor", glm::convertSRGBToLinear(directionalLight.color));
+	standardShader->setVec3("u_ambientColorDown", ambient_color_down);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, shadowMap);
+	glBindTexture(GL_TEXTURE_2D, shadowMap[0]);
 	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, shadowMap[1]);
+	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 	glActiveTexture(GL_TEXTURE0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -210,23 +223,24 @@ int Renderer::Init() {
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 
+	standardShader->use();
 	// shadow stuff
-	glGenFramebuffers(1, &shadowMapFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
-	glGenTextures(1, &shadowMap);
-	glBindTexture(GL_TEXTURE_2D, shadowMap);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_SIZE, SHADOW_SIZE, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	float borderColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap, 0);
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
-
+	for (int i = 0; i < NUM_LIGHTS; ++i) {
+		glGenFramebuffers(1, &shadowMapFBO[i]);
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO[i]);
+		glGenTextures(1, &shadowMap[i]);
+		glBindTexture(GL_TEXTURE_2D, shadowMap[i]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_SIZE, SHADOW_SIZE, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap[i], 0);
+		standardShader->setInt("u_shadowMapSampler[" + std::to_string(i) + "]", i + 1);
+	}
 	// ssao stuff
 	glGenFramebuffers(1, &depthMapFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -238,14 +252,8 @@ int Renderer::Init() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
-
-	standardShader->use();
-	// binds UNIFORM_SHADOWMAP_SAMPLER to GL_TEXTURE1
-	standardShader->setInt("u_shadowMapSampler", 1);
-	// binds UNIFORM_DEPTHMAP_SAMPLER to GL_TEXTURE2
-	standardShader->setInt("u_depthMapSampler", 2);
+	// binds UNIFORM_DEPTHMAP_SAMPLER to GL_TEXTURE3
+	standardShader->setInt("u_depthMapSampler", 3);
 	// binds SSAO kernel
 	std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
 	std::default_random_engine generator;
@@ -293,6 +301,11 @@ int Renderer::Init() {
 
 	PreloadAssetBuffers();
 	InputManager::registerInputCallbacks(window);
+
+	directionalLight[1].color = glm::vec3(0.7f, 0.8f, 0.9f);
+	directionalLight[1].direction = glm::vec3(0, -1, 0);
+	directionalLight[1].nearclip = -50;
+	directionalLight[1].farclip = 50;
 
 	return EXIT_SUCCESS;
 }
@@ -350,7 +363,7 @@ void Renderer::notify(EventName eventName, Param* params) {
 
 		case RENDERER_SET_DIRECTIONAL_LIGHT: {
 			TypeParam<DirectionalLight> *p = dynamic_cast<TypeParam<DirectionalLight> *>(params);
-			directionalLight = p->Param;
+			directionalLight[0] = p->Param;
 			break;
 		}
 
@@ -360,9 +373,9 @@ void Renderer::notify(EventName eventName, Param* params) {
 			break;
 		}
 
-		case RENDERER_SET_AMBIENT_DOWN: {
+		case RENDERER_SET_FLOOR_COLOR: {
 			TypeParam<glm::vec3> *p = dynamic_cast<TypeParam<glm::vec3> *>(params);
-			ambient_color_down = p->Param;
+			floor_color = p->Param;
 			break;
 		}
 
@@ -391,7 +404,7 @@ Renderer::Renderer() {
 	EventManager::subscribe(RENDERER_SET_CAMERA, this);
 	EventManager::subscribe(RENDERER_SET_DIRECTIONAL_LIGHT, this);
 	EventManager::subscribe(RENDERER_SET_AMBIENT_UP, this);
-	EventManager::subscribe(RENDERER_SET_AMBIENT_DOWN, this);
+	EventManager::subscribe(RENDERER_SET_FLOOR_COLOR, this);
 	EventManager::subscribe(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, this);
 	EventManager::subscribe(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, this);
 }
@@ -403,7 +416,7 @@ Renderer::~Renderer() {
 	EventManager::unsubscribe(RENDERER_SET_CAMERA, this);
 	EventManager::unsubscribe(RENDERER_SET_DIRECTIONAL_LIGHT, this);
 	EventManager::unsubscribe(RENDERER_SET_AMBIENT_UP, this);
-	EventManager::unsubscribe(RENDERER_SET_AMBIENT_DOWN, this);
+	EventManager::unsubscribe(RENDERER_SET_FLOOR_COLOR, this);
 	EventManager::unsubscribe(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, this);
 	EventManager::unsubscribe(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, this);
 }
