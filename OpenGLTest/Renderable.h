@@ -10,7 +10,6 @@ typedef float GLfloat;
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
 #include "Enums.h"
 
 struct Camera {
@@ -64,7 +63,7 @@ class Renderable {
 		float previousScale;
 
 		// material
-		glm::vec4 color;
+		glm::vec3 color;
 		bool fullBright;
 		float roughness;
 		float metallic;

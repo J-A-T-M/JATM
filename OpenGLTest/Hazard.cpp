@@ -7,7 +7,7 @@ Hazard::Hazard(glm::vec3 spawnPosition, float fall_speed) {
 	setLocalScale(2.5f);
 	addRenderable();
 	renderable->roughness = 0.25;
-	renderable->color = glm::vec4(0.75, 0.75, 0.75, 1.0);
+	renderable->color = glm::vec3(0.75, 0.75, 0.75);
 	renderable->model = MODEL_CUBE_BEVEL;
 	renderable->interpolated = true;
 
