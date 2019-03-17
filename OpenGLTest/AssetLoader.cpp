@@ -63,7 +63,7 @@ Model AssetLoader::processMesh(aiMesh *mesh) {
 Texture AssetLoader::loadTexture(std::string const & path) {
 	Texture texture;
 	stbi_set_flip_vertically_on_load(true);
-	GLubyte* texData = stbi_load(path.c_str(), &texture.width, &texture.height, NULL, 4);
+	GLubyte* texData = stbi_load(path.c_str(), &texture.width, &texture.height, NULL, STBI_rgb_alpha);
 	texture.data.assign(texData, texData + texture.width * texture.height * 4);
 	return texture;
 }
