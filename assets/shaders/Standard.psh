@@ -1,25 +1,26 @@
 #version 330 core
 #define M_PI 3.1415926535897932384626433832795
 #define MAX_SAMPLES 64
+#define NUM_LIGHTS 2
 
 in vec2 v_texCoord;
 in vec3 v_position;
 in vec3 v_normal;
-in vec4 v_lightSpace_position;
+in vec4 v_lightSpace_position[NUM_LIGHTS];
 
 uniform vec3 u_color;
 uniform bool u_fullBright;
 uniform float u_roughness;
 uniform float u_metallic;
-uniform float u_f0;
 uniform sampler2D u_textureSampler;
-uniform sampler2DShadow u_shadowMapSampler;
 
 uniform vec3 u_up;
 uniform vec3 u_ambientColorUp;
 uniform vec3 u_ambientColorDown;
-uniform vec3 u_lightDirection;
-uniform vec3 u_lightColor;
+
+uniform sampler2DShadow u_shadowMapSampler[NUM_LIGHTS];
+uniform vec3 u_lightDirection[NUM_LIGHTS];
+uniform vec3 u_lightColor[NUM_LIGHTS];
 
 uniform mat4 projection;
 uniform sampler2D u_depthMapSampler;
@@ -87,16 +88,16 @@ vec3 GGX(vec3 N, vec3 V, vec3 L, float roughness, vec3 F0) {
 	return specular;
 }
 
-float shadow(vec4 lightSpace_position) {
+float shadow(vec4 lightSpace_position, sampler2DShadow shadowSampler) {
 	vec3 projCoords = (lightSpace_position.xyz / lightSpace_position.w) * 0.5 + 0.5;
 	float fragment_depth = projCoords.z;
 
 	float visibility = 0.0;
-	vec2 texelSize = 1.0 / textureSize(u_shadowMapSampler, 0);
+	vec2 texelSize = 1.0 / textureSize(shadowSampler, 0);
 	for (int x = -1; x <= 1; ++x) {
 		for (int y = -1; y <= 1; ++y) {
 			vec3 offset = vec3(x * texelSize.x * 2.0, y * texelSize.y * 2.0, -0.015);
-			visibility += texture(u_shadowMapSampler, projCoords + offset, 0.0);
+			visibility += texture(shadowSampler, projCoords + offset, 0.0);
 		}
 	}
 	visibility /= 9.0;
@@ -151,21 +152,25 @@ void main() {
 
 	vec3 N = normalize(v_normal);
 	vec3 V = normalize(-v_position);
-	vec3 L = normalize(-u_lightDirection);
 	vec3 R = reflect(-V, N);
+	vec3 F0 = mix(vec3(0.04), color, u_metallic);
 	float dotNV = max(dot(N, V), 0.0);
-	float dotNL = max(dot(N, L), 0.0);
-	vec3 F0 = mix(vec3(u_f0), color, u_metallic);
 
-	vec3 ambient = vec3(0);
-	ambient += color * mix(u_ambientColorDown, u_ambientColorUp, dot(u_up, N) * 0.5 + 0.5) * (1.0 - u_metallic);
-	ambient += schlick(F0, dotNV) * mix(u_ambientColorDown, u_ambientColorUp, dot(u_up, R) * 0.5 + 0.5);
-	ambient *= occlusion(N);
+	vec3 lighting = vec3(0);
+	lighting += color * mix(u_ambientColorDown, u_ambientColorUp, dot(u_up, N) * 0.5 + 0.5) * (1.0 - u_metallic);
+	lighting += schlick(F0, dotNV) * mix(u_ambientColorDown, u_ambientColorUp, dot(u_up, R) * 0.5 + 0.5);
+	lighting *= occlusion(N);
 
-	vec3 direct = vec3(0);
-	direct += color * dotNL * (1.0 - schlick(u_f0, dotNL)) * (1.0 - u_metallic);
-	direct += GGX(N, V, L, u_roughness, F0);
-	direct *= u_lightColor * shadow(v_lightSpace_position);
+	for (int i = 0; i < NUM_LIGHTS; ++i) {
+		vec3 L = normalize(-u_lightDirection[i]);
+		float dotNL = max(dot(N, L), 0.0);
 
-	o_fragColor = vec4(dither(ambient + direct), 1.0);
+		vec3 direct = vec3(0);
+		direct += color * dotNL * (1.0 - schlick(0.04, dotNL)) * (1.0 - u_metallic);
+		direct += GGX(N, V, L, u_roughness, F0);
+		direct *= u_lightColor[i] * shadow(v_lightSpace_position[i], u_shadowMapSampler[i]);
+		lighting += direct;
+	}
+
+	o_fragColor = vec4(dither(lighting), 1.0);
 }

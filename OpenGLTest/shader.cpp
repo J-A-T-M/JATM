@@ -3,20 +3,34 @@
 #include <fstream>
 #include <iostream>
 
-Shader::Shader(const std::string& fileName, unsigned int type) {
-	if (type == GL_VERTEX_SHADER)
-		myShader = CreateShader(LoadShader(fileName + ".vsh"), GL_VERTEX_SHADER);
-	else
-		myShader = CreateShader(LoadShader(fileName + ".psh"), GL_FRAGMENT_SHADER);
+Shader::Shader(const char* vertexPath, const char* fragmentPath) {
+	std::string vertexSrc = ReadFile(vertexPath);
+	const char* vertexSrcCstr = vertexSrc.c_str();
+	GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertex, 1, &vertexSrcCstr, NULL);
+	glCompileShader(vertex);
+	CheckShaderError(vertex, GL_COMPILE_STATUS);
+
+	std::string fragmentSrc = ReadFile(fragmentPath);
+	const char* fragmentSrcCstr = fragmentSrc.c_str();
+	GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragment, 1, &fragmentSrcCstr, NULL);
+	glCompileShader(fragment);
+	CheckShaderError(fragment, GL_COMPILE_STATUS);
+
+	program = glCreateProgram();
+	glAttachShader(program, vertex);
+	glAttachShader(program, fragment);
+	glLinkProgram(program);
+	CheckShaderError(program, GL_LINK_STATUS);
+
+	glDeleteShader(vertex);
+	glDeleteShader(fragment);
 }
 
-Shader::~Shader() {
-	glDeleteShader(myShader);
-}
-
-std::string Shader::LoadShader(const std::string& fileName) {
+std::string Shader::ReadFile(const char* fileName) {
 	std::ifstream file;
-	file.open((fileName).c_str());
+	file.open(fileName);
 
 	std::string output;
 	std::string line;
@@ -33,38 +47,20 @@ std::string Shader::LoadShader(const std::string& fileName) {
 	return output;
 }
 
-GLuint Shader::CreateShader(const std::string& text, unsigned int type) {
-	GLuint shader = glCreateShader(type);
-
-	if (shader == 0)
-		std::cerr << "Error compiling shader type " << type << std::endl;
-
-	const GLchar* srcStrings[1]; //this is an array simply because that's what glShaderSource wants
-	GLint lengths[1]; //same with this
-	srcStrings[0] = text.c_str();
-	lengths[0] = text.length();
-
-	glShaderSource(shader, 1, srcStrings, lengths);
-	glCompileShader(shader);
-
-	CheckShaderError(shader, GL_COMPILE_STATUS, "Error compiling shader!");
-
-	return shader;
-}
-
-void Shader::CheckShaderError(GLuint shader, GLuint flag, const std::string& errorMessage) {
+void Shader::CheckShaderError(GLuint shader, GLuint flag) {
 	GLint success = 0;
 	GLchar error[1024] = { 0 };
-
-	glGetShaderiv(shader, flag, &success);
-
-	if (success == GL_FALSE) {
-		glGetShaderInfoLog(shader, sizeof(error), NULL, error);
-
-		std::cerr << errorMessage << ": '" << error << "'" << std::endl;
+	if (flag == GL_COMPILE_STATUS) {
+		glGetShaderiv(shader, flag, &success);
+		if (success == GL_FALSE) {
+			glGetShaderInfoLog(shader, sizeof(error), NULL, error);
+			std::cerr << "Error compiling shader : " << error << "'" << std::endl;
+		}
+	} else {
+		glGetProgramiv(shader, GL_LINK_STATUS, &success);
+		if (success == GL_FALSE) {
+			glGetShaderInfoLog(shader, sizeof(error), NULL, error);
+			std::cerr << "Error linking shaders : " << error << "'" << std::endl;
+		}
 	}
-}
-
-GLuint Shader::GetShader() {
-	return myShader;
 }

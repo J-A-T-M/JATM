@@ -12,5 +12,4 @@ Renderable::Renderable() {
 	fullBright = false;
 	roughness = 0.5f;
 	metallic = 0.0f;
-	f0 = 0.04;
 }

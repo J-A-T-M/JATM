@@ -67,5 +67,4 @@ class Renderable {
 		bool fullBright;
 		float roughness;
 		float metallic;
-		float f0;
 };
