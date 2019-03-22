@@ -11,6 +11,7 @@ typedef float GLfloat;
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include "Enums.h"
+#include "Colour.h"
 
 struct Camera {
 	glm::vec3 position;
