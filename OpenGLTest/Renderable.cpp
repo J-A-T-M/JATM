@@ -8,9 +8,8 @@ Renderable::Renderable() {
 	previousPosition = glm::vec3(0.0f);
 	interpolated = false;
 	scale = 1.0f;
-	color = glm::vec4(1.0f);
+	color = glm::vec3(1.0f);
 	fullBright = false;
 	roughness = 0.5f;
 	metallic = 0.0f;
-	f0 = 0.04;
 }

@@ -2,8 +2,7 @@
 
 #pragma comment (lib, "Ws2_32.lib") // Needed to link with Ws2_32.lib
 
-#define SERVER_IP_ADDRESS "127.0.0.1"
-#define DEFAULT_BUFLEN 512	//max buffer size oof 512 bytes
+#define DEFAULT_BUFLEN 512	//max buffer size of 512 bytes
 #define DEFAULT_PORT "5055"
 #define MAX_CLIENTS 2
 #define NUM_LOCAL 2
@@ -14,31 +13,50 @@
 #include <string>
 #include <thread>  
 #include <vector>
+#include <glm/vec3.hpp>
 
 #include "InputManager.h"
+
 
 struct CLIENT {
 	int id;
 	SOCKET socket;
 };
 
-struct PLAYER {
-	float x;
-	float z;
-	float velocityX;
-	float velocityZ;
+struct PLAYER_TRANSFORM {
+	glm::vec3 position;
+	glm::vec3 rotation;
 	int health;
 };
 
-struct SERVERPACKET {
-	PLAYER players[MAX_CLIENTS + NUM_LOCAL];
+struct PlayerTransformPacket {
+	PLAYER_TRANSFORM playerTransforms[MAX_CLIENTS + NUM_LOCAL];
+};
+
+struct HazardSpawnPacket {
+	glm::vec3 spawnPosition;
+	float fallSpeed;
+};
+
+struct ServerPacket {
+	ServerPacketType type;
+	union {
+		PlayerTransformPacket playerTransformPacket;
+		HazardSpawnPacket hazardSpawnPacket;
+	};
 };
 
 typedef Input CLIENTPACKET;
 
 // state on or from the server
-SERVERPACKET serverState;
+PlayerTransformPacket serverState;
 bool networkThreadShouldDie = false;
+
+void initNetwork() {
+	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
+		serverState.playerTransforms[i] = { glm::vec3(0), glm::vec3(0), 100 };
+	}
+}
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //
@@ -50,12 +68,12 @@ bool networkThreadShouldDie = false;
 std::thread threads[MAX_CLIENTS];
 std::vector<CLIENT> clients(MAX_CLIENTS);
 
-void sendToClients() {
+void sendToClients(ServerPacket packet) {
 	int iResult = 0;
 
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		if (clients[i].socket != INVALID_SOCKET) {
-			iResult = send(clients[i].socket, (char*)&serverState, sizeof(SERVERPACKET), 0);
+			iResult = send(clients[i].socket, (char*)&packet, sizeof(ServerPacket), 0);
 			// if send failed print reason
 			if (iResult == 0) {
 				std::cout << "Client #" << clients[i].id << " send failed, client shutdown connection" << std::endl;
@@ -164,12 +182,6 @@ int listenForClients() {
 		clients[i] = { i, INVALID_SOCKET };
 	}
 
-	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
-		serverState.players[i] = { 0.0f, 0.0f, 0.0f, 0.0f, 100 };
-	}
-
-
-
 	while (!networkThreadShouldDie) {
 		timeval timeout;
 		timeout.tv_sec = 1;
@@ -262,13 +274,26 @@ void recieveFromServer() {
 	int iResult = 0;
 
 	while (!networkThreadShouldDie && clientSocket != INVALID_SOCKET) {
-		SERVERPACKET packet;
-		iResult = recv(clientSocket, (char *)&packet, sizeof(SERVERPACKET), 0);
+		ServerPacket packet;
+		iResult = recv(clientSocket, (char *)&packet, sizeof(ServerPacket), 0);
 		if (iResult == 0 || iResult == SOCKET_ERROR) {
 			break;
 		}
-		// do something with server packet
-		serverState = packet;
+		switch (packet.type) {
+			case PACKET_PLAYER_TRANSFORM: {
+				serverState = packet.playerTransformPacket;
+				break;
+			}
+			case PACKET_HAZARD_SPAWN: {
+				Hazard* hazard = new Hazard(
+					packet.hazardSpawnPacket.spawnPosition, 
+					packet.hazardSpawnPacket.fallSpeed
+				);
+				hazard->clearRenderablePreviousTransforms();
+				EventManager::notify(SPAWN_HAZARD, &TypeParam<Hazard*>(hazard), false);
+				break;
+			}
+		}
 	}
 
 	// print server disconnect reason
@@ -283,7 +308,7 @@ void recieveFromServer() {
 	std::cout << "Recieve thread for server ended" << std::endl;
 }
 
-SOCKET initializeClientSocket() {
+SOCKET initializeClientSocket(std::string serverIP) {
 	std::cout << "Initializing client socket" << std::endl;
 
 	int iResult;
@@ -299,11 +324,11 @@ SOCKET initializeClientSocket() {
 	addrinfo hints = {};
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_protocol = IPPROTO_TCP; 
 
 	// Resolve client address and port
 	addrinfo *addressInfo = NULL;
-	iResult = getaddrinfo(static_cast<PCSTR>(SERVER_IP_ADDRESS), DEFAULT_PORT, &hints, &addressInfo); // Resolve the server address and port
+	iResult = getaddrinfo(serverIP.c_str(), DEFAULT_PORT, &hints, &addressInfo); // Resolve the server address and port  //static_cast<PCSTR>(SERVER_IP_ADDRESS)
 	if (iResult != 0) {
 		std::cout << "getaddrinfo failed with error: " << iResult << std::endl;
 		return INVALID_SOCKET;
@@ -342,8 +367,8 @@ SOCKET initializeClientSocket() {
 	return clientSocket;
 }
 
-int ClientLoop() {
-	clientSocket = initializeClientSocket();
+int ClientLoop(std::string SERVER_IP) {
+	clientSocket = initializeClientSocket(SERVER_IP);
 	if (clientSocket == INVALID_SOCKET) {
 		WSACleanup();
 		return EXIT_FAILURE;

@@ -112,12 +112,12 @@
     <ClCompile Include="shader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Standard.psh" />
-    <None Include="Standard.vsh" />
-    <None Include="ShadowMap.psh" />
-    <None Include="ShadowMap.vsh" />
-    <None Include="UI.psh" />
-    <None Include="UI.vsh" />
+    <None Include="../assets/shaders/Standard.psh" />
+    <None Include="../assets/shaders/Standard.vsh" />
+    <None Include="../assets/shaders/ShadowMap.psh" />
+    <None Include="../assets/shaders/ShadowMap.vsh" />
+    <None Include="../assets/shaders/UI.psh" />
+    <None Include="../assets/shaders/UI.vsh" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssetLoader.h" />
@@ -138,9 +138,6 @@
     <ClInclude Include="ISubscriber.h" />
   </ItemGroup>
   <ItemGroup>
-    <Xml Include="..\UI\DefaultUI.xml">
-      <SubType>Designer</SubType>
-    </Xml>
     <Xml Include="TestUI.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

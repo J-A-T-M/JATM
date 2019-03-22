@@ -56,22 +56,22 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Standard.psh">
+    <None Include="../assets/shaders/ShadowMap.psh">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="ShadowMap.psh">
+    <None Include="../assets/shaders/ShadowMap.vsh">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="UI.psh">
+    <None Include="../assets/shaders/Standard.psh">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="Standard.vsh">
+    <None Include="../assets/shaders/Standard.vsh">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="ShadowMap.vsh">
+    <None Include="../assets/shaders/UI.psh">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="UI.vsh">
+    <None Include="../assets/shaders/UI.vsh">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
@@ -126,9 +126,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Xml Include="..\UI\DefaultUI.xml">
-      <Filter>Resource Files</Filter>
-    </Xml>
     <Xml Include="TestUI.xml">
       <Filter>Resource Files</Filter>
     </Xml>

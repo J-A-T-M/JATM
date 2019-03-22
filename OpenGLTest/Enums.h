@@ -28,3 +28,8 @@ enum InputSourceEnum {
 	INPUT_CLIENT7,
 	NUM_INPUTS
 };
+
+enum ServerPacketType {
+	PACKET_PLAYER_TRANSFORM,
+	PACKET_HAZARD_SPAWN
+};

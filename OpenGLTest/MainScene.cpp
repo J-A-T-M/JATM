@@ -2,7 +2,23 @@
 #include "Network.h"
 #include <glm/glm.hpp>
 
-MainScene::MainScene(bool isServer) : IS_SERVER(isServer) {}
+MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer), SERVER_IP(serverIP){
+	EventManager::subscribe(SPAWN_HAZARD, this);
+}
+
+MainScene::~MainScene() {
+	EventManager::unsubscribe(SPAWN_HAZARD, this);
+}
+
+bool MainScene::checkDone() {
+	int count = 0;
+	for (Player* player : players) {
+		if (player->getHealth() != 0) {
+			++count;
+		}
+	}
+	return (count <= 1);
+}
 
 void MainScene::movePlayersBasedOnInput(const float delta) {
 	for (int i = 0; i < players.size(); i++) {
@@ -16,30 +32,39 @@ void MainScene::movePlayersBasedOnInput(const float delta) {
 	}
 }
 
-void MainScene::setServerState()
-{
+void MainScene::sendPlayerTransforms() {
+	ServerPacket packet;
+	packet.type = PACKET_PLAYER_TRANSFORM;
 	for (int i = 0; i < players.size(); i++) {
-		glm::vec3 pos = players[i]->getLocalPosition();
-		serverState.players[i].x = pos.x;
-		serverState.players[i].z = pos.z;
+		packet.playerTransformPacket.playerTransforms[i].position = players[i]->getLocalPosition();
+		packet.playerTransformPacket.playerTransforms[i].rotation = players[i]->getLocalRotation();
+		packet.playerTransformPacket.playerTransforms[i].health = players[i]->getHealth();
 	}
+	sendToClients(packet);
 }
 
 void MainScene::movePlayersBasedOnNetworking() {
 	for (int i = 0; i < players.size(); i++) {
-		glm::vec2 pos = glm::vec2(serverState.players[i].x, serverState.players[i].z);
-		players[i]->setLocalPositionXZ(pos);
+		players[i]->setLocalPosition(serverState.playerTransforms[i].position);
+		players[i]->setLocalRotation(serverState.playerTransforms[i].rotation);
+		// horrible hackjob by markus
+		// find a better way to send this
+		int damage = players[i]->getHealth() - serverState.playerTransforms[i].health;
+		if (damage != 0) {
+			players[i]->damageHealth(damage);
+		}
 	}
 }
 int Q, R;
 void MainScene::Setup() {
+	initNetwork();
 	if (IS_SERVER) {
 		networkThread = std::thread(listenForClients);
 	} else {
-		networkThread = std::thread(ClientLoop);
+		networkThread = std::thread(ClientLoop, this->SERVER_IP);
 	}
 
-	glm::vec4 color[] = { glm::vec4(1.0, 0.0, 0.3, 1.0), glm::vec4(1.0, 0.3, 0.0, 1.0), glm::vec4(1.0, 0.0, 0.3, 1.0) , glm::vec4(1.0, 0.3, 0.0, 1.0) };
+	glm::vec3 color[] = { glm::vec3(1.0, 0.0, 0.3), glm::vec3(1.0, 0.3, 0.0), glm::vec3(1.0, 0.0, 0.3) , glm::vec3(1.0, 0.3, 0.0) };
 	float metallic[] = { 1.0f, 1.0f, 0.0f, 0.0f };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
 		Player* player = new Player();
@@ -56,7 +81,7 @@ void MainScene::Setup() {
 	floor->setLocalPosition(glm::vec3(0, -32, 0));
 	floor->addRenderable();
 	floor->renderable->roughness = 0.8;
-	floor->renderable->color = glm::vec4(0.8, 0.6, 0.4, 1.0);
+	floor->renderable->color = glm::vec3(0.8, 0.6, 0.4);
 	floor->renderable->model = MODEL_CUBE;
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor->renderable), false);
 
@@ -72,7 +97,7 @@ void MainScene::Setup() {
 	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera), false);
 
 	directionalLight.direction = glm::normalize(glm::vec3(1.0f, -0.5f, -0.25f));
-	directionalLight.color = glm::vec3(1.0f, 1.0f, 1.0f);
+	directionalLight.color = glm::vec3(0.9f, 0.8f, 0.7f);
 	directionalLight.nearclip = -50.0f;
 	directionalLight.farclip = 50.0f;
 	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight), false);
@@ -80,56 +105,62 @@ void MainScene::Setup() {
 	glm::vec3 up_color = glm::vec3(0.25f, 0.15f, 0.1f);
 	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(up_color), false);
 
-	glm::vec3 down_color = glm::vec3(floor->renderable->color) * (up_color + -directionalLight.direction.y * directionalLight.color);
-	EventManager::notify(RENDERER_SET_AMBIENT_DOWN, &TypeParam<glm::vec3>(down_color), false);
-	
+	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color), false);
 }
-int h = 0, g = 0;
-float timeTwo;
+
+void MainScene::SpawnHazard() {
+	glm::vec3 pos = glm::vec3(rand() % 58 - 29, 10 + rand() % 10, rand() % 58 - 29);
+	float fallSpeed = 5.0f;
+
+	Hazard* hazard = new Hazard(pos, fallSpeed);
+	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(hazard->renderable), false);
+	hazards.push_back(hazard);
+
+	ServerPacket packet;
+	packet.type = PACKET_HAZARD_SPAWN;
+	packet.hazardSpawnPacket.spawnPosition = pos;
+	packet.hazardSpawnPacket.fallSpeed = fallSpeed;
+	sendToClients(packet);
+}
+
 void MainScene::Update(const float delta) {
 	time += delta;
-	
-	if (activeHazard == nullptr || activeHazard->grounded()) {
-		activeHazard = new Hazard();
-		activeHazard->fallSpeed = 5.0f;
-		
-		activeHazard->setLocalPosition(glm::vec3(rand() % R + (-Q), 15, rand() % R + (-Q)));
-		activeHazard->clearRenderablePreviousTransforms();
-		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(activeHazard->renderable), false);
-		hazards.push_back(activeHazard);
+
+	auto it = hazards.begin();
+	while (it != hazards.end()) {
+		if ((*it)->grounded()) {
+			delete (*it);
+			it = hazards.erase(it);
+		} else {
+			++it;
+		}
 	}
-	activeHazard->update(delta);
 
-	if (hazards[h]->grounded()) {
-		timeTwo += delta;
-
-		std::cout << timeTwo << std::endl;
-
-		if (timeTwo > 5) {
-			hazards[h]->renderable->color = glm::vec4(0.0, 0.0, 0.0, 0.0);
-			hazards[h]->setLocalScale(0.01);
-			h++;
-			timeTwo = 0;
-		}		
+	for (Hazard* hazard : hazards) {
+		hazard->update(delta);
 	}
 
 	if (IS_SERVER) {
+		if (hazards.size() <= 5) {
+			SpawnHazard();
+		}
 		movePlayersBasedOnInput(delta);
 		// check collisions
 		PhysicsManager::Update(players, hazards, delta);
 		// set server states
-		setServerState();
-		// send player positions to clients
-		sendToClients();
+		sendPlayerTransforms();
 	} else {
 		movePlayersBasedOnNetworking();
 		// send user input to server
 		sendToServer();
 	}
 
+	_done = checkDone();
+
 	EventManager::notify(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, NULL, false);
-	for (GameObject* gameObject : players) {
-		gameObject->updateRenderableTransforms();
+	for (Player* player : players) {
+		player->update();
+		player->updateRenderableTransforms();
 	}
 	for (GameObject* gameObject : hazards) {
 		gameObject->updateRenderableTransforms();
@@ -138,7 +169,7 @@ void MainScene::Update(const float delta) {
 }
 
 bool MainScene::Done() {
-	return false;
+	return _done;
 }
 
 void MainScene::Cleanup() {
@@ -156,4 +187,20 @@ void MainScene::Cleanup() {
 	networkThread.join();
 
 	std::cout << "MainScene cleaned up" << std::endl;
+}
+
+void MainScene::notify(EventName eventName, Param* params) {
+	switch (eventName) {
+		case SPAWN_HAZARD: {
+			TypeParam<Hazard*> *p = dynamic_cast<TypeParam<Hazard*> *>(params);
+			Hazard* hazard = p->Param;
+			EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(hazard->renderable), false);
+			hazards.push_back(hazard);
+			break;
+		}
+
+		default: {
+			break;
+		}
+	}
 }

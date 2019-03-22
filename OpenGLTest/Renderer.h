@@ -20,7 +20,6 @@ class Renderer : public ISubscriber {
 	private:
 		int RenderLoop();
 		int Init();
-		void CreateShaderProgram(GLuint & programLoc, const char * vertexShaderPath, const char * fragmentShaderPath);
 		void PreloadAssetBuffers();
 		void Draw();
 		void DrawRenderable(std::shared_ptr<Renderable> renderable);
@@ -30,17 +29,19 @@ class Renderer : public ISubscriber {
 		void notify(EventName eventName, Param* params);
 
 		GLFWwindow* window;
-		GLuint mainProgram, VAO;
+		GLuint VAO;
+		Shader* standardShader;
+		Shader* depthMapShader;
 		int windowWidth = 1600;
 		int windowHeight = 900;
 
 		// stuff for renderable transform interpolation
-		float calculateInterpolationValue();
+		void updateInterpolationValue();
 		std::chrono::time_point<std::chrono::high_resolution_clock> interp_start;
 		float interp_duration;
 		float interp_value;
 
-		DirectionalLight directionalLight;
+		glm::vec3 floor_color;
 		glm::vec3 ambient_color_up;
 		glm::vec3 ambient_color_down;
 		Camera camera;
@@ -51,13 +52,10 @@ class Renderer : public ISubscriber {
 		std::list<std::shared_ptr<Renderable>> renderables;
 		std::mutex renderables_mutex;
 
-		GLuint depthMapProgram;
-		GLuint shadowMap, shadowMapFBO;
-		const GLuint SHADOW_WIDTH = 1024;
-		const GLuint SHADOW_HEIGHT = 1024;
+		static const int NUM_LIGHTS = 2;
+		DirectionalLight directionalLight[NUM_LIGHTS];
+		GLuint shadowMap[NUM_LIGHTS], shadowMapFBO[NUM_LIGHTS];
+		const GLuint SHADOW_SIZE = 1024;
 
 		GLuint depthMap, depthMapFBO;
-		std::vector<glm::vec3> ssaoKernel;
-
-		GLuint uiProgram;
 };
