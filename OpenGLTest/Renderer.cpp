@@ -68,12 +68,13 @@ void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
 }
 
 void Renderer::Draw() {
-	ambient_color_down = glm::convertSRGBToLinear(ambient_color_up);
+	glClearColor(ambient_color_up.r, ambient_color_up.g, ambient_color_up.b, 1.0f);
+	ambient_color_down = ambient_color_up;
 	for (int i = 0; i < NUM_LIGHTS; ++i) {
 		glm::vec3 L = glm::normalize(directionalLight[i].direction);
 		ambient_color_down += -L.y * glm::convertSRGBToLinear(directionalLight[i].color);
 	}
-	ambient_color_down *= glm::convertSRGBToLinear(floor_color);
+	ambient_color_down *= floor_color;
 
 	glm::mat4 camera_view = glm::lookAt(camera.position, camera.target, glm::vec3(0, 1, 0));
 	glm::mat4 camera_projection = glm::perspective(glm::radians(camera.FOV), (GLfloat)windowWidth / (GLfloat)windowHeight, camera.nearClip, camera.farClip);
@@ -116,7 +117,7 @@ void Renderer::Draw() {
 	standardShader->setMat4("view", camera_view);
 	standardShader->setMat4("projection", camera_projection);
 	standardShader->setVec3("u_up", camera_upDir);
-	standardShader->setVec3("u_ambientColorUp", glm::convertSRGBToLinear(ambient_color_up));
+	standardShader->setVec3("u_ambientColorUp", ambient_color_up);
 	standardShader->setVec3("u_ambientColorDown", ambient_color_down);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, shadowMap[0]);
@@ -297,7 +298,6 @@ int Renderer::Init() {
 	glfwSwapInterval(1);
 
 	glm::vec3 linear_ambient_color_up = glm::convertSRGBToLinear(ambient_color_up);
-	glClearColor(linear_ambient_color_up.r, linear_ambient_color_up.g, linear_ambient_color_up.b, 1.0f);
 
 	PreloadAssetBuffers();
 	InputManager::registerInputCallbacks(window);
@@ -369,13 +369,13 @@ void Renderer::notify(EventName eventName, Param* params) {
 
 		case RENDERER_SET_AMBIENT_UP: {
 			TypeParam<glm::vec3> *p = dynamic_cast<TypeParam<glm::vec3> *>(params);
-			ambient_color_up = p->Param;
+			ambient_color_up = glm::convertSRGBToLinear(p->Param);
 			break;
 		}
 
 		case RENDERER_SET_FLOOR_COLOR: {
 			TypeParam<glm::vec3> *p = dynamic_cast<TypeParam<glm::vec3> *>(params);
-			floor_color = p->Param;
+			floor_color = glm::convertSRGBToLinear(p->Param);
 			break;
 		}
 

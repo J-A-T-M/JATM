@@ -1,5 +1,6 @@
 #include "InputManager.h"
 #include <iostream>
+#include "EventManager.h"
 
 using Callback = std::function<void()>;
 std::map<int, std::vector<Callback>> InputManager::keypress_Callbacks;
@@ -36,10 +37,15 @@ void InputManager::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 		onKeyRepeat(key);
 		// return early for repeat 
 		// basic player input can infer when held from PRESS and RELEASE
+		EventManager::notify(KEY_REPEAT, &TypeParam<int>(key), false);
 		return;
 	} 
 	if (action == GLFW_PRESS) {
 		onKeyPress(key);
+		EventManager::notify(KEY_DOWN, &TypeParam<int>(key), false);
+	}
+	if (action == GLFW_RELEASE) {
+		EventManager::notify(KEY_UP, &TypeParam<int>(key), false);
 	}
 
 	switch (key) {

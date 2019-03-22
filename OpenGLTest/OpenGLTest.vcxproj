@@ -104,12 +104,14 @@
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainScene.cpp" />
+    <ClCompile Include="MenuScene.cpp" />
     <ClCompile Include="Network.cpp" />
     <ClCompile Include="PhysicsManager.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Renderable.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="StateMachine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="../assets/shaders/Standard.psh" />
@@ -129,6 +131,7 @@
     <ClInclude Include="Hazard.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="MainScene.h" />
+    <ClInclude Include="MenuScene.h" />
     <ClInclude Include="PhysicsManager.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Renderable.h" />
@@ -137,6 +140,7 @@
     <ClInclude Include="Scene.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="ISubscriber.h" />
+    <ClInclude Include="StateMachine.h" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="TestUI.xml" />
