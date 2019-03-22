@@ -1,12 +1,74 @@
 #include "MainScene.h"
 #include "Network.h"
 #include <glm/glm.hpp>
+#include "MenuScene.h"
 
 MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer), SERVER_IP(serverIP){
 	EventManager::subscribe(SPAWN_HAZARD, this);
+
+	initNetwork();
+	if (IS_SERVER) {
+		networkThread = std::thread(listenForClients);
+	} else {
+		networkThread = std::thread(ClientLoop, this->SERVER_IP);
+	}
+
+	glm::vec3 color[] = { glm::vec3(1.0, 0.0, 0.3), glm::vec3(1.0, 0.3, 0.0), glm::vec3(1.0, 0.0, 0.3) , glm::vec3(1.0, 0.3, 0.0) };
+	float metallic[] = { 1.0f, 1.0f, 0.0f, 0.0f };
+	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
+		Player* player = new Player();
+		player->setLocalPosition(glm::vec3(10.0 * i - 15.0, 2.0, 5.0));
+		player->renderable->color = color[i % 4];
+		player->renderable->metallic = metallic[i];
+		player->renderable->interpolated = true;
+		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player->renderable), false);
+		players.push_back(player);
+	}
+
+	GameObject* floor = new GameObject();
+	floor->setLocalScale(32.0f);
+	floor->setLocalPosition(glm::vec3(0, -32, 0));
+	floor->addRenderable();
+	floor->renderable->roughness = 0.8;
+	floor->renderable->color = glm::vec3(0.8, 0.6, 0.4);
+	floor->renderable->model = MODEL_CUBE;
+	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor->renderable), false);
+
+	camera.position = glm::vec3(0.0f, 64.0f, 100.0f);
+	camera.target = glm::vec3(0.0f, 0.0f, 0.0f);
+	camera.FOV = 25.0f;
+	camera.nearClip = 0.1f;
+	camera.farClip = 1000.0f;
+	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera), false);
+
+	directionalLight.direction = glm::normalize(glm::vec3(1.0f, -0.5f, -0.25f));
+	directionalLight.color = glm::vec3(0.9f, 0.8f, 0.7f);
+	directionalLight.nearclip = -50.0f;
+	directionalLight.farclip = 50.0f;
+	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight), false);
+
+	glm::vec3 up_color = glm::vec3(0.25f, 0.15f, 0.1f);
+	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(up_color), false);
+
+	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color), false);
 }
 
 MainScene::~MainScene() {
+	for (GameObject* gameObject : players) {
+		if (gameObject != nullptr) {
+			delete gameObject;
+		}
+	}
+	for (GameObject* gameObject : hazards) {
+		if (gameObject != nullptr) {
+			delete gameObject;
+		}
+	}
+	delete floor;
+	networkThreadShouldDie = true;
+	networkThread.join();
+
+	std::cout << "MainScene cleaned up" << std::endl;
 	EventManager::unsubscribe(SPAWN_HAZARD, this);
 }
 
@@ -54,58 +116,6 @@ void MainScene::movePlayersBasedOnNetworking() {
 			players[i]->damageHealth(damage);
 		}
 	}
-}
-int Q, R;
-void MainScene::Setup() {
-	initNetwork();
-	if (IS_SERVER) {
-		networkThread = std::thread(listenForClients);
-	} else {
-		networkThread = std::thread(ClientLoop, this->SERVER_IP);
-	}
-
-	glm::vec3 color[] = { glm::vec3(1.0, 0.0, 0.3), glm::vec3(1.0, 0.3, 0.0), glm::vec3(1.0, 0.0, 0.3) , glm::vec3(1.0, 0.3, 0.0) };
-	float metallic[] = { 1.0f, 1.0f, 0.0f, 0.0f };
-	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
-		Player* player = new Player();
-		player->setLocalPosition(glm::vec3(10.0 * i - 15.0, 2.0, 5.0));
-		player->renderable->color = color[i % 4];
-		player->renderable->metallic = metallic[i];
-		player->renderable->interpolated = true;
-		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player->renderable), false);
-		players.push_back(player);
-	}
-
-	GameObject* floor = new GameObject();
-	floor->setLocalScale(32.0f);
-	floor->setLocalPosition(glm::vec3(0, -32, 0));
-	floor->addRenderable();
-	floor->renderable->roughness = 0.8;
-	floor->renderable->color = Colour::BEIGE;
-	floor->renderable->model = MODEL_CUBE;
-	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor->renderable), false);
-
-	Q = floor->getScale() - 3;
-	R = Q + Q;
-	std::cout << "Q = " << Q << std::endl;
-	std::cout << "R = " << R << std::endl;
-	camera.position = glm::vec3(0.0f, 64.0f, 100.0f);
-	camera.target = glm::vec3(0.0f, 0.0f, 0.0f);
-	camera.FOV = 25.0f;
-	camera.nearClip = 0.1f;
-	camera.farClip = 1000.0f;
-	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera), false);
-
-	directionalLight.direction = glm::normalize(glm::vec3(1.0f, -0.5f, -0.25f));
-	directionalLight.color = Colour::BEIGARA;
-	directionalLight.nearclip = -50.0f;
-	directionalLight.farclip = 50.0f;
-	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight), false);
-
-	glm::vec3 up_color = glm::vec3(0.25f, 0.15f, 0.1f);
-	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(up_color), false);
-
-	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color), false);
 }
 
 void MainScene::SpawnHazard() {
@@ -168,25 +178,8 @@ void MainScene::Update(const float delta) {
 	EventManager::notify(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, &TypeParam<float>(delta), false);
 }
 
-bool MainScene::Done() {
-	return _done;
-}
-
-void MainScene::Cleanup() {
-	for (GameObject* gameObject : players) {
-		if (gameObject != nullptr) {
-			delete gameObject;
-		}
-	}
-	for (GameObject* gameObject : hazards) {
-		if (gameObject != nullptr) {
-			delete gameObject;
-		}
-	}
-	networkThreadShouldDie = true;
-	networkThread.join();
-
-	std::cout << "MainScene cleaned up" << std::endl;
+Scene * MainScene::GetNext() {
+	return new MenuScene();
 }
 
 void MainScene::notify(EventName eventName, Param* params) {

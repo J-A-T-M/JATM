@@ -1,8 +1,14 @@
 #pragma once
 class Scene {
 	public:
-	virtual void Setup() = 0;
-	virtual void Update(const float delta) = 0;
-	virtual bool Done() = 0;
-	virtual void Cleanup() = 0;
+		Scene() : _done(false) {};
+
+		bool Done() {
+			return _done;
+		}
+		virtual ~Scene() {};
+		virtual void Update(const float delta) = 0;
+		virtual Scene* GetNext() = 0;
+	protected:
+		bool _done;
 };
