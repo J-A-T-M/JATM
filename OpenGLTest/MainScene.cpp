@@ -55,7 +55,7 @@ void MainScene::movePlayersBasedOnNetworking() {
 		}
 	}
 }
-
+int Q, R;
 void MainScene::Setup() {
 	initNetwork();
 	if (IS_SERVER) {
@@ -81,10 +81,14 @@ void MainScene::Setup() {
 	floor->setLocalPosition(glm::vec3(0, -32, 0));
 	floor->addRenderable();
 	floor->renderable->roughness = 0.8;
-	floor->renderable->color = glm::vec3(0.8, 0.6, 0.4);
+	floor->renderable->color = Colour::BEIGE;
 	floor->renderable->model = MODEL_CUBE;
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor->renderable), false);
 
+	Q = floor->getScale() - 3;
+	R = Q + Q;
+	std::cout << "Q = " << Q << std::endl;
+	std::cout << "R = " << R << std::endl;
 	camera.position = glm::vec3(0.0f, 64.0f, 100.0f);
 	camera.target = glm::vec3(0.0f, 0.0f, 0.0f);
 	camera.FOV = 25.0f;
@@ -93,7 +97,7 @@ void MainScene::Setup() {
 	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera), false);
 
 	directionalLight.direction = glm::normalize(glm::vec3(1.0f, -0.5f, -0.25f));
-	directionalLight.color = glm::vec3(0.9f, 0.8f, 0.7f);
+	directionalLight.color = Colour::BEIGARA;
 	directionalLight.nearclip = -50.0f;
 	directionalLight.farclip = 50.0f;
 	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight), false);
