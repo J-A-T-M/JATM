@@ -93,10 +93,10 @@ void TextComponent::generateVertices() {
 		model.positions.push_back(glm::vec3(screenPosition.x + fontWidth * i + fontWidth, screenPosition.y + screenSize.y, 0)); // Top Right
 		model.positions.push_back(glm::vec3(screenPosition.x + fontWidth * i, screenPosition.y, 0)); // Bottom Left
 		model.positions.push_back(glm::vec3(screenPosition.x + fontWidth * i + fontWidth, screenPosition.y, 0)); // Bottom Right
-		model.UVs.push_back(uv);
-		model.UVs.push_back(uv + glm::vec2(0.1, 0));
-		model.UVs.push_back(uv + glm::vec2(0, -0.1));
-		model.UVs.push_back(uv + glm::vec2(0.1, -0.1));
+		model.UVs.push_back(uv + glm::vec2(0.01, -0.01));
+		model.UVs.push_back(uv + glm::vec2(0.09, -0.01));
+		model.UVs.push_back(uv + glm::vec2(0.01, -0.09));
+		model.UVs.push_back(uv + glm::vec2(0.09, -0.09));
 		model.elements.push_back(i * 4 + 1);
 		model.elements.push_back(i * 4 + 0);
 		model.elements.push_back(i * 4 + 2);
