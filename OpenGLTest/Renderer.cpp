@@ -10,6 +10,7 @@
 #include "AssetLoader.h"
 #include "Enums.h"
 #include "InputManager.h"
+#include "UI/UIManager.h"
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
@@ -28,6 +29,30 @@ glm::mat4 Renderer::CalculateModelMatrix(std::shared_ptr<Renderable> renderable)
 		m = glm::scale(m, glm::vec3(renderable->scale));
 	}
 	return m;
+}
+
+void Renderer::DrawUIComponent(UIComponent* UIrenderable) {
+	if (!UIrenderable->valid) {
+		InitUIComponent(UIrenderable);
+		UIrenderable->valid = true;
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, UIrenderable->model.positionLoc);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
+	glBindBuffer(GL_ARRAY_BUFFER, UIrenderable->model.UVLoc);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), BUFFER_OFFSET(0));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, UIrenderable->model.elementLoc);
+
+	Texture* texture = &AssetLoader::textures[UIrenderable->texture];
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture->loc);
+
+	glm::mat4 m = glm::mat4(1.0);
+	m = glm::translate(m, glm::vec3(UIrenderable->position, UIrenderable->z));
+	uiShader->setMat4("model", m);
+	uiShader->setVec4("u_color", glm::convertSRGBToLinear(UIrenderable->color));
+
+	glDrawElements(GL_TRIANGLES, UIrenderable->model.elements.size(), GL_UNSIGNED_INT, BUFFER_OFFSET(0));
 }
 
 void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
@@ -132,6 +157,9 @@ void Renderer::Draw() {
 	for (auto renderable : renderables) {
 		DrawRenderable(renderable);
 	}
+	
+	// draw 2d objects
+	DrawUI();
 }
 
 void Renderer::PreloadAssetBuffers() {
@@ -216,6 +244,7 @@ int Renderer::Init() {
 
 	standardShader = new Shader("../assets/shaders/Standard.vsh", "../assets/shaders/Standard.psh");
 	depthMapShader = new Shader("../assets/shaders/ShadowMap.vsh", "../assets/shaders/ShadowMap.psh");
+	uiShader = new Shader("../assets/shaders/UI.vsh", "../assets/shaders/UI.psh");
 
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
@@ -343,6 +372,65 @@ int Renderer::RenderLoop() {
 	glfwTerminate();
 	renderThreadDone = true;
 	return EXIT_SUCCESS;
+}
+
+void Renderer::DrawUI() {
+	UIManager::Root()->screenSize = glm::vec2(windowWidth, windowHeight);
+	UIManager::Root()->Resize();
+	glm::mat4 ui_viewProjection = glm::ortho(0.0f, (GLfloat)windowWidth, 0.0f, (GLfloat)windowHeight, -100.0f, 100.0f);
+	uiShader->use();
+	uiShader->setMat4("viewProjection", ui_viewProjection);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, windowWidth, windowHeight);
+	glClear(GL_DEPTH_BUFFER_BIT);
+	transparentList.clear();
+
+	TraverseUIComponent(UIManager::Root());
+
+	glDepthFunc(GL_LEQUAL);
+	transparentList.sort([](const UIComponent *f, const UIComponent *s) { return f->z < s->z; });
+	for (UIComponent *t : transparentList) {
+		DrawUIComponent(t);
+	}
+
+	UIComponent* black = UIManager::GetComponentById("BlackOverlay");
+	if (black != nullptr && black->visible) {
+		DrawUIComponent(black);
+	}
+	glDepthFunc(GL_LESS);
+}
+void Renderer::TraverseUIComponent(UIComponent *component) {
+	if (component == nullptr || !component->visible || component->id == "BlackOverlay") {
+		return;
+	}
+
+	if (component->IsTransparent()) {
+		transparentList.push_back(component);
+	} else {
+		DrawUIComponent(component);
+	}
+
+	for (UIComponent *child : component->children) {
+		TraverseUIComponent(child);
+	}
+}
+void Renderer::InitUIComponent(UIComponent * renderable) {
+	glDeleteBuffers(1, &renderable->model.positionLoc);
+	glDeleteBuffers(1, &renderable->model.UVLoc);
+	glDeleteBuffers(1, &renderable->model.normalLoc);
+	glDeleteBuffers(1, &renderable->model.elementLoc);
+	glGenBuffers(1, &renderable->model.positionLoc);
+	glGenBuffers(1, &renderable->model.UVLoc);
+	glGenBuffers(1, &renderable->model.normalLoc);
+	glGenBuffers(1, &renderable->model.elementLoc);
+	glBindBuffer(GL_ARRAY_BUFFER, renderable->model.positionLoc);
+	glBufferData(GL_ARRAY_BUFFER, renderable->model.positions.size() * sizeof(glm::vec3), renderable->model.positions.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, renderable->model.UVLoc);
+	glBufferData(GL_ARRAY_BUFFER, renderable->model.UVs.size() * sizeof(glm::vec2), renderable->model.UVs.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, renderable->model.normalLoc);
+	glBufferData(GL_ARRAY_BUFFER, renderable->model.normals.size() * sizeof(glm::vec3), renderable->model.normals.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderable->model.elementLoc);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, renderable->model.elements.size() * sizeof(GLuint), renderable->model.elements.data(), GL_STATIC_DRAW);
 }
 
 void Renderer::notify(EventName eventName, Param* params) {

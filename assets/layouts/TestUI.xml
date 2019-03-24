@@ -1,0 +1,34 @@
+<root>
+	<component id="MenuScene" width="100%" height="100%" alpha="0.0" color="246DC2" visible="false">
+		<component width="100%" height="10%" anchor="top center">
+			<component width="100%" height="100%" anchor="center center">
+				<component id="isServerBox" height="100%" width="20%" alpha="0.75" color="000000" anchor="center left">
+					<text id="isServerText" size="30%" anchor="center center" color="FFFFFF">Server</text>
+				</component>
+				<component id="ipBox" height="100%" width="80%" alpha="0.5" color="000000" anchor="center right">
+					<text id="ipDigit0" size="50%" anchor="center left" offset="10% 0%" color="FFFFFF"></text>
+					<text id="ipDigit1" size="50%" anchor="center left" offset="20% 0%" color="FFFFFF"></text>
+					<text id="ipDigit2" size="50%" anchor="center left" offset="30% 0%" color="FFFFFF"></text>
+					<text size="50%" anchor="center left" offset="40% 0%" color="FFFFFF">.</text>
+
+					<text id="ipDigit3" size="50%" anchor="center left" offset="50% 0%" color="FFFFFF"></text>
+					<text id="ipDigit4" size="50%" anchor="center left" offset="60% 0%" color="FFFFFF"></text>
+					<text id="ipDigit5" size="50%" anchor="center left" offset="70% 0%" color="FFFFFF"></text>
+					<text size="50%" anchor="center left" offset="80% 0%" color="FFFFFF">.</text>
+
+					<text id="ipDigit6" size="50%" anchor="center left" offset="90% 0%" color="FFFFFF"></text>
+					<text id="ipDigit7" size="50%" anchor="center left" offset="100% 0%" color="FFFFFF"></text>
+					<text id="ipDigit8" size="50%" anchor="center left" offset="110% 0%" color="FFFFFF"></text>
+					<text size="50%" anchor="center left" offset="120% 0%" color="FFFFFF">.</text>
+
+					<text id="ipDigit9" size="50%" anchor="center left" offset="130% 0%" color="FFFFFF"></text>
+					<text id="ipDigit10" size="50%" anchor="center left" offset="140% 0%" color="FFFFFF"></text>
+					<text id="ipDigit11" size="50%" anchor="center left" offset="150% 0%" color="FFFFFF"></text>
+					<text size="50%" anchor="center left" offset="160% 0%" color="FFFFFF"></text>
+				</component>
+			</component>
+		</component>
+	</component>
+	<component id="GameScene" width="100%" height="100%" alpha="0.0" color="246DC2" visible="false">
+	</component>
+</root>
