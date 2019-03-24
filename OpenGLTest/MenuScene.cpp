@@ -4,6 +4,7 @@
 #include "GLFW/glfw3.h"
 #include "MainScene.h"
 #include "Colour.h"
+#include "UI/UIManager.h"
 
 #define BASE_Z 28
 
@@ -72,10 +73,27 @@ MenuScene::MenuScene() {
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor.renderable->color), false);
 
 	EventManager::subscribe(KEY_DOWN, this);
+
+	// grab UI components
+	_UImenuScene = UIManager::GetComponentById("MenuScene");
+	_UIisServer = (TextComponent*)UIManager::GetComponentById("isServerText");
+	_UIserverIP = std::vector<TextComponent*>(_serverIP.size());
+	for (int i = 0; i < _serverIP.size(); ++i) {
+		_UIserverIP[i] = (TextComponent*)UIManager::GetComponentById("ipDigit" + std::to_string(i));
+	}
+	_UIipBox = UIManager::GetComponentById("ipBox");
+	// set UI component values
+	for (int i = 0; i < _serverIP.size(); ++i) {
+		_UIserverIP[i]->SetText(std::to_string(_serverIP[i]));
+	}
+	_UIisServer->SetText((_isServer) ? "Server" : "client");
+	_UIipBox->visible = (_isServer) ? false : true;
+	_UImenuScene->visible = true;
 }
 
 MenuScene::~MenuScene() {
 	EventManager::unsubscribe(KEY_DOWN, this);
+	_UImenuScene->visible = false;
 }
 
 void MenuScene::Update(const float delta) {
@@ -103,10 +121,13 @@ void MenuScene::UIMoveY(int delta_y) {
 	if (_xIndex == 0) {
 		_isServer = !_isServer;
 		pos.z = BASE_Z - _isServer * 5;
+		_UIisServer->SetText((_isServer) ? "Server" : "Client");
+		_UIipBox->visible = (_isServer) ? false : true;
 	} else {
 		int value = _serverIP[_xIndex - 1] + delta_y;
 		if (value < 0) value = 10 + value;
 		if (value >= 10) value = value % 10;
+		_UIserverIP[_xIndex - 1]->SetText(std::to_string(value));
 		_serverIP[_xIndex - 1] = value;
 		pos.z = BASE_Z - value * 5;
 	}
@@ -115,9 +136,16 @@ void MenuScene::UIMoveY(int delta_y) {
 
 void MenuScene::UIMoveX(int delta_x) {
 	_gameObjects[_xIndex].setLocalPositionY(2.0f);
+	if (_xIndex > 0) {
+		_UIserverIP[_xIndex - 1]->position.y -= 16;
+	}
 	_xIndex += delta_x;
+	if (_isServer) _xIndex = 0;
 	if (_xIndex < 0) _xIndex = X_INDEX_MAX + _xIndex;
 	if (_xIndex >= X_INDEX_MAX) _xIndex = _xIndex % X_INDEX_MAX;
+	if (_xIndex > 0) {
+		_UIserverIP[_xIndex - 1]->position.y += 16;
+	}
 	_gameObjects[_xIndex].setLocalPositionY(4.0f);
 }
 

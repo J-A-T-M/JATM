@@ -11,6 +11,7 @@ enum ModelEnum {
 enum TextureEnum {
 	TEXTURE_NONE,
 	TEXTURE_UV_GRID,
+	TEXTURE_FONT_SHARE_TECH_MONO,
 	NUM_TEXTURES,
 };
 

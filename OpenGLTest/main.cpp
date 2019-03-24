@@ -4,6 +4,7 @@
 #include "Renderer.h"
 #include "StateMachine.h"
 #include "MenuScene.h"
+#include "UI/UIManager.h"
 
 using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
@@ -12,6 +13,7 @@ using std::chrono::duration;
 int main() {
 	AssetLoader::preloadAssets();
 	Renderer* renderer = new Renderer();
+	UIManager* uiManager = new UIManager(1600, 900);
 	StateMachine* stateMachine = new StateMachine(new MenuScene());
 
 	const double FIXED_UPDATE_FREQUENCY = 20.0;
@@ -31,6 +33,7 @@ int main() {
     }
 
 	delete stateMachine;
+	delete uiManager;
 	delete renderer;
 	return EXIT_SUCCESS;
 }
