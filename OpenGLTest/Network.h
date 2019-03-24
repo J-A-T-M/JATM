@@ -10,6 +10,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iostream>
+#include <chrono>
 #include <string>
 #include <thread>  
 #include <vector>
@@ -51,6 +52,8 @@ typedef Input CLIENTPACKET;
 // state on or from the server
 PlayerTransformPacket serverState;
 bool networkThreadShouldDie = false;
+bool isConnectedToServer = false;
+const long long MAX_DISCONNECT_TIME_MS = 1000;
 
 void initNetwork() {
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
@@ -272,12 +275,30 @@ void recieveFromServer() {
 	std::cout << "Recieve thread for server started" << std::endl;
 
 	int iResult = 0;
+	bool hasDisconnected = false;
+	auto t1 = std::chrono::high_resolution_clock::now();
+	auto t2 = t1;
+
+	printf("Is client socket invalid?: %d, also networkthread: %d", (clientSocket == INVALID_SOCKET), networkThreadShouldDie);
 
 	while (!networkThreadShouldDie && clientSocket != INVALID_SOCKET) {
 		ServerPacket packet;
 		iResult = recv(clientSocket, (char *)&packet, sizeof(ServerPacket), 0);
 		if (iResult == 0 || iResult == SOCKET_ERROR) {
-			break;
+
+			if (!hasDisconnected) {
+				t1 = std::chrono::high_resolution_clock::now();
+				hasDisconnected = true;
+			}
+			else {
+
+				t2 = std::chrono::high_resolution_clock::now();
+
+				if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() > MAX_DISCONNECT_TIME_MS) {
+					isConnectedToServer = false;
+					break;
+				}
+			}
 		}
 		switch (packet.type) {
 			case PACKET_PLAYER_TRANSFORM: {
@@ -302,6 +323,7 @@ void recieveFromServer() {
 	} else if (iResult == 0) {
 		std::cout << "Server shutdown connection" << std::endl;
 	} else if (iResult == SOCKET_ERROR) {
+		std::cout << "isConnected2server: " << isConnectedToServer << std::endl;
 		std::cout << "Server recv failed with error " << WSAGetLastError() << std::endl;
 	}
 
@@ -362,6 +384,7 @@ SOCKET initializeClientSocket(std::string serverIP) {
 		return INVALID_SOCKET;
 	}
 
+	isConnectedToServer = true;
 	std::cout << "Connected to server" << std::endl;
 
 	return clientSocket;
