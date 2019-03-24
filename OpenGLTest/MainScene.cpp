@@ -13,6 +13,8 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 		networkThread = std::thread(ClientLoop, this->SERVER_IP);
 	}
 
+	networkThreadShouldDie = false;		//markus? is this gucci lol
+
 	glm::vec3 color[] = { glm::vec3(1.0, 0.0, 0.3), glm::vec3(1.0, 0.3, 0.0), glm::vec3(1.0, 0.0, 0.3) , glm::vec3(1.0, 0.3, 0.0) };
 	float metallic[] = { 1.0f, 1.0f, 0.0f, 0.0f };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
@@ -79,6 +81,9 @@ bool MainScene::checkDone() {
 			++count;
 		}
 	}
+
+	if (!IS_SERVER) return !isConnectedToServer;
+
 	return (count <= 1);
 }
 
