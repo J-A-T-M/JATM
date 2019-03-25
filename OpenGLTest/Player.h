@@ -4,7 +4,7 @@
 
 class Player : public GameObject {
 	public:
-		Player();
+		Player(glm::vec2 xz, glm::vec3 color, float radius = 2.0f);
 		~Player();
 
 		float getRadius();
@@ -39,6 +39,8 @@ class Player : public GameObject {
 		const static int MAX_INVULN_FRAMES = 10;
 		const static int MAX_STUN_FRAMES = 20;
 	protected:
+		const glm::vec3 BASE_COLOR;
+		
 		int _invulnFrames;
 		int _stunFrames;
 

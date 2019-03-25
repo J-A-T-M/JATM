@@ -55,7 +55,7 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 		glm::vec3 movement = glm::vec3(velocity.x, 0.0f, velocity.z) * delta;
 		pos += movement;
 
-		float baseHeight = PLAYER_BASE_HEIGHT * ((float)players[i]->getHealth() / (float)Player::STARTING_HEALTH);
+		float baseHeight = players[i]->getRadius() * ((float)players[i]->getHealth() / (float)Player::STARTING_HEALTH);
 		float jumpHeight = glm::max(pos.y - baseHeight, 0.0f);
 		if (force.x != 0 || force.z != 0)
 		{

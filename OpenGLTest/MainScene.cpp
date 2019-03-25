@@ -15,12 +15,7 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 
 	glm::vec3 color[] = { Colour::FUCSHIA , Colour::ORANGE, Colour::BLUERA , Colour::GREENRA };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
-		Player* player = new Player();
-		player->setLocalPosition(glm::vec3(10.0 * i - 15.0, 2.0, 5.0));
-		player->renderable->color = color[i % 4];
-		player->renderable->metallic = true;
-		player->renderable->interpolated = true;
-		player->clearRenderablePreviousTransforms();
+		Player* player = new Player(glm::vec2(10.0 * i - 15.0, 5.0), color[i % 4]);
 		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player->renderable), false);
 		players.push_back(player);
 	}
