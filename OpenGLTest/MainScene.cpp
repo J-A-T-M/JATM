@@ -20,6 +20,7 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 		player->renderable->color = color[i % 4];
 		player->renderable->metallic = true;
 		player->renderable->interpolated = true;
+		player->clearRenderablePreviousTransforms();
 		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player->renderable), false);
 		players.push_back(player);
 	}
