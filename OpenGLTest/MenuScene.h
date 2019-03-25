@@ -15,7 +15,6 @@ class MenuScene : public Scene, ISubscriber {
 	private:
 		void UIMoveY(int delta_y);
 		void UIMoveX(int delta_x);
-		float _time;
 
 		GameObject floor;
 		std::vector<GameObject> _gameObjects;
