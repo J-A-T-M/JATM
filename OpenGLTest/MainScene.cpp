@@ -54,22 +54,21 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 }
 
 MainScene::~MainScene() {
+	networkThreadShouldDie = true;
 	for (GameObject* gameObject : players) {
 		if (gameObject != nullptr) {
 			delete gameObject;
 		}
 	}
+	EventManager::unsubscribe(SPAWN_HAZARD, this);
 	for (GameObject* gameObject : hazards) {
 		if (gameObject != nullptr) {
 			delete gameObject;
 		}
 	}
 	delete floor;
-	networkThreadShouldDie = true;
 	networkThread.join();
-
 	std::cout << "MainScene cleaned up" << std::endl;
-	EventManager::unsubscribe(SPAWN_HAZARD, this);
 }
 
 bool MainScene::checkDone() {
