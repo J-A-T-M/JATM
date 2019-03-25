@@ -149,10 +149,6 @@ void MainScene::Update(const float delta) {
 		}
 	}
 
-	for (Hazard* hazard : hazards) {
-		hazard->update(delta);
-	}
-
 	if (IS_SERVER) {
 		if (hazards.size() <= 5) {
 			SpawnHazard();
@@ -175,8 +171,9 @@ void MainScene::Update(const float delta) {
 		player->update();
 		player->updateRenderableTransforms();
 	}
-	for (GameObject* gameObject : hazards) {
-		gameObject->updateRenderableTransforms();
+	for (Hazard* hazard : hazards) {
+		hazard->update(delta);
+		hazard->updateRenderableTransforms();
 	}
 	EventManager::notify(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, &TypeParam<float>(delta), false);
 }
