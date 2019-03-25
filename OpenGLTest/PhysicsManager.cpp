@@ -115,7 +115,7 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 				players[j]->setLocalPositionXZ(posB);
 
 				// if neither player is stunned, and they're not moving in opposing directions
-				if (!players[i]->getStun() && !players[i]->getStun() && glm::dot(velocityA, velocityB) >= 0.0f) {
+				if (!players[i]->getStun() && !players[j]->getStun() && glm::dot(velocityA, velocityB) >= 0.0f) {
 					// if playerB moving towards playerA stun playerA
 					if (glm::dot(velocityB, normal) > 0.0f) {
 						players[i]->setStun();
