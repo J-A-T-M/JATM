@@ -13,8 +13,6 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 		networkThread = std::thread(ClientLoop, this->SERVER_IP);
 	}
 
-	networkThreadShouldDie = false;		//markus? is this gucci lol
-
 	glm::vec3 color[] = { glm::vec3(1.0, 0.0, 0.3), glm::vec3(1.0, 0.3, 0.0), glm::vec3(1.0, 0.0, 0.3) , glm::vec3(1.0, 0.3, 0.0) };
 	float metallic[] = { 1.0f, 1.0f, 0.0f, 0.0f };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
@@ -32,7 +30,7 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 	floor->setLocalPosition(glm::vec3(0, -32, 0));
 	floor->addRenderable();
 	floor->renderable->roughness = 0.8;
-	floor->renderable->color = glm::vec3(0.8, 0.6, 0.4);
+	floor->renderable->color = Colour::BEIGE;
 	floor->renderable->model = MODEL_CUBE;
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor->renderable), false);
 
@@ -44,12 +42,12 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera), false);
 
 	directionalLight.direction = glm::normalize(glm::vec3(1.0f, -0.5f, -0.25f));
-	directionalLight.color = glm::vec3(0.9f, 0.8f, 0.7f);
+	directionalLight.color = Colour::BEIGARA;
 	directionalLight.nearclip = -50.0f;
 	directionalLight.farclip = 50.0f;
 	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight), false);
 
-	glm::vec3 up_color = glm::vec3(0.25f, 0.15f, 0.1f);
+	glm::vec3 up_color = Colour::BROWN;
 	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(up_color), false);
 
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color), false);
@@ -91,10 +89,15 @@ void MainScene::movePlayersBasedOnInput(const float delta) {
 	for (int i = 0; i < players.size(); i++) {
 		glm::vec3 pos = players[i]->getLocalPosition();
 		if (i < playerInputSources.size()) {
-			Input input = InputManager::getInput(playerInputSources[i]);
-			float xAxis = input.right - input.left;
-			float zAxis = input.down - input.up;
-			players[i]->setForce(glm::vec3(xAxis, 0.0f, zAxis));
+			if (!players[i]->getStun()) {
+				Input input = InputManager::getInput(playerInputSources[i]);
+				float xAxis = input.right - input.left;
+				float zAxis = input.down - input.up;
+				players[i]->setForce(glm::vec3(xAxis, 0.0f, zAxis));
+			}
+			else {
+//				players[i]->b
+			}
 		}
 	}
 }

@@ -24,7 +24,7 @@ MenuScene::MenuScene() {
 	floor.setLocalPosition(glm::vec3(0, -32, 0));
 	floor.addRenderable();
 	floor.renderable->roughness = 0.8;
-	floor.renderable->color = glm::vec3(0.4, 0.6, 0.8);
+	floor.renderable->color = Colour::BLUERA;
 	floor.renderable->model = MODEL_CUBE;
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor.renderable), false);
 
@@ -63,7 +63,7 @@ MenuScene::MenuScene() {
 
 	DirectionalLight directionalLight;
 	directionalLight.direction = glm::normalize(glm::vec3(1.0f, -0.5f, -0.25f));
-	directionalLight.color = glm::vec3(0.9f, 0.8f, 0.7f);
+	directionalLight.color = Colour::BEIGARA;
 	directionalLight.nearclip = -50.0f;
 	directionalLight.farclip = 50.0f;
 	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight), false);

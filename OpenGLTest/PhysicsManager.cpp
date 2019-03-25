@@ -1,7 +1,6 @@
 #include "PhysicsManager.h"
 
 #include <glm/glm.hpp>
-
 bool intersects(glm::vec2 distance, float radius, float size) {
 	if (distance.x > (size + radius)) { return false; }
 	if (distance.y > (size + radius)) { return false; }
@@ -108,19 +107,18 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 			dist -= radiusA + radiusB;
 
 			if (dist < 0.0f) {
-				// if we want to make it easier to push other players we can
-				// multiply the normal by abs of itself to make it more axis
-				// alligned
-				/*
-				normal *= abs(normal);
-				normal = normalize(normal);
-				*/
 				glm::vec2 avg_pos = (posA + posB) * 0.5f;
 				float avg_radius = (radiusA + radiusB) * 0.5f;
 				posA = avg_pos + normal * avg_radius;
 				posB = avg_pos - normal * avg_radius;
 				players[i]->setLocalPositionXZ(posA);
 				players[j]->setLocalPositionXZ(posB);
+
+				if (normal.x == -1) {
+					players[j]->setStun(true);
+					players[j]->setBounceUp(false);
+					players[j]->setForce(glm::vec3(0.0, 0.0, 0.0));
+				}
 			}
 		}
 	}

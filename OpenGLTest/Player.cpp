@@ -7,6 +7,7 @@ Player::Player() {
 	_force = glm::vec3(0);
 	_velocity = glm::vec3(0);
 	_bounceUp = false;
+	_stun = false;
 	_health = STARTING_HEALTH;
 	_invulnFrames = 0;
 	addRenderable();
@@ -107,6 +108,16 @@ void Player::setHealth(int health) {
 		_health = 0;
 	}
 }
+
+//!
+void Player::setStun(bool S) {
+	_stun = S;
+}
+//!
+bool Player::getStun() {
+	return _stun;
+}
+
 
 void Player::update() {
 	renderable->fullBright = _invulnFrames % 2;

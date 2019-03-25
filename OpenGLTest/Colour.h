@@ -2,9 +2,7 @@
 
 #include <glm/vec3.hpp>
 
-namespace Colour {
-
-	
+namespace Colour {	
 	const glm::vec3 IRON     = glm::vec3(0.560, 0.570, 0.580);
 	const glm::vec3 SILVER   = glm::vec3(0.972, 0.960, 0.915);
 	const glm::vec3 ALUMINUM = glm::vec3(0.913, 0.921, 0.925);
@@ -24,9 +22,13 @@ namespace Colour {
 	const glm::vec3 BLACK   = glm::vec3(0.000, 0.000, 0.000);
 	const glm::vec3 WHITE   = glm::vec3(1.000, 1.000, 1.000);
 	const glm::vec3 BLUE    = glm::vec3(0.000, 0.000, 1.000);
+	const glm::vec3 BLUERA  = glm::vec3(0.400, 0.600, 0.800);
 	const glm::vec3 RED     = glm::vec3(1.000, 0.000, 0.000);
 	const glm::vec3 GREEN   = glm::vec3(0.000, 1.000, 0.000);
 	const glm::vec3 FUCSHIA = glm::vec3(1.000, 0.000, 0.301);
 	const glm::vec3 ORANGE  = glm::vec3(1.000, 0.301, 0.000);
+	const glm::vec3 YELLOW  = glm::vec3(1.000, 1.000, 0.000);
 
+	const glm::vec3 BROWN   = glm::vec3(0.250, 0.150, 0.100);
+	const glm::vec3 BROWNRA = glm::vec3(0.435, 0.592, 0.972);
 };
