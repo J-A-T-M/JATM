@@ -72,14 +72,16 @@ MainScene::~MainScene() {
 }
 
 bool MainScene::checkDone() {
+	if (!IS_SERVER) {
+		return !isConnectedToServer;
+	}
+
 	int count = 0;
 	for (Player* player : players) {
 		if (player->getHealth() != 0) {
 			++count;
 		}
 	}
-
-	if (!IS_SERVER) return !isConnectedToServer;
 
 	return (count <= 1);
 }
