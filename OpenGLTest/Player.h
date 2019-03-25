@@ -27,9 +27,7 @@ class Player : public GameObject {
 		bool getBounceUp();
 		void setBounceUp(bool flag);
 
-		//!
-		void setStun(bool S);
-		//!
+		void setStun();
 		bool getStun();
 
 		int getHealth();
@@ -39,13 +37,15 @@ class Player : public GameObject {
 
 		const static int STARTING_HEALTH = 100;
 		const static int MAX_INVULN_FRAMES = 10;
+		const static int MAX_STUN_FRAMES = 20;
 	protected:
 		int _invulnFrames;
+		int _stunFrames;
+
 		float _radius;
 		glm::vec3 _force;
 		glm::vec3 _velocity;
 		bool _bounceUp;
 		int _health;
-		bool _stun;
 };
 

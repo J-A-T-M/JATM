@@ -7,9 +7,9 @@ Player::Player() {
 	_force = glm::vec3(0);
 	_velocity = glm::vec3(0);
 	_bounceUp = false;
-	_stun = false;
 	_health = STARTING_HEALTH;
 	_invulnFrames = 0;
+	_stunFrames = 0;
 	addRenderable();
 	renderable->roughness = 0.4f;
 	renderable->model = MODEL_SUZANNE;
@@ -27,15 +27,23 @@ void Player::setRadius(float radius) {
 }
 
 float Player::getForceY() {
+	if (_stunFrames > 0) {
+		return 0.0f;
+	}
 	return _force.y;
 }
 
 glm::vec2 Player::getForceXZ() {
+	if (_stunFrames > 0) {
+		return glm::vec2(0.0f);
+	}
 	return glm::vec2(_force.x, _force.z);
 }
 
-glm::vec3 Player::getForce()
-{
+glm::vec3 Player::getForce(){
+	if (_stunFrames > 0) {
+		return glm::vec3(0.0f);
+	}
 	return _force;
 }
 
@@ -109,20 +117,20 @@ void Player::setHealth(int health) {
 	}
 }
 
-//!
-void Player::setStun(bool S) {
-	_stun = S;
+void Player::setStun() {
+	_stunFrames = MAX_STUN_FRAMES;
 }
-//!
 bool Player::getStun() {
-	return _stun;
+	return _stunFrames > 0;
 }
-
 
 void Player::update() {
 	renderable->fullBright = _invulnFrames % 2;
-
+	renderable->metallic = _stunFrames == 0;
 	if (_invulnFrames > 0) {
 		--_invulnFrames;
+	}
+	if (_stunFrames > 0) {
+		--_stunFrames;
 	}
 }

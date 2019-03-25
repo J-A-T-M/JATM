@@ -13,13 +13,12 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 		networkThread = std::thread(ClientLoop, this->SERVER_IP);
 	}
 
-	glm::vec3 color[] = { glm::vec3(1.0, 0.0, 0.3), glm::vec3(1.0, 0.3, 0.0), glm::vec3(1.0, 0.0, 0.3) , glm::vec3(1.0, 0.3, 0.0) };
-	float metallic[] = { 1.0f, 1.0f, 0.0f, 0.0f };
+	glm::vec3 color[] = { Colour::FUCSHIA , Colour::ORANGE, Colour::BLUERA , Colour::GREENRA };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
 		Player* player = new Player();
 		player->setLocalPosition(glm::vec3(10.0 * i - 15.0, 2.0, 5.0));
 		player->renderable->color = color[i % 4];
-		player->renderable->metallic = metallic[i];
+		player->renderable->metallic = true;
 		player->renderable->interpolated = true;
 		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player->renderable), false);
 		players.push_back(player);
@@ -87,17 +86,11 @@ bool MainScene::checkDone() {
 
 void MainScene::movePlayersBasedOnInput(const float delta) {
 	for (int i = 0; i < players.size(); i++) {
-		glm::vec3 pos = players[i]->getLocalPosition();
 		if (i < playerInputSources.size()) {
-			if (!players[i]->getStun()) {
-				Input input = InputManager::getInput(playerInputSources[i]);
-				float xAxis = input.right - input.left;
-				float zAxis = input.down - input.up;
-				players[i]->setForce(glm::vec3(xAxis, 0.0f, zAxis));
-			}
-			else {
-//				players[i]->b
-			}
+			Input input = InputManager::getInput(playerInputSources[i]);
+			float xAxis = input.right - input.left;
+			float zAxis = input.down - input.up;
+			players[i]->setForce(glm::vec3(xAxis, 0.0f, zAxis));
 		}
 	}
 }
