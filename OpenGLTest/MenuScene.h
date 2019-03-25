@@ -4,6 +4,7 @@
 #include <vector>
 #include "EventManager.h"
 #include "GameObject.h"
+#include "UI/TextComponent.h"
 
 class MenuScene : public Scene, ISubscriber {
 	public:
@@ -18,6 +19,11 @@ class MenuScene : public Scene, ISubscriber {
 
 		GameObject floor;
 		std::vector<GameObject> _gameObjects;
+
+		UIComponent* _UImenuScene;
+		TextComponent* _UIisServer;
+		UIComponent* _UIipBox;
+		std::vector<TextComponent*> _UIserverIP;
 
 		std::vector<int> _serverIP;
 		bool _isServer;

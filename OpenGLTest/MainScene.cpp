@@ -13,9 +13,8 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 		networkThread = std::thread(ClientLoop, this->SERVER_IP);
 	}
 
-//	glm::vec3 color[] = { glm::vec3(1.0, 0.0, 0.3), glm::vec3(1.0, 0.3, 0.0), glm::vec3(1.0, 0.0, 0.3) , glm::vec3(1.0, 0.3, 0.0) };
-	glm::vec3 color[] = { Colour::FUCSHIA , Colour::ORANGE, Colour::BLUE , Colour::GREEN };
-	float metallic[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glm::vec3 color[] = { glm::vec3(1.0, 0.0, 0.3), glm::vec3(1.0, 0.3, 0.0), glm::vec3(1.0, 0.0, 0.3) , glm::vec3(1.0, 0.3, 0.0) };
+	float metallic[] = { 1.0f, 1.0f, 0.0f, 0.0f };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
 		Player* player = new Player();
 		player->setLocalPosition(glm::vec3(10.0 * i - 15.0, 2.0, 5.0));
@@ -80,6 +79,9 @@ bool MainScene::checkDone() {
 			++count;
 		}
 	}
+
+	if (!IS_SERVER) return !isConnectedToServer;
+
 	return (count <= 1);
 }
 

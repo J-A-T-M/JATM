@@ -57,7 +57,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;.\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -81,7 +81,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;.\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -112,6 +112,10 @@
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="StateMachine.cpp" />
+    <ClCompile Include="UI\ImageComponent.cpp" />
+    <ClCompile Include="UI\TextComponent.cpp" />
+    <ClCompile Include="UI\UIComponent.cpp" />
+    <ClCompile Include="UI\UIManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="../assets/shaders/Standard.psh" />
@@ -141,6 +145,10 @@
     <ClInclude Include="shader.h" />
     <ClInclude Include="ISubscriber.h" />
     <ClInclude Include="StateMachine.h" />
+    <ClInclude Include="UI\ImageComponent.h" />
+    <ClInclude Include="UI\TextComponent.h" />
+    <ClInclude Include="UI\UIComponent.h" />
+    <ClInclude Include="UI\UIManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="TestUI.xml" />

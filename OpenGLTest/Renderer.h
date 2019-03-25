@@ -10,6 +10,7 @@
 #include "EventManager.h"
 #include "Renderable.h"
 #include "shader.h"
+#include "UI\UIComponent.h"
 
 class Renderer : public ISubscriber {
 	public:
@@ -32,6 +33,7 @@ class Renderer : public ISubscriber {
 		GLuint VAO;
 		Shader* standardShader;
 		Shader* depthMapShader;
+		Shader* uiShader;
 		int windowWidth = 1600;
 		int windowHeight = 900;
 
@@ -58,4 +60,10 @@ class Renderer : public ISubscriber {
 		const GLuint SHADOW_SIZE = 1024;
 
 		GLuint depthMap, depthMapFBO;
+
+		void DrawUIComponent(UIComponent * uiComponent);
+		void TraverseUIComponent(UIComponent * uiComponent);
+		void DrawUI();
+		void InitUIComponent(UIComponent * uiComponent);
+		std::list<UIComponent*> transparentList;
 };

@@ -74,4 +74,5 @@ void AssetLoader::preloadAssets() {
 	models[MODEL_SPHERE] = loadModel("../assets/models/sphere.obj");
 	models[MODEL_SUZANNE] = loadModel("../assets/models/suzanne.obj");
 	textures[TEXTURE_UV_GRID] = loadTexture("../assets/textures/UV Grid.png");
+	textures[TEXTURE_FONT_SHARE_TECH_MONO] = loadTexture("../assets/textures/ShareTechMono.png");
 }
