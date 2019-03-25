@@ -302,7 +302,7 @@ int Renderer::Init() {
 	PreloadAssetBuffers();
 	InputManager::registerInputCallbacks(window);
 
-	directionalLight[1].color = glm::vec3(0.7f, 0.8f, 0.9f);
+	directionalLight[1].color = Colour::BROWNRA;
 	directionalLight[1].direction = glm::vec3(0, -1, 0);
 	directionalLight[1].nearclip = -50;
 	directionalLight[1].farclip = 50;

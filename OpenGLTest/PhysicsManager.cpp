@@ -1,7 +1,7 @@
 #include "PhysicsManager.h"
 
 #include <glm/glm.hpp>
-
+#include "Colour.h"
 bool intersects(glm::vec2 distance, float radius, float size) {
 	if (distance.x > (size + radius)) { return false; }
 	if (distance.y > (size + radius)) { return false; }
@@ -24,6 +24,7 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 	const float PLAYER_BASE_HEIGHT = 2.0;
 
 	for (int i = 0; i < players.size(); ++i) {
+		
 		glm::vec3 rot = players[i]->getLocalRotation();
 		glm::vec3 pos = players[i]->getLocalPosition();
 		glm::vec3 force = players[i]->getForce();
@@ -121,6 +122,21 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 				posB = avg_pos - normal * avg_radius;
 				players[i]->setLocalPositionXZ(posA);
 				players[j]->setLocalPositionXZ(posB);
+
+				std::cout << "Normal: " << normal.x << "," << normal.y << std::endl;
+
+				//!
+				if (normal.x == -1) {
+					std::cout << "BLUE - " << players[i]->getStun() << std::endl;
+					players[j]->setStun(true);
+					players[j]->setBounceUp(false);
+					players[j]->setForce(glm::vec3(0.0, 0.0, 0.0));
+					std::cout << "PERSONA - " << players[j]->getBounceUp() << std::endl;
+					std::cout << "RED - " << players[i]->getStun() << std::endl;
+
+				}
+				//!
+//				std::cout << "APPLE!" << std::endl;
 			}
 		}
 	}
@@ -136,7 +152,11 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 			if (hazardHeight <= playerHeight + size + radius) {
 				if (intersects(distance, radius, size)) {
 					players[i]->damageHealth(25);
+					//!
+//					std::cout << "ORANGE!" << std::endl;
 				}
+				//!
+				//std::cout << "PEACH!" << std::endl;
 			}
 		}
 	}

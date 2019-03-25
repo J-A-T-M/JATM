@@ -27,6 +27,11 @@ class Player : public GameObject {
 		bool getBounceUp();
 		void setBounceUp(bool flag);
 
+		//!
+		void setStun(bool S);
+		//!
+		bool getStun();
+
 		int getHealth();
 		void damageHealth(int damage);
 		void setHealth(int health);
@@ -41,5 +46,6 @@ class Player : public GameObject {
 		glm::vec3 _velocity;
 		bool _bounceUp;
 		int _health;
+		bool _stun;
 };
 
