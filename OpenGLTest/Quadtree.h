@@ -6,8 +6,8 @@
 class Quadtree
 {
 private:
-	const int MAX_OBJECTS = 3;
-	const int MAX_LEVELS = 255;
+	const int MAX_OBJECTS = 1;
+	const int MAX_LEVELS = 8;
 
 	int level;
 	std::vector<Rectangle*> objects = {};
