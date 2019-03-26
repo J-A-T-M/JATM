@@ -37,24 +37,27 @@ private:
 	int GetIndex(Rectangle* rect)
 	{
 		int index = -1;
-		double verticalMidpoint = this->bounds->x + (this->bounds->width / 2.0);
-		double horizontalMidpoint = this->bounds->y + (this->bounds->height / 2.0);
 
-		bool topQuadrant = (rect->y < horizontalMidpoint && rect->y + rect->height < horizontalMidpoint);
-		bool bottomQuadrant = (rect->y > horizontalMidpoint);
+		double verticalMidpoint = bounds->x + (bounds->width / 2.0);
+		double horizontalMidpoint = bounds->y + (bounds->height / 2.0);
 
-		if (rect->x < verticalMidpoint && rect->x + rect->width < verticalMidpoint)
+		bool inLeft = (rect->x < verticalMidpoint && rect->x + rect->width < verticalMidpoint);
+		bool inRight = (rect->x >= verticalMidpoint && rect->x + rect->width >= verticalMidpoint);
+		bool inTop = (rect->y < horizontalMidpoint && rect->y + rect->height < horizontalMidpoint);
+		bool inBottom = (rect->y >= horizontalMidpoint && rect->y + rect->height >= horizontalMidpoint);
+
+		if (inLeft) 
 		{
-			if (topQuadrant)
+			if (inTop)
 				index = 0;
-			else
+			else if (inBottom)
 				index = 3;
 		}
-		else
+		else if (inRight)
 		{
-			if (topQuadrant)
+			if (inTop)
 				index = 1;
-			else
+			else if (inBottom)
 				index = 2;
 		}
 
@@ -117,13 +120,27 @@ public:
 	}
 
 	std::vector<int>* Retrieve(std::vector<int>* result, Rectangle* rect)
-	{
-		int index = this->GetIndex(rect);
-		if (index != -1 && this->nodes.size() > 0 && this->nodes[0] != NULL)
-			this->nodes[index]->Retrieve(result, rect);
+	{	
+		// push back object IDs from this quadtree
+		for (int i = 0; i < objects.size(); ++i) {
+			result->push_back(objects[i]->id);
+		}
 
-		for (int i = 0; i < this->objects.size(); ++i)
-			result->push_back(this->objects[i]->id);
+		int index = GetIndex(rect);
+		if (index == -1) { // push back object IDs from all children
+			for (int i = 0; i < nodes.size(); ++i) {
+				if (nodes[i] != NULL) {
+					nodes[i]->Retrieve(result, rect);
+				}
+			}
+		} else { // push back object IDs from child given by index
+			if (index < nodes.size()) {
+				if (nodes[index] != NULL) {
+					nodes[index]->Retrieve(result, rect);
+				}
+			}
+		}
+
 		return result;
 	}
 };
