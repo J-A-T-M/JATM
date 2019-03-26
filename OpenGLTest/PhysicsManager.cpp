@@ -142,10 +142,8 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 					}
 				}
 			}
-			else
+			else if (i != goId)
 			{
-				if (i == goId)
-					continue;
 				// player vs player
 				glm::vec2 posA = players[i]->getLocalPositionXZ();
 				glm::vec2 posB = players[goId]->getLocalPositionXZ();
@@ -177,57 +175,4 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 			}
 		}
 	}
-
-	// collision detection (without quadtree)
-	/*
-	for (int i = 0; i < players.size(); ++i) {
-		for (int j = i + 1; j < players.size(); ++j) {
-			glm::vec2 posA = players[i]->getLocalPositionXZ();
-			glm::vec2 posB = players[j]->getLocalPositionXZ();
-			glm::vec2 velocityA = players[i]->getVelocityXZ();
-			glm::vec2 velocityB = players[j]->getVelocityXZ();
-			float radiusA = players[i]->getRadius();
-			float radiusB = players[j]->getRadius();
-
-			glm::vec2 normal = posA - posB;
-
-			float dist = glm::length(normal);
-			normal /= dist;
-			dist -= radiusA + radiusB;
-
-			if (dist < 0.0f) {
-				glm::vec2 avg_pos = (posA + posB) * 0.5f;
-				float avg_radius = (radiusA + radiusB) * 0.5f;
-				posA = avg_pos + normal * avg_radius;
-				posB = avg_pos - normal * avg_radius;
-				players[i]->setLocalPositionXZ(posA);
-				players[j]->setLocalPositionXZ(posB);
-
-				if (normal.x == -1) {
-					players[j]->setStun(true);
-					players[j]->setBounceUp(false);
-					players[j]->setForce(glm::vec3(0.0, 0.0, 0.0));
-				}
-			}
-		}
-	}
-	*/
-	/*
-	for (int i = 0; i < players.size(); ++i) {
-		for (int j = 0; j < hazards.size(); ++j) {
-			glm::vec2 playerPosition = players[i]->getLocalPositionXZ();
-			glm::vec2 hazardPosition = hazards[j]->getLocalPositionXZ();
-			glm::vec2 distance = glm::abs(playerPosition - hazardPosition);
-			float radius = players[i]->getRadius();
-			float size = hazards[j]->getLocalScale();
-			float playerHeight = players[i]->getLocalPositionY();
-			float hazardHeight = hazards[j]->getLocalPositionY();
-			if (hazardHeight <= playerHeight + size + radius) {
-				if (intersects(distance, radius, size)) {
-					players[i]->damageHealth(25);
-				}
-			}
-		}
-	}
-	*/
 }
