@@ -1,6 +1,8 @@
 #include "PhysicsManager.h"
 
 #include <glm/glm.hpp>
+Quadtree* PhysicsManager::quad = new Quadtree(0, new Rectangle(0, 0, 32, 32));
+
 bool intersects(glm::vec2 distance, float radius, float size) {
 	if (distance.x > (size + radius)) { return false; }
 	if (distance.y > (size + radius)) { return false; }
@@ -90,7 +92,94 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 		players[i]->setLocalPosition(pos);
 	}
 
-	// collision detection
+	// insert players and hazards into quadtree
+	PhysicsManager::quad->Clear();
+	for (int i = 0; i < players.size(); ++i)
+	{
+		float radius = players[i]->getRadius();
+		glm::vec2 playerPosition = players[i]->getLocalPositionXZ();
+		Rectangle* pRect = new Rectangle(i, playerPosition.x - radius, playerPosition.y - radius, radius * 2, radius * 2);
+		PhysicsManager::quad->Insert(pRect);
+	}
+	for (int i = 0; i < hazards.size(); ++i)
+	{
+		glm::vec2 hazardPosition = hazards[i]->getLocalPositionXZ();
+		float size = hazards[i]->getLocalScale();
+		Rectangle* hRect = new Rectangle(i + 100, hazardPosition.x - size / 2.0, hazardPosition.y - size / 2.0, size, size);
+		PhysicsManager::quad->Insert(hRect);
+	}
+
+	// fetch from quadtree and do collision detection
+	std::vector<int> closeBy;
+	for (int i = 0; i < players.size(); ++i)
+	{
+		closeBy.clear();
+
+		float radius = players[i]->getRadius();
+		glm::vec2 playerPosition = players[i]->getLocalPositionXZ();
+		Rectangle* pRect = new Rectangle(i, playerPosition.x - radius, playerPosition.y - radius, radius * 2, radius * 2);
+
+		PhysicsManager::quad->Retrieve(&closeBy, pRect);
+
+		for (int j = 0; j < closeBy.size(); ++j)
+		{
+			int goId = closeBy[j];
+
+			if (goId >= 100) // hazzards
+			{
+				int hId = goId - 100;
+
+				glm::vec2 playerPosition = players[i]->getLocalPositionXZ();
+				glm::vec2 hazardPosition = hazards[hId]->getLocalPositionXZ();
+				glm::vec2 distance = glm::abs(playerPosition - hazardPosition);
+				float radius = players[i]->getRadius();
+				float size = hazards[hId]->getLocalScale();
+				float playerHeight = players[i]->getLocalPositionY();
+				float hazardHeight = hazards[hId]->getLocalPositionY();
+				if (hazardHeight <= playerHeight + size + radius) {
+					if (intersects(distance, radius, size)) {
+						players[i]->damageHealth(25);
+					}
+				}
+			}
+			else
+			{
+				if (i == goId)
+					continue;
+				// player vs player
+				glm::vec2 posA = players[i]->getLocalPositionXZ();
+				glm::vec2 posB = players[goId]->getLocalPositionXZ();
+				glm::vec2 velocityA = players[i]->getVelocityXZ();
+				glm::vec2 velocityB = players[goId]->getVelocityXZ();
+				float radiusA = players[i]->getRadius();
+				float radiusB = players[goId]->getRadius();
+
+				glm::vec2 normal = posA - posB;
+
+				float dist = glm::length(normal);
+				normal /= dist;
+				dist -= radiusA + radiusB;
+
+				if (dist < 0.0f) {
+					glm::vec2 avg_pos = (posA + posB) * 0.5f;
+					float avg_radius = (radiusA + radiusB) * 0.5f;
+					posA = avg_pos + normal * avg_radius;
+					posB = avg_pos - normal * avg_radius;
+					players[i]->setLocalPositionXZ(posA);
+					players[goId]->setLocalPositionXZ(posB);
+
+					if (normal.x == -1) {
+						players[goId]->setStun(true);
+						players[goId]->setBounceUp(false);
+						players[goId]->setForce(glm::vec3(0.0, 0.0, 0.0));
+					}
+				}
+			}
+		}
+	}
+
+	// collision detection (without quadtree)
+	/*
 	for (int i = 0; i < players.size(); ++i) {
 		for (int j = i + 1; j < players.size(); ++j) {
 			glm::vec2 posA = players[i]->getLocalPositionXZ();
@@ -122,6 +211,8 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 			}
 		}
 	}
+	*/
+	/*
 	for (int i = 0; i < players.size(); ++i) {
 		for (int j = 0; j < hazards.size(); ++j) {
 			glm::vec2 playerPosition = players[i]->getLocalPositionXZ();
@@ -138,4 +229,5 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 			}
 		}
 	}
+	*/
 }
