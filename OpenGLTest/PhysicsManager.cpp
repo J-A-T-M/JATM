@@ -57,7 +57,7 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 		glm::vec3 movement = glm::vec3(velocity.x, 0.0f, velocity.z) * delta;
 		pos += movement;
 
-		float baseHeight = PLAYER_BASE_HEIGHT * ((float)players[i]->getHealth() / (float)Player::STARTING_HEALTH);
+		float baseHeight = players[i]->getRadius() * ((float)players[i]->getHealth() / (float)Player::STARTING_HEALTH);
 		float jumpHeight = glm::max(pos.y - baseHeight, 0.0f);
 		if (force.x != 0 || force.z != 0)
 		{
@@ -166,10 +166,16 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 					players[i]->setLocalPositionXZ(posA);
 					players[goId]->setLocalPositionXZ(posB);
 
-					if (normal.x == -1) {
-						players[goId]->setStun(true);
-						players[goId]->setBounceUp(false);
-						players[goId]->setForce(glm::vec3(0.0, 0.0, 0.0));
+					// if neither player is stunned, and they're not moving in opposing directions
+					if (!players[i]->getStun() && !players[goId]->getStun() && glm::dot(velocityA, velocityB) >= 0.0f) {
+						// if playerB moving towards playerA stun playerA
+						if (glm::dot(velocityB, normal) > 0.0f) {
+							players[i]->setStun();
+						}
+						// if playerA moving towards playerB stun playerB
+						if (glm::dot(velocityA, normal) < 0.0f) {
+							players[goId]->setStun();
+						}
 					}
 				}
 			}

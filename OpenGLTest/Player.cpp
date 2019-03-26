@@ -1,17 +1,30 @@
 #include "Player.h"
 #include <algorithm>
 
-Player::Player() {
-	setLocalScale(2.0f);
-	_radius = 2.0f;
+const float BASE_ROUGHNESS = 0.4f; 
+const float BASE_METALLIC = 1.0f;
+const float STUN_ROUGHNESS = 0.75f;
+const float STUN_METALLIC = 0.0f;
+#define STUN_COLOR Colour::TITANIUM
+#define INVULN_COLOR Colour::RED
+
+Player::Player(glm::vec2 xz, glm::vec3 color, float radius) : BASE_COLOR(color) {
+	setLocalPositionXZ(xz);
+	setLocalPositionY(radius);
+	setLocalScale(radius);
+	
+	_invulnFrames = 0;
+	_stunFrames = 0;
+	_radius = radius;
 	_force = glm::vec3(0);
 	_velocity = glm::vec3(0);
 	_bounceUp = false;
-	_stun = false;
 	_health = STARTING_HEALTH;
-	_invulnFrames = 0;
+
 	addRenderable();
-	renderable->roughness = 0.4f;
+	renderable->color = BASE_COLOR;
+	renderable->roughness = BASE_ROUGHNESS;
+	renderable->metallic = BASE_METALLIC;
 	renderable->model = MODEL_SUZANNE;
 	renderable->interpolated = true;
 }
@@ -27,15 +40,23 @@ void Player::setRadius(float radius) {
 }
 
 float Player::getForceY() {
+	if (_stunFrames > 0) {
+		return 0.0f;
+	}
 	return _force.y;
 }
 
 glm::vec2 Player::getForceXZ() {
+	if (_stunFrames > 0) {
+		return glm::vec2(0.0f);
+	}
 	return glm::vec2(_force.x, _force.z);
 }
 
-glm::vec3 Player::getForce()
-{
+glm::vec3 Player::getForce(){
+	if (_stunFrames > 0) {
+		return glm::vec3(0.0f);
+	}
 	return _force;
 }
 
@@ -109,20 +130,39 @@ void Player::setHealth(int health) {
 	}
 }
 
-//!
-void Player::setStun(bool S) {
-	_stun = S;
+void Player::setStun() {
+	_stunFrames = MAX_STUN_FRAMES;
 }
-//!
 bool Player::getStun() {
-	return _stun;
+	return _stunFrames > 0;
+}
+void Player::setStunFrames(int frames) {
+	if (frames >= 0) {
+		_stunFrames = frames;
+	} else {
+		_stunFrames = 0;
+	}
+}
+int Player::getStunFrames() {
+	return _stunFrames;
 }
 
 
 void Player::update() {
+	// visual response for being stunned
+	renderable->metallic = (_stunFrames == 0) ? BASE_METALLIC : STUN_METALLIC;
+	renderable->roughness = (_stunFrames == 0) ? BASE_ROUGHNESS : STUN_ROUGHNESS;
+	float mixFactor = _stunFrames / (float)MAX_STUN_FRAMES;
+	renderable->color = glm::mix(BASE_COLOR, STUN_COLOR, mixFactor);
+
+	// visual response for being invulnerable
 	renderable->fullBright = _invulnFrames % 2;
+	renderable->color = (_invulnFrames % 2) ? INVULN_COLOR : renderable->color;
 
 	if (_invulnFrames > 0) {
 		--_invulnFrames;
+	}
+	if (_stunFrames > 0) {
+		--_stunFrames;
 	}
 }

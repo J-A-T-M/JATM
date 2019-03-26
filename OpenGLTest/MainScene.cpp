@@ -13,14 +13,9 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 		networkThread = std::thread(ClientLoop, this->SERVER_IP);
 	}
 
-	glm::vec3 color[] = { glm::vec3(1.0, 0.0, 0.3), glm::vec3(1.0, 0.3, 0.0), glm::vec3(1.0, 0.0, 0.3) , glm::vec3(1.0, 0.3, 0.0) };
-	float metallic[] = { 1.0f, 1.0f, 0.0f, 0.0f };
+	glm::vec3 color[] = { Colour::FUCSHIA , Colour::ORANGE, Colour::BLUERA , Colour::GREENRA };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
-		Player* player = new Player();
-		player->setLocalPosition(glm::vec3(10.0 * i - 15.0, 2.0, 5.0));
-		player->renderable->color = color[i % 4];
-		player->renderable->metallic = metallic[i];
-		player->renderable->interpolated = true;
+		Player* player = new Player(glm::vec2(10.0 * i - 15.0, 5.0), color[i % 4]);
 		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player->renderable), false);
 		players.push_back(player);
 	}
@@ -54,25 +49,28 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 }
 
 MainScene::~MainScene() {
+	networkThreadShouldDie = true;
 	for (GameObject* gameObject : players) {
 		if (gameObject != nullptr) {
 			delete gameObject;
 		}
 	}
+	EventManager::unsubscribe(SPAWN_HAZARD, this);
 	for (GameObject* gameObject : hazards) {
 		if (gameObject != nullptr) {
 			delete gameObject;
 		}
 	}
 	delete floor;
-	networkThreadShouldDie = true;
 	networkThread.join();
-
 	std::cout << "MainScene cleaned up" << std::endl;
-	EventManager::unsubscribe(SPAWN_HAZARD, this);
 }
 
 bool MainScene::checkDone() {
+	if (!IS_SERVER) {
+		return !isConnectedToServer;
+	}
+
 	int count = 0;
 	for (Player* player : players) {
 		if (player->getHealth() != 0) {
@@ -80,24 +78,16 @@ bool MainScene::checkDone() {
 		}
 	}
 
-	if (!IS_SERVER) return !isConnectedToServer;
-
 	return (count <= 1);
 }
 
 void MainScene::movePlayersBasedOnInput(const float delta) {
 	for (int i = 0; i < players.size(); i++) {
-		glm::vec3 pos = players[i]->getLocalPosition();
 		if (i < playerInputSources.size()) {
-			if (!players[i]->getStun()) {
-				Input input = InputManager::getInput(playerInputSources[i]);
-				float xAxis = input.right - input.left;
-				float zAxis = input.down - input.up;
-				players[i]->setForce(glm::vec3(xAxis, 0.0f, zAxis));
-			}
-			else {
-//				players[i]->b
-			}
+			Input input = InputManager::getInput(playerInputSources[i]);
+			float xAxis = input.right - input.left;
+			float zAxis = input.down - input.up;
+			players[i]->setForce(glm::vec3(xAxis, 0.0f, zAxis));
 		}
 	}
 }
@@ -109,6 +99,7 @@ void MainScene::sendPlayerTransforms() {
 		packet.playerTransformPacket.playerTransforms[i].position = players[i]->getLocalPosition();
 		packet.playerTransformPacket.playerTransforms[i].rotation = players[i]->getLocalRotation();
 		packet.playerTransformPacket.playerTransforms[i].health = players[i]->getHealth();
+		packet.playerTransformPacket.playerTransforms[i].stunFrames = players[i]->getStunFrames();
 	}
 	sendToClients(packet);
 }
@@ -117,6 +108,7 @@ void MainScene::movePlayersBasedOnNetworking() {
 	for (int i = 0; i < players.size(); i++) {
 		players[i]->setLocalPosition(serverState.playerTransforms[i].position);
 		players[i]->setLocalRotation(serverState.playerTransforms[i].rotation);
+		players[i]->setStunFrames(serverState.playerTransforms[i].stunFrames);
 		// horrible hackjob by markus
 		// find a better way to send this
 		int damage = players[i]->getHealth() - serverState.playerTransforms[i].health;
@@ -154,10 +146,6 @@ void MainScene::Update(const float delta) {
 		}
 	}
 
-	for (Hazard* hazard : hazards) {
-		hazard->update(delta);
-	}
-
 	if (IS_SERVER) {
 		if (hazards.size() <= 5) {
 			SpawnHazard();
@@ -180,8 +168,9 @@ void MainScene::Update(const float delta) {
 		player->update();
 		player->updateRenderableTransforms();
 	}
-	for (GameObject* gameObject : hazards) {
-		gameObject->updateRenderableTransforms();
+	for (Hazard* hazard : hazards) {
+		hazard->update(delta);
+		hazard->updateRenderableTransforms();
 	}
 	EventManager::notify(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, &TypeParam<float>(delta), false);
 }

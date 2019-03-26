@@ -9,8 +9,6 @@
 #define BASE_Z 28
 
 MenuScene::MenuScene() {
-	_time = 0;
-
 	_serverIP = {
 			1,2,7,
 			0,0,0,

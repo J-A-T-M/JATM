@@ -25,6 +25,7 @@ namespace Colour {
 	const glm::vec3 BLUERA  = glm::vec3(0.400, 0.600, 0.800);
 	const glm::vec3 RED     = glm::vec3(1.000, 0.000, 0.000);
 	const glm::vec3 GREEN   = glm::vec3(0.000, 1.000, 0.000);
+	const glm::vec3 GREENRA = glm::vec3(0.600, 0.800, 0.400);
 	const glm::vec3 FUCSHIA = glm::vec3(1.000, 0.000, 0.301);
 	const glm::vec3 ORANGE  = glm::vec3(1.000, 0.301, 0.000);
 	const glm::vec3 YELLOW  = glm::vec3(1.000, 1.000, 0.000);

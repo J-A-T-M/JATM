@@ -4,7 +4,7 @@
 
 class Player : public GameObject {
 	public:
-		Player();
+		Player(glm::vec2 xz, glm::vec3 color, float radius = 2.0f);
 		~Player();
 
 		float getRadius();
@@ -27,10 +27,10 @@ class Player : public GameObject {
 		bool getBounceUp();
 		void setBounceUp(bool flag);
 
-		//!
-		void setStun(bool S);
-		//!
+		void setStun();
 		bool getStun();
+		void setStunFrames(int frames);
+		int getStunFrames();
 
 		int getHealth();
 		void damageHealth(int damage);
@@ -39,13 +39,17 @@ class Player : public GameObject {
 
 		const static int STARTING_HEALTH = 100;
 		const static int MAX_INVULN_FRAMES = 10;
+		const static int MAX_STUN_FRAMES = 20;
 	protected:
+		const glm::vec3 BASE_COLOR;
+		
 		int _invulnFrames;
+		int _stunFrames;
+
 		float _radius;
 		glm::vec3 _force;
 		glm::vec3 _velocity;
 		bool _bounceUp;
 		int _health;
-		bool _stun;
 };
 
