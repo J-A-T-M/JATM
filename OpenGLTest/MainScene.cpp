@@ -67,8 +67,10 @@ MainScene::~MainScene() {
 }
 
 bool MainScene::checkDone() {
-	if (!IS_SERVER) {
-		return !isConnectedToServer;
+	if (!IS_SERVER && time > MAX_DISCONNECT_TIME_MS / 1000.0f) {
+		if (!isConnectedToServer) {
+			return true;
+		}
 	}
 
 	int count = 0;
