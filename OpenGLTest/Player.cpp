@@ -136,6 +136,16 @@ void Player::setStun() {
 bool Player::getStun() {
 	return _stunFrames > 0;
 }
+void Player::setStunFrames(int frames) {
+	if (frames >= 0) {
+		_stunFrames = frames;
+	} else {
+		_stunFrames = 0;
+	}
+}
+int Player::getStunFrames() {
+	return _stunFrames;
+}
 
 
 void Player::update() {

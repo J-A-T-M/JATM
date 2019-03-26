@@ -99,6 +99,7 @@ void MainScene::sendPlayerTransforms() {
 		packet.playerTransformPacket.playerTransforms[i].position = players[i]->getLocalPosition();
 		packet.playerTransformPacket.playerTransforms[i].rotation = players[i]->getLocalRotation();
 		packet.playerTransformPacket.playerTransforms[i].health = players[i]->getHealth();
+		packet.playerTransformPacket.playerTransforms[i].stunFrames = players[i]->getStunFrames();
 	}
 	sendToClients(packet);
 }
@@ -107,6 +108,7 @@ void MainScene::movePlayersBasedOnNetworking() {
 	for (int i = 0; i < players.size(); i++) {
 		players[i]->setLocalPosition(serverState.playerTransforms[i].position);
 		players[i]->setLocalRotation(serverState.playerTransforms[i].rotation);
+		players[i]->setStunFrames(serverState.playerTransforms[i].stunFrames);
 		// horrible hackjob by markus
 		// find a better way to send this
 		int damage = players[i]->getHealth() - serverState.playerTransforms[i].health;

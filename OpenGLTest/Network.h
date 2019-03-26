@@ -28,6 +28,7 @@ struct PLAYER_TRANSFORM {
 	glm::vec3 position;
 	glm::vec3 rotation;
 	int health;
+	int stunFrames;
 };
 
 struct PlayerTransformPacket {

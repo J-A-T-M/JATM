@@ -29,6 +29,8 @@ class Player : public GameObject {
 
 		void setStun();
 		bool getStun();
+		void setStunFrames(int frames);
+		int getStunFrames();
 
 		int getHealth();
 		void damageHealth(int damage);
