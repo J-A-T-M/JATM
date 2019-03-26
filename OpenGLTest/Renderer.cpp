@@ -106,12 +106,15 @@ void Renderer::Draw() {
 	glm::mat4 camera_viewProjection = camera_projection * camera_view;
 	glm::vec3 camera_upDir = camera_view * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
 
+	glm::mat4 lightViewProjections[NUM_LIGHTS];
+	glm::vec3 lightDirections[NUM_LIGHTS];
+	glm::vec3 lightColors[NUM_LIGHTS];
+	depthMapShader->use();
 	for (int i = 0; i < NUM_LIGHTS; ++i) {
 		glm::mat4 light_view = glm::lookAt(glm::vec3(0, 0, 0), directionalLight[i].direction, glm::vec3(0.01, 1, 0));
 		glm::mat4 light_projection = glm::ortho(-50.0f, 50.0f, -32.0f, 32.0f, directionalLight[i].nearclip, directionalLight[i].farclip);
 		glm::mat4 light_viewProjection = light_projection * light_view;
 		glm::vec3 camera_lightDir = camera_view * glm::vec4(directionalLight[i].direction, 0.0f);
-		depthMapShader->use();
 		depthMapShader->setMat4("viewProjection", light_viewProjection);
 		glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO[i]);
 		glViewport(0, 0, SHADOW_SIZE, SHADOW_SIZE);
@@ -119,14 +122,13 @@ void Renderer::Draw() {
 		for (auto renderable : renderables) {
 			DrawRenderableDepthMap(renderable);
 		}
-		standardShader->use();
-		standardShader->setMat4("lightSpace[" + std::to_string(i) + "]", light_viewProjection);
-		standardShader->setVec3("u_lightDirection[" + std::to_string(i) + "]", camera_lightDir);
-		standardShader->setVec3("u_lightColor[" + std::to_string(i) + "]", glm::convertSRGBToLinear(directionalLight[i].color));
+		lightViewProjections[i] = light_viewProjection;
+		lightDirections[i] = camera_lightDir;
+		lightColors[i] = glm::convertSRGBToLinear(directionalLight[i].color);
 	}
 
-	depthMapShader->use();
 	// draw camera depthmap
+	depthMapShader->use();
 	depthMapShader->setMat4("viewProjection", camera_viewProjection);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
@@ -144,6 +146,9 @@ void Renderer::Draw() {
 	standardShader->setVec3("u_up", camera_upDir);
 	standardShader->setVec3("u_ambientColorUp", ambient_color_up);
 	standardShader->setVec3("u_ambientColorDown", ambient_color_down);
+	standardShader->setMat4("lightSpace", lightViewProjections[0], NUM_LIGHTS);
+	standardShader->setVec3("u_lightDirection", lightDirections[0], NUM_LIGHTS);
+	standardShader->setVec3("u_lightColor", lightColors[0], NUM_LIGHTS);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, shadowMap[0]);
 	glActiveTexture(GL_TEXTURE2);
@@ -255,6 +260,7 @@ int Renderer::Init() {
 
 	standardShader->use();
 	// shadow stuff
+	standardShader->setFloat("u_shadowMapTexelSize", 1.0f / SHADOW_SIZE);
 	float borderColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	for (int i = 0; i < NUM_LIGHTS; ++i) {
 		glGenFramebuffers(1, &shadowMapFBO[i]);
