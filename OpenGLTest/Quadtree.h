@@ -26,8 +26,6 @@ private:
 		Quadtree* subQuad3 = new Quadtree(this->level + 1, new Rectangle(x, y + subHeight, subWidth, subHeight));
 		Quadtree* subQuad4 = new Quadtree(this->level + 1, new Rectangle(x + subWidth, y + subHeight, subWidth, subHeight));
 
-		this->nodes.clear();
-
 		this->nodes.push_back(subQuad1);
 		this->nodes.push_back(subQuad2);
 		this->nodes.push_back(subQuad3);
@@ -71,17 +69,21 @@ public:
 		this->bounds = bounds;
 	}
 
-	void Clear()
-	{
-		this->objects.clear();
-		for (int i = 0; i < this->nodes.size(); ++i)
-		{
-			if (this->nodes.size() > 0 && this->nodes[i] != NULL)
-			{
-				this->nodes[i]->Clear();
-				this->nodes[i] = NULL;
-			}
+	~Quadtree() {
+		Clear();
+		delete bounds;
+	}
+
+	void Clear() {
+		for (Rectangle* object : objects) {
+			delete object;
 		}
+		objects.clear();
+
+		for (Quadtree* node : nodes) {
+			delete node;
+		}
+		nodes.clear();
 	}
 
 	void Insert(Rectangle* rect)
