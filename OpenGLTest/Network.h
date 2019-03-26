@@ -52,11 +52,13 @@ typedef Input CLIENTPACKET;
 
 // state on or from the server
 PlayerTransformPacket serverState;
-bool networkThreadShouldDie = false;
-bool isConnectedToServer = false;
+bool networkThreadShouldDie;
+bool isConnectedToServer;
 const long long MAX_DISCONNECT_TIME_MS = 1000;
 
 void initNetwork() {
+	networkThreadShouldDie = false;
+	isConnectedToServer = false;
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
 		serverState.playerTransforms[i] = { glm::vec3(0), glm::vec3(0), 100 };
 	}
