@@ -3,7 +3,10 @@
 
 const float BASE_ROUGHNESS = 0.4f; 
 const float BASE_METALLIC = 1.0f;
+const float STUN_ROUGHNESS = 0.75f;
+const float STUN_METALLIC = 0.0f;
 #define STUN_COLOR Colour::TITANIUM
+#define INVULN_COLOR Colour::RED
 
 Player::Player(glm::vec2 xz, glm::vec3 color, float radius) : BASE_COLOR(color) {
 	setLocalPositionXZ(xz);
@@ -136,12 +139,15 @@ bool Player::getStun() {
 
 
 void Player::update() {
-	renderable->fullBright = _invulnFrames % 2;
-
+	// visual response for being stunned
+	renderable->metallic = (_stunFrames == 0) ? BASE_METALLIC : STUN_METALLIC;
+	renderable->roughness = (_stunFrames == 0) ? BASE_ROUGHNESS : STUN_ROUGHNESS;
 	float mixFactor = _stunFrames / (float)MAX_STUN_FRAMES;
-	renderable->metallic = (_stunFrames == 0) ? BASE_METALLIC : 0.0f;
-	renderable->roughness = (_stunFrames == 0) ? BASE_ROUGHNESS : 1.0f;
 	renderable->color = glm::mix(BASE_COLOR, STUN_COLOR, mixFactor);
+
+	// visual response for being invulnerable
+	renderable->fullBright = _invulnFrames % 2;
+	renderable->color = (_invulnFrames % 2) ? INVULN_COLOR : renderable->color;
 
 	if (_invulnFrames > 0) {
 		--_invulnFrames;
