@@ -1,6 +1,8 @@
 #include "PhysicsManager.h"
 
 #include <glm/glm.hpp>
+Quadtree* PhysicsManager::quad = new Quadtree(0, new Rectangle(-32, -32, 32, 32));
+
 bool intersects(glm::vec2 distance, float radius, float size) {
 	if (distance.x > (size + radius)) { return false; }
 	if (distance.y > (size + radius)) { return false; }
@@ -90,56 +92,91 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 		players[i]->setLocalPosition(pos);
 	}
 
-	// collision detection
-	for (int i = 0; i < players.size(); ++i) {
-		for (int j = i + 1; j < players.size(); ++j) {
-			glm::vec2 posA = players[i]->getLocalPositionXZ();
-			glm::vec2 posB = players[j]->getLocalPositionXZ();
-			glm::vec2 velocityA = players[i]->getVelocityXZ();
-			glm::vec2 velocityB = players[j]->getVelocityXZ();
-			float radiusA = players[i]->getRadius();
-			float radiusB = players[j]->getRadius();
+	// insert players and hazards into quadtree
+	PhysicsManager::quad->Clear();
+	for (int i = 0; i < players.size(); ++i)
+	{
+		float radius = players[i]->getRadius();
+		glm::vec2 playerPosition = players[i]->getLocalPositionXZ();
+		Rectangle* pRect = new Rectangle(i, playerPosition.x - radius, playerPosition.y - radius, radius * 2, radius * 2);
+		PhysicsManager::quad->Insert(pRect);
+	}
+	for (int i = 0; i < hazards.size(); ++i)
+	{
+		glm::vec2 hazardPosition = hazards[i]->getLocalPositionXZ();
+		float size = hazards[i]->getLocalScale();
+		Rectangle* hRect = new Rectangle(i + 100, hazardPosition.x - size / 2.0, hazardPosition.y - size / 2.0, size, size);
+		PhysicsManager::quad->Insert(hRect);
+	}
 
-			glm::vec2 normal = posA - posB;
+	// fetch from quadtree and do collision detection
+	std::vector<int> closeBy;
+	for (int i = 0; i < players.size(); ++i)
+	{
+		closeBy.clear();
 
-			float dist = glm::length(normal);
-			normal /= dist;
-			dist -= radiusA + radiusB;
+		float radius = players[i]->getRadius();
+		glm::vec2 playerPosition = players[i]->getLocalPositionXZ();
+		Rectangle* pRect = new Rectangle(i, playerPosition.x - radius, playerPosition.y - radius, radius * 2, radius * 2);
 
-			if (dist < 0.0f) {
-				glm::vec2 avg_pos = (posA + posB) * 0.5f;
-				float avg_radius = (radiusA + radiusB) * 0.5f;
-				posA = avg_pos + normal * avg_radius;
-				posB = avg_pos - normal * avg_radius;
-				players[i]->setLocalPositionXZ(posA);
-				players[j]->setLocalPositionXZ(posB);
+		PhysicsManager::quad->Retrieve(&closeBy, pRect);
 
-				// if neither player is stunned, and they're not moving in opposing directions
-				if (!players[i]->getStun() && !players[j]->getStun() && glm::dot(velocityA, velocityB) >= 0.0f) {
-					// if playerB moving towards playerA stun playerA
-					if (glm::dot(velocityB, normal) > 0.0f) {
-						players[i]->setStun();
-					}
-					// if playerA moving towards playerB stun playerB
-					if (glm::dot(velocityA, normal) < 0.0f) {
-						players[j]->setStun();
+		for (int j = 0; j < closeBy.size(); ++j)
+		{
+			int goId = closeBy[j];
+
+			if (goId >= 100) // hazzards
+			{
+				int hId = goId - 100;
+
+				glm::vec2 playerPosition = players[i]->getLocalPositionXZ();
+				glm::vec2 hazardPosition = hazards[hId]->getLocalPositionXZ();
+				glm::vec2 distance = glm::abs(playerPosition - hazardPosition);
+				float radius = players[i]->getRadius();
+				float size = hazards[hId]->getLocalScale();
+				float playerHeight = players[i]->getLocalPositionY();
+				float hazardHeight = hazards[hId]->getLocalPositionY();
+				if (hazardHeight <= playerHeight + size + radius) {
+					if (intersects(distance, radius, size)) {
+						players[i]->damageHealth(25);
 					}
 				}
 			}
-		}
-	}
-	for (int i = 0; i < players.size(); ++i) {
-		for (int j = 0; j < hazards.size(); ++j) {
-			glm::vec2 playerPosition = players[i]->getLocalPositionXZ();
-			glm::vec2 hazardPosition = hazards[j]->getLocalPositionXZ();
-			glm::vec2 distance = glm::abs(playerPosition - hazardPosition);
-			float radius = players[i]->getRadius();
-			float size = hazards[j]->getLocalScale();
-			float playerHeight = players[i]->getLocalPositionY();
-			float hazardHeight = hazards[j]->getLocalPositionY();
-			if (hazardHeight <= playerHeight + size + radius) {
-				if (intersects(distance, radius, size)) {
-					players[i]->damageHealth(25);
+			else if (i != goId)
+			{
+				// player vs player
+				glm::vec2 posA = players[i]->getLocalPositionXZ();
+				glm::vec2 posB = players[goId]->getLocalPositionXZ();
+				glm::vec2 velocityA = players[i]->getVelocityXZ();
+				glm::vec2 velocityB = players[goId]->getVelocityXZ();
+				float radiusA = players[i]->getRadius();
+				float radiusB = players[goId]->getRadius();
+
+				glm::vec2 normal = posA - posB;
+
+				float dist = glm::length(normal);
+				normal /= dist;
+				dist -= radiusA + radiusB;
+
+				if (dist < 0.0f) {
+					glm::vec2 avg_pos = (posA + posB) * 0.5f;
+					float avg_radius = (radiusA + radiusB) * 0.5f;
+					posA = avg_pos + normal * avg_radius;
+					posB = avg_pos - normal * avg_radius;
+					players[i]->setLocalPositionXZ(posA);
+					players[goId]->setLocalPositionXZ(posB);
+
+					// if neither player is stunned, and they're not moving in opposing directions
+					if (!players[i]->getStun() && !players[goId]->getStun() && glm::dot(velocityA, velocityB) >= 0.0f) {
+						// if playerB moving towards playerA stun playerA
+						if (glm::dot(velocityB, normal) > 0.0f) {
+							players[i]->setStun();
+						}
+						// if playerA moving towards playerB stun playerB
+						if (glm::dot(velocityA, normal) < 0.0f) {
+							players[goId]->setStun();
+						}
+					}
 				}
 			}
 		}
