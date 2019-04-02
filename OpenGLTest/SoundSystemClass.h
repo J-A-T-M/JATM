@@ -1,10 +1,11 @@
 #include <FMOD/fmod.hpp>
 #include <FMOD/fmod_errors.h>  //only for error checking
 #include <iostream>
+#include "ISubscriber.h"
 
 typedef FMOD::Sound* SoundClass;
 
-class SoundSystemClass {
+class SoundSystemClass : public ISubscriber {
 	public:
 		// Pointer to the FMOD instance
 	FMOD::System *m_pSystem;
@@ -53,6 +54,10 @@ class SoundSystemClass {
 		if (result != FMOD_OK) {
 			std::cout << "FMOD error! (" << result << ") " << FMOD_ErrorString(result) << std::endl;
 		}
+	}
+	
+	void notify(EventName eventName, Param * params) {
+		std::cout << "test!";
 	}
 };
 
