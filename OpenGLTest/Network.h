@@ -56,39 +56,25 @@ bool networkThreadShouldDie;
 bool isConnectedToServer;
 const long long MAX_DISCONNECT_TIME_MS = 1000;
 
-void initNetwork() {
-	networkThreadShouldDie = false;
-	isConnectedToServer = false;
-	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
-		serverState.playerTransforms[i] = { glm::vec3(0), glm::vec3(0), 100 };
-	}
-}
 
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-//
-//    Server code
-//
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// threads for recieving client messages
-std::thread threads[MAX_CLIENTS];
-std::vector<CLIENT> clients(MAX_CLIENTS);
+class NetworkManager {
 
-void sendToClients(ServerPacket packet) {
-	int iResult = 0;
+public:
+	NetworkManager();
+	~NetworkManager();
 
-	for (int i = 0; i < MAX_CLIENTS; i++) {
-		if (clients[i].socket != INVALID_SOCKET) {
-			iResult = send(clients[i].socket, (char*)&packet, sizeof(ServerPacket), 0);
-			// if send failed print reason
-			if (iResult == 0) {
-				std::cout << "Client #" << clients[i].id << " send failed, client shutdown connection" << std::endl;
-			} else if (iResult == SOCKET_ERROR) {
-				std::cout << "Client send failed, with error: " << WSAGetLastError() << std::endl;
-			}
-		}
-	}
-}
+	//========================================== 
+	void SendToClients(ServerPacket packet);
+
+private:
+
+	// threads for recieving client messages
+	std::thread threads[MAX_CLIENTS];
+	std::vector<CLIENT> clients = std::vector<CLIENT>(MAX_CLIENTS);
+
+};
+
 
 void recieveFromClient(CLIENT &client) {
 	std::cout << "Recieve thread for Client #" << client.id << " started" << std::endl;
