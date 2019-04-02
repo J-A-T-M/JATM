@@ -146,6 +146,7 @@
     <ClInclude Include="Scene.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="ISubscriber.h" />
+    <ClInclude Include="SoundSystemClass.h" />
     <ClInclude Include="StateMachine.h" />
     <ClInclude Include="UI\ImageComponent.h" />
     <ClInclude Include="UI\TextComponent.h" />
