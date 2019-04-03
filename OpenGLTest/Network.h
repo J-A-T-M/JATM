@@ -2,8 +2,6 @@
 
 #pragma comment (lib, "Ws2_32.lib") // Needed to link with Ws2_32.lib
 
-#define DEFAULT_BUFLEN 512	//max buffer size of 512 bytes
-#define DEFAULT_PORT "5055"
 #define MAX_CLIENTS 2
 #define NUM_LOCAL 2
 
@@ -61,7 +59,7 @@ public:
 	PlayerTransformPacket serverState;
 	bool networkThreadShouldDie;
 	bool isConnectedToServer;
-	const long long MAX_DISCONNECT_TIME_MS = 1000;
+	static const long long MAX_DISCONNECT_TIME_MS = 1000;
 
 	NetworkManager();
 	~NetworkManager();
@@ -79,6 +77,9 @@ public:
 	int ClientLoop(std::string SERVER_IP);
 
 private:
+	static const size_t DEFAULT_BUFLEN = 512; //max buffer size of 512 bytes
+	static const PCSTR DEFAULT_PORT;
+
 
 	// threads for recieving client messages
 	std::thread threads[MAX_CLIENTS];

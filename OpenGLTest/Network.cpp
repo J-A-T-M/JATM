@@ -1,9 +1,8 @@
 #include "Network.h"
 
-
+const PCSTR NetworkManager::DEFAULT_PORT = "5055";
 
 NetworkManager::NetworkManager() {
-
 	//Initialize network
 	networkThreadShouldDie = false;
 	isConnectedToServer = false;
