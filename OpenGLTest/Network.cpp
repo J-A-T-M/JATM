@@ -2,20 +2,28 @@
 
 const PCSTR NetworkManager::DEFAULT_PORT = "5055";
 
-NetworkManager::NetworkManager() {
+NetworkManager::NetworkManager(bool isServer, std::string serverIP) {
 	//Initialize network
 	networkThreadShouldDie = false;
 	isConnectedToServer = false;
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
 		serverState.playerTransforms[i] = { glm::vec3(0), glm::vec3(0), 100 };
 	}
+
+	if (isServer) {
+		networkThread = std::thread(&NetworkManager::ListenForClients, this);
+	}
+	else {
+		networkThread = std::thread(&NetworkManager::ClientLoop, this, serverIP);
+	}
 }
 
 
 //destructor still needs to be properly implemented
 NetworkManager::~NetworkManager() {
+	networkThreadShouldDie = true;
+	networkThread.join();
 	std::cout << "NetworkManager destructor called\n";
-	
 }
 
 
@@ -139,6 +147,8 @@ int NetworkManager::ListenForClients() {
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		clients[i] = { i, INVALID_SOCKET };
 	}
+
+	std::thread threads[MAX_CLIENTS];
 
 	while (!networkThreadShouldDie) {
 		timeval timeout;

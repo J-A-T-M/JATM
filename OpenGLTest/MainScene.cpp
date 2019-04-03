@@ -6,13 +6,7 @@
 MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer), SERVER_IP(serverIP){
 	EventManager::subscribe(SPAWN_HAZARD, this);
 
-	networkManager = new NetworkManager();
-	if (IS_SERVER) {
-		networkThread = std::thread(&NetworkManager::ListenForClients, networkManager);
-
-	} else {
-		networkThread = std::thread(&NetworkManager::ClientLoop, networkManager, this->SERVER_IP);
-	}
+	networkManager = new NetworkManager(IS_SERVER, SERVER_IP);
 
 	glm::vec3 color[] = { Colour::FUCSHIA , Colour::ORANGE, Colour::BLUERA , Colour::GREENRA };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
@@ -50,8 +44,7 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 }
 
 MainScene::~MainScene() {
-	//networkThreadShouldDie = true;
-	networkManager->networkThreadShouldDie = true;
+	delete networkManager;
 	for (GameObject* gameObject : players) {
 		if (gameObject != nullptr) {
 			delete gameObject;
@@ -64,7 +57,6 @@ MainScene::~MainScene() {
 		}
 	}
 	delete floor;
-	networkThread.join();
 	std::cout << "MainScene cleaned up" << std::endl;
 }
 

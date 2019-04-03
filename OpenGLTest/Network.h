@@ -61,7 +61,7 @@ public:
 	bool isConnectedToServer;
 	static const long long MAX_DISCONNECT_TIME_MS = 1000;
 
-	NetworkManager();
+	NetworkManager(bool isServer, std::string serverIP);
 	~NetworkManager();
 
 	//========================================== Server Functions ==========================================//
@@ -77,12 +77,13 @@ public:
 	int ClientLoop(std::string SERVER_IP);
 
 private:
+	std::thread networkThread;
+
 	static const size_t DEFAULT_BUFLEN = 512; //max buffer size of 512 bytes
 	static const PCSTR DEFAULT_PORT;
 
 
 	// threads for recieving client messages
-	std::thread threads[MAX_CLIENTS];
 	std::vector<CLIENT> clients = std::vector<CLIENT>(MAX_CLIENTS);
 
 	// socket for communicating with server
