@@ -11,6 +11,8 @@
 #include "Renderable.h"
 #include "Hazard.h"
 #include "PhysicsManager.h"
+#include "Network.h"
+
 
 
 class MainScene : public Scene, ISubscriber{
@@ -37,4 +39,5 @@ class MainScene : public Scene, ISubscriber{
 		std::thread networkThread;
 		Camera camera;
 		DirectionalLight directionalLight;
+		NetworkManager *networkManager;
 };
