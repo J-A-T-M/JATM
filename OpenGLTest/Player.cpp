@@ -1,4 +1,5 @@
 #include "Player.h"
+//#include "SoundSystemClass.h"
 #include <algorithm>
 
 const float BASE_ROUGHNESS = 0.4f; 
@@ -119,6 +120,8 @@ void Player::damageHealth(int damage) {
 	if (_invulnFrames == 0 && _health != 0) {
 		_invulnFrames = MAX_INVULN_FRAMES;
 		Player::setHealth(_health - damage);
+		//SoundSystemClass::SE_type()
+		//damage->SE_type(1);
 	}
 }
 

@@ -87,6 +87,8 @@ MenuScene::MenuScene() {
 	_UIisServer->SetText((_isServer) ? "Server" : "client");
 	_UIipBox->visible = (_isServer) ? false : true;
 	_UImenuScene->visible = true;
+
+	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(68), false);
 }
 
 MenuScene::~MenuScene() {

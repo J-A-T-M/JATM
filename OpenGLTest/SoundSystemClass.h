@@ -10,6 +10,8 @@ public:
 	// Pointer to the FMOD instance
 	FMOD::System *m_pSystem;
 	int bgm_Type, se_Type;
+	int rate;
+	unsigned long long dspclock;
 
 	SoundSystemClass() {
 		if (FMOD::System_Create(&m_pSystem) != FMOD_OK) {
@@ -57,6 +59,16 @@ public:
 		pSound->release();
 	}
 
+	void FadeOut() {
+		
+		
+	}
+
+	void setPan(float position) {
+		FMOD::Channel *channel;
+		channel->setPan(position);
+	}
+
 	void BGM_type(int pType) {
 		if (pType == 0) {
 			//std::cout << "aaa" << std::endl;
@@ -88,9 +100,13 @@ private:
 				SoundClass sound;
 				if (SoundSystemClass::bgm_Type == 0) {
 					std::cout<<"normal"<<std::endl;
-					createSound(&sound, "..\\assets\\sounds\\12_mixdown.wav");
+					createSound(&sound, "..\\assets\\sounds\\bgm1.wav");
 				}
 				else if(SoundSystemClass::bgm_Type == -1){
+					std::cout << "BGM defines error!" << std::endl;
+					createSound(&sound, " ");
+				}
+				else {
 					std::cout << "BGM defines error!" << std::endl;
 					createSound(&sound, " ");
 				}
@@ -102,8 +118,10 @@ private:
 			case PLAY_SE: {
 				SoundClass sound;
 				if (SoundSystemClass::se_Type == 0) {
-					createSound(&sound, "..\\assets\\sounds\\Blow1.wav");
-				}
+					createSound(&sound, "..\\assets\\sounds\\hit1.wav");
+				}else
+					createSound(&sound, " ");
+				playSound(sound, false);
 				break;
 			}
 			default: {

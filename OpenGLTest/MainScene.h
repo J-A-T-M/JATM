@@ -13,14 +13,13 @@
 #include "PhysicsManager.h"
 #include "SoundSystemClass.h"
 
-
-
 class MainScene : public Scene, ISubscriber{
 	public:
 		MainScene(bool isServer, std::string serverIP);
 		~MainScene();
 		void Update(const float delta);
 		Scene* GetNext();
+		SoundSystemClass soundSystemClass;
 		
 	private:
 		bool checkDone();
@@ -40,5 +39,5 @@ class MainScene : public Scene, ISubscriber{
 		std::thread networkThread;
 		Camera camera;
 		DirectionalLight directionalLight;
-		SoundSystemClass soundSystemClass;
+		
 };
