@@ -2,6 +2,7 @@
 #include "Network.h"
 #include <glm/glm.hpp>
 #include "MenuScene.h"
+#include "SoundSystemClass.h"
 
 MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer), SERVER_IP(serverIP){
 	EventManager::subscribe(SPAWN_HAZARD, this);
@@ -46,6 +47,14 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(up_color), false);
 
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color), false);
+
+	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(69), false);
+	//// test sound playback
+	//// should move this somewhere else
+	//SoundSystemClass soundSystem;
+	//SoundClass sound;
+	//soundSystem.createSound(&sound, "..\\assets\\sounds\\12_mixdown.wav");
+	//soundSystem.playSound(sound, true);
 }
 
 MainScene::~MainScene() {
@@ -175,6 +184,8 @@ void MainScene::Update(const float delta) {
 		hazard->updateRenderableTransforms();
 	}
 	EventManager::notify(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, &TypeParam<float>(delta), false);
+	//std::cout << "aa" << std::endl;
+	//EventManager::subscribe(SOUND_P, this);
 }
 
 Scene * MainScene::GetNext() {

@@ -56,8 +56,26 @@ class SoundSystemClass : public ISubscriber {
 		}
 	}
 	
-	void notify(EventName eventName, Param * params) {
-		std::cout << "test!";
+	void notify(EventName eventName, Param* params) {
+		switch (eventName) {
+			case PLAY_BGM_N: {
+				//TypeParam<SoundSystemClass*> *p = dynamic_cast<TypeParam<SoundSystemClass*> *>(params);
+				//SoundSystemClass* soundSystemClass = p->Param;
+				std::cout << "test!";
+				// test sound playback
+				// should move this somewhere else
+				SoundSystemClass soundSystem;
+				SoundClass sound;
+				soundSystem.createSound(&sound, "..\\assets\\sounds\\12_mixdown.wav");
+				soundSystem.playSound(sound, true);
+				break;
+			}
+			default: {
+				break;
+			}
+		}
+		
 	}
+	//EventManager::subscribe(PLAY_BGM_N, this);
 };
 
