@@ -75,6 +75,9 @@
     <ClCompile Include="UI\ImageComponent.cpp">
       <Filter>UI</Filter>
     </ClCompile>
+    <ClCompile Include="HazardFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="../assets/shaders/ShadowMap.psh">
@@ -170,6 +173,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Rectangle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HazardFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
