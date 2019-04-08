@@ -26,6 +26,13 @@ class SoundSystemClass : public ISubscriber {
 
 		// Initialize our Instance with 36 Channels
 		m_pSystem->init(36, FMOD_INIT_NORMAL, nullptr);
+		EventManager::subscribe(PLAY_BGM_N, this);
+		EventManager::subscribe(PLAY_SE, this);
+	}
+
+	~SoundSystemClass() {
+		EventManager::unsubscribe(PLAY_BGM_N, this);
+		EventManager::unsubscribe(PLAY_SE, this);
 	}
 
 	void createSound(SoundClass *pSound, const char* pFile) {
@@ -59,22 +66,15 @@ class SoundSystemClass : public ISubscriber {
 	void notify(EventName eventName, Param* params) {
 		switch (eventName) {
 			case PLAY_BGM_N: {
-				//TypeParam<SoundSystemClass*> *p = dynamic_cast<TypeParam<SoundSystemClass*> *>(params);
-				//SoundSystemClass* soundSystemClass = p->Param;
-				std::cout << "test!";
-				// test sound playback
-				// should move this somewhere else
-				SoundSystemClass soundSystem;
 				SoundClass sound;
-				soundSystem.createSound(&sound, "..\\assets\\sounds\\12_mixdown.wav");
-				soundSystem.playSound(sound, true);
+				createSound(&sound, "..\\assets\\sounds\\12_mixdown.wav");
+				playSound(sound, true);
 				break;
 			}
 			default: {
 				break;
 			}
-		}
-		
+		}	
 	}
 	//EventManager::subscribe(PLAY_BGM_N, this);
 };

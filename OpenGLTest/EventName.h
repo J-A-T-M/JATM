@@ -14,6 +14,5 @@ enum EventName {
 	KEY_UP,
 	SPAWN_HAZARD,
 	PLAY_BGM_N,
-	PLAY_BGM_H,
 	PLAY_SE
 };
