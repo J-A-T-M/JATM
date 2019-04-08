@@ -18,6 +18,7 @@ GameObject::GameObject() {
 	_localScale = 1.0f;
 	_scale = 1.0f;
 	_parentScale = 1.0f;
+	_nonLinearScale = glm::vec3(1.0f);
 }
 
 GameObject::~GameObject() {
@@ -128,6 +129,10 @@ void GameObject::setParentScale(float scale) {
 		child->setParentScale(_scale);
 	}
 }
+
+void GameObject::setNonLinearScale(glm::vec3 scale) {
+	_nonLinearScale = scale;
+}
 #pragma endregion
 
 void GameObject::addRenderable() {
@@ -152,7 +157,7 @@ void GameObject::updateRenderableTransforms() {
 
 		renderable->position = _position;
 		renderable->rotation = _rotation;
-		renderable->scale = _scale;
+		renderable->scale = _scale * _nonLinearScale;
 	}
 
 	for (GameObject* child : children) {
@@ -164,11 +169,11 @@ void GameObject::clearRenderablePreviousTransforms() {
 	if (renderable != nullptr) {
 		renderable->previousPosition = _position;
 		renderable->previousRotation = _rotation;
-		renderable->previousScale = _scale;
+		renderable->previousScale = _scale * _nonLinearScale;
 
 		renderable->position = _position;
 		renderable->rotation = _rotation;
-		renderable->scale = _scale;
+		renderable->scale = _scale * _nonLinearScale;
 	}
 
 	for (GameObject* child : children) {

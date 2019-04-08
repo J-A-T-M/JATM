@@ -7,7 +7,7 @@ Renderable::Renderable() {
 	rotation = glm::vec3(0.0f);
 	previousPosition = glm::vec3(0.0f);
 	interpolated = false;
-	scale = 1.0f;
+	scale = glm::vec3(1.0f);
 	color = glm::vec3(1.0f);
 	fullBright = false;
 	roughness = 0.5f;

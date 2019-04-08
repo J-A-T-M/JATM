@@ -56,12 +56,12 @@ class Renderable {
 		// transform
 		glm::vec3 position;
 		glm::quat rotation;
-		float scale;
+		glm::vec3 scale;
 		// stuff to allow renderer to interpolate positions
 		bool interpolated;
 		glm::vec3 previousPosition;
 		glm::quat previousRotation;
-		float previousScale;
+		glm::vec3 previousScale;
 
 		// material
 		glm::vec3 color;
