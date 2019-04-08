@@ -30,6 +30,8 @@ class GameObject {
 		float getLocalScale();
 		void setLocalScale(float scale);
 		void setParentScale(float scale);
+		// only affects this->renderable
+		void setNonLinearScale(glm::vec3 scale);
 
 		void addRenderable();
 		void addChild(GameObject* child);
@@ -51,4 +53,5 @@ class GameObject {
 		float _localScale;
 		float _scale;
 		float _parentScale;
+		glm::vec3 _nonLinearScale;
 };
