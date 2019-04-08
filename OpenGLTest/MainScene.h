@@ -9,7 +9,7 @@
 #include "GameObject.h"
 #include "Player.h"
 #include "Renderable.h"
-#include "HazardFactory.h"
+#include "Hazard.h"
 #include "PhysicsManager.h"
 
 
