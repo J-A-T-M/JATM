@@ -11,6 +11,7 @@
 #include "Renderable.h"
 #include "Hazard.h"
 #include "PhysicsManager.h"
+#include "SoundSystemClass.h"
 
 
 
@@ -20,6 +21,7 @@ class MainScene : public Scene, ISubscriber{
 		~MainScene();
 		void Update(const float delta);
 		Scene* GetNext();
+		
 	private:
 		bool checkDone();
 		void movePlayersBasedOnInput(const float delta);
@@ -38,4 +40,5 @@ class MainScene : public Scene, ISubscriber{
 		std::thread networkThread;
 		Camera camera;
 		DirectionalLight directionalLight;
+		SoundSystemClass soundSystemClass;
 };

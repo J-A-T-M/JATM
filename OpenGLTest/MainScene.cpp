@@ -2,7 +2,6 @@
 #include "Network.h"
 #include <glm/glm.hpp>
 #include "MenuScene.h"
-#include "SoundSystemClass.h"
 
 MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer), SERVER_IP(serverIP){
 	EventManager::subscribe(SPAWN_HAZARD, this);
@@ -48,7 +47,10 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color), false);
 
+	soundSystemClass.BGM_type(0);
 	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(68), false);
+	
+
 	//// test sound playback
 	//// should move this somewhere else
 	//SoundSystemClass soundSystem;

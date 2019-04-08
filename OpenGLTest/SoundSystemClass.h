@@ -6,9 +6,10 @@
 typedef FMOD::Sound* SoundClass;
 
 class SoundSystemClass : public ISubscriber {
-	public:
-		// Pointer to the FMOD instance
+public:
+	// Pointer to the FMOD instance
 	FMOD::System *m_pSystem;
+	int bgm_Type, se_Type;
 
 	SoundSystemClass() {
 		if (FMOD::System_Create(&m_pSystem) != FMOD_OK) {
@@ -56,25 +57,59 @@ class SoundSystemClass : public ISubscriber {
 		pSound->release();
 	}
 
-	private:
+	void BGM_type(int pType) {
+		if (pType == 0) {
+			//std::cout << "aaa" << std::endl;
+			bgm_Type=0;
+		}
+		else if(pType==1){
+			//std::cout << "bbb" << std::endl;
+			bgm_Type=1;
+		}
+		else
+			bgm_Type = -1;
+	}
+	void SE_type(int pType) {
+		if (pType == 0)
+			std::cout << "SE0" << std::endl;
+	}
+
+private:
 	void FMODErrorCheck(FMOD_RESULT result) {
 		if (result != FMOD_OK) {
 			std::cout << "FMOD error! (" << result << ") " << FMOD_ErrorString(result) << std::endl;
 		}
 	}
-	
+
 	void notify(EventName eventName, Param* params) {
 		switch (eventName) {
 			case PLAY_BGM_N: {
+				
 				SoundClass sound;
-				createSound(&sound, "..\\assets\\sounds\\12_mixdown.wav");
+				if (SoundSystemClass::bgm_Type == 0) {
+					std::cout<<"normal"<<std::endl;
+					createSound(&sound, "..\\assets\\sounds\\12_mixdown.wav");
+				}
+				else if(SoundSystemClass::bgm_Type == -1){
+					std::cout << "BGM defines error!" << std::endl;
+					createSound(&sound, " ");
+				}
+				
 				playSound(sound, true);
+				//std::cout << "test" << std::endl;
+				break;
+			}
+			case PLAY_SE: {
+				SoundClass sound;
+				if (SoundSystemClass::se_Type == 0) {
+					createSound(&sound, "..\\assets\\sounds\\Blow1.wav");
+				}
 				break;
 			}
 			default: {
 				break;
 			}
-		}	
+		}
 	}
 	//EventManager::subscribe(PLAY_BGM_N, this);
 };
