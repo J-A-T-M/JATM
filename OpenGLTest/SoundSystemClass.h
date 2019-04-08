@@ -26,6 +26,11 @@ class SoundSystemClass : public ISubscriber {
 
 		// Initialize our Instance with 36 Channels
 		m_pSystem->init(36, FMOD_INIT_NORMAL, nullptr);
+		EventManager::subscribe(PLAY_BGM_N, this);
+	}
+
+	~SoundSystemClass() {
+		EventManager::unsubscribe(PLAY_BGM_N, this);
 	}
 
 	void createSound(SoundClass *pSound, const char* pFile) {
@@ -64,10 +69,9 @@ class SoundSystemClass : public ISubscriber {
 				std::cout << "test!";
 				// test sound playback
 				// should move this somewhere else
-				SoundSystemClass soundSystem;
 				SoundClass sound;
-				soundSystem.createSound(&sound, "..\\assets\\sounds\\12_mixdown.wav");
-				soundSystem.playSound(sound, true);
+				createSound(&sound, "..\\assets\\sounds\\12_mixdown.wav");
+				playSound(sound, true);
 				break;
 			}
 			default: {
@@ -76,6 +80,5 @@ class SoundSystemClass : public ISubscriber {
 		}
 		
 	}
-	//EventManager::subscribe(PLAY_BGM_N, this);
 };
 
