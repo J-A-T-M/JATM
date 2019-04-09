@@ -3,12 +3,9 @@
 class HazardFactory
 {
 public:
-
-	HazardFactory();
-	~HazardFactory();
 	static Hazard* buildCube(float size);
 	static Hazard* buildPrism(glm::vec3 size);
-
+	static glm::vec2 floorSize;
 private:
 
 
