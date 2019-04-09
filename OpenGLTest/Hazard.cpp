@@ -4,7 +4,6 @@ Hazard::Hazard(glm::vec3 spawnPosition, float fall_speed) {
 	fallSpeed = fall_speed;
 
 	setLocalPosition(spawnPosition);
-	setLocalScale(2.5f);
 	addRenderable();
 	renderable->roughness = 0.25;
 	renderable->color = Colour::PLATINUM;

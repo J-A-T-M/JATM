@@ -21,8 +21,7 @@ Hazard* HazardFactory::buildPrism(glm::vec3 size) {
 	float fallSpeed = 5.0f;
 
 	Hazard* hazard = new Hazard(pos, fallSpeed);
-	hazard->setLocalScale(1.0f);
-	hazard->setNonLinearScale(size);
+	hazard->setSize(size);
 	hazard->clearRenderablePreviousTransforms();
 	return hazard;
 }

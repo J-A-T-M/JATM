@@ -21,7 +21,7 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 	}
 
 	floor = new GameObject();
-	floor->setLocalScale(32.0f);
+	floor->setSize(32.0f);
 	floor->setLocalPosition(glm::vec3(0, -32, 0));
 	floor->addRenderable();
 	floor->renderable->roughness = 0.8;
