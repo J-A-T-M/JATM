@@ -105,7 +105,7 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 	{
 		glm::vec2 hazardPosition = hazards[i]->getLocalPositionXZ();
 		glm::vec3 size = hazards[i]->getSize();
-		Rectangle* hRect = new Rectangle(i + 100, hazardPosition.x - size.x / 2.0, hazardPosition.y - size.z / 2.0, size.x, size.z);
+		Rectangle* hRect = new Rectangle(i + 100, hazardPosition.x - size.x, hazardPosition.y - size.z, size.x * 2, size.z * 2);
 		PhysicsManager::quad->Insert(hRect);
 	}
 
