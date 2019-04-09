@@ -9,9 +9,6 @@ class SoundSystemClass : public ISubscriber {
 public:
 	// Pointer to the FMOD instance
 	FMOD::System *m_pSystem;
-	int bgm_Type, se_Type;
-	int rate;
-	unsigned long long dspclock;
 
 	SoundSystemClass() {
 		if (FMOD::System_Create(&m_pSystem) != FMOD_OK) {
@@ -59,33 +56,6 @@ public:
 		pSound->release();
 	}
 
-	void FadeOut() {
-		
-		
-	}
-
-	void setPan(float position) {
-		FMOD::Channel *channel;
-		channel->setPan(position);
-	}
-
-	void BGM_type(int pType) {
-		if (pType == 0) {
-			//std::cout << "aaa" << std::endl;
-			bgm_Type=0;
-		}
-		else if(pType==1){
-			//std::cout << "bbb" << std::endl;
-			bgm_Type=1;
-		}
-		else
-			bgm_Type = -1;
-	}
-	void SE_type(int pType) {
-		if (pType == 0)
-			std::cout << "SE0" << std::endl;
-	}
-
 private:
 	void FMODErrorCheck(FMOD_RESULT result) {
 		if (result != FMOD_OK) {
@@ -96,31 +66,33 @@ private:
 	void notify(EventName eventName, Param* params) {
 		switch (eventName) {
 			case PLAY_BGM_N: {
-				
+				TypeParam<int> *p = dynamic_cast<TypeParam<int> *>(params);
+				int bgm_Type = p->Param;
+
 				SoundClass sound;
-				if (SoundSystemClass::bgm_Type == 0) {
+				if (bgm_Type == 0) {
 					std::cout<<"normal"<<std::endl;
 					createSound(&sound, "..\\assets\\sounds\\bgm1.wav");
-				}
-				else if(SoundSystemClass::bgm_Type == -1){
-					std::cout << "BGM defines error!" << std::endl;
+				} else {
 					createSound(&sound, " ");
-				}
-				else {
 					std::cout << "BGM defines error!" << std::endl;
-					createSound(&sound, " ");
 				}
 				
 				playSound(sound, true);
-				//std::cout << "test" << std::endl;
 				break;
 			}
 			case PLAY_SE: {
+				TypeParam<int> *p = dynamic_cast<TypeParam<int> *>(params);
+				int se_Type = p->Param;
+
 				SoundClass sound;
-				if (SoundSystemClass::se_Type == 0) {
-					createSound(&sound, "..\\assets\\sounds\\hit1.wav");
-				}else
+				if (se_Type == 0) {
+					createSound(&sound, "..\\assets\\sounds\\Hit1.wav");
+				} else {
 					createSound(&sound, " ");
+					std::cout << "SE defines error!" << std::endl;
+				}
+
 				playSound(sound, false);
 				break;
 			}
@@ -129,6 +101,5 @@ private:
 			}
 		}
 	}
-	//EventManager::subscribe(PLAY_BGM_N, this);
 };
 

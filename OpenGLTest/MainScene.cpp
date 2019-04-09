@@ -47,16 +47,7 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color), false);
 
-	soundSystemClass.BGM_type(0);
-	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(68), false);
-	
-
-	//// test sound playback
-	//// should move this somewhere else
-	//SoundSystemClass soundSystem;
-	//SoundClass sound;
-	//soundSystem.createSound(&sound, "..\\assets\\sounds\\12_mixdown.wav");
-	//soundSystem.playSound(sound, true);
+	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(0), false);
 }
 
 MainScene::~MainScene() {
