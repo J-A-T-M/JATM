@@ -145,7 +145,7 @@ void MainScene::Update(const float delta) {
 	}
 
 	if (IS_SERVER) {
-		if (hazards.size() <= 5) {
+		if (hazards.size() <= 10) {
 			SpawnHazard();
 		}
 		movePlayersBasedOnInput(delta);
