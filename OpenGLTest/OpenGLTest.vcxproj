@@ -101,6 +101,7 @@
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Hazard.cpp" />
+    <ClCompile Include="HazardFactory.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainScene.cpp" />
@@ -133,6 +134,7 @@
     <ClInclude Include="EventName.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Hazard.h" />
+    <ClInclude Include="HazardFactory.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="MainScene.h" />
     <ClInclude Include="MenuScene.h" />
