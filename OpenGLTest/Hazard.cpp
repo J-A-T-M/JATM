@@ -1,9 +1,10 @@
 #include "Hazard.h"
 
-Hazard::Hazard(glm::vec3 spawnPosition, float fall_speed) {
+Hazard::Hazard(glm::vec3 spawnPosition, glm::vec3 size, float fall_speed) {
 	fallSpeed = fall_speed;
 
 	setLocalPosition(spawnPosition);
+	setSize(size);
 	addRenderable();
 	renderable->roughness = 0.25;
 	renderable->color = Colour::PLATINUM;
@@ -27,7 +28,7 @@ void Hazard::update(float delta) {
 
 
 bool Hazard::grounded() {
-	return (_localPosition.y <= _localScale);
+	return (_localPosition.y <= _size.y);
 }
 
 ModelEnum Hazard::HazardModel() {

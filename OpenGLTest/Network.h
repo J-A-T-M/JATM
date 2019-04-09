@@ -37,6 +37,7 @@ struct PlayerTransformPacket {
 
 struct HazardSpawnPacket {
 	glm::vec3 spawnPosition;
+	glm::vec3 size;
 	float fallSpeed;
 };
 
@@ -310,7 +311,8 @@ void recieveFromServer() {
 			}
 			case PACKET_HAZARD_SPAWN: {
 				Hazard* hazard = new Hazard(
-					packet.hazardSpawnPacket.spawnPosition, 
+					packet.hazardSpawnPacket.spawnPosition,
+					packet.hazardSpawnPacket.size,
 					packet.hazardSpawnPacket.fallSpeed
 				);
 				hazard->clearRenderablePreviousTransforms();

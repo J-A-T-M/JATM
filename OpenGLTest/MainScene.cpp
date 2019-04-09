@@ -121,19 +121,17 @@ void MainScene::movePlayersBasedOnNetworking() {
 }
 
 void MainScene::SpawnHazard() {
-	glm::vec3 pos = glm::vec3(rand() % 58 - 29, 10 + rand() % 10, rand() % 58 - 29);
-	float fallSpeed = 5.0f;
 	float X = (rand() % 15) + 1;
 	float Z = (rand() % 15) + 1;
-//	Hazard* hazard = HazardFactory::buildCube(1);
 	Hazard* hazard = HazardFactory::buildPrism(glm::vec3(X, 1, Z));
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(hazard->renderable), false);
 	hazards.push_back(hazard);
 
 	ServerPacket packet;
 	packet.type = PACKET_HAZARD_SPAWN;
-	packet.hazardSpawnPacket.spawnPosition = pos;
-	packet.hazardSpawnPacket.fallSpeed = fallSpeed;
+	packet.hazardSpawnPacket.spawnPosition = hazard->getLocalPosition();
+	packet.hazardSpawnPacket.size = hazard->getSize();
+	packet.hazardSpawnPacket.fallSpeed = hazard->fallSpeed;
 	sendToClients(packet);
 }
 
