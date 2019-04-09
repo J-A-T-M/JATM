@@ -123,9 +123,10 @@ void MainScene::movePlayersBasedOnNetworking() {
 void MainScene::SpawnHazard() {
 	glm::vec3 pos = glm::vec3(rand() % 58 - 29, 10 + rand() % 10, rand() % 58 - 29);
 	float fallSpeed = 5.0f;
-
+	float X = rand() % 15;
+	float Z = rand() % 15;
 //	Hazard* hazard = HazardFactory::buildCube(1);
-	Hazard* hazard = HazardFactory::buildPrism(glm::vec3(0, 0, 0));
+	Hazard* hazard = HazardFactory::buildPrism(glm::vec3(X, 1, Z));
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(hazard->renderable), false);
 	hazards.push_back(hazard);
 

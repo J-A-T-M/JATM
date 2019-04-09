@@ -19,8 +19,8 @@ Hazard* HazardFactory::buildPrism(glm::vec3 size) {
 	float Xscale = size.x;
 	float Zscale = size.z;
 	int A = 64, B = 32;
-	int xBuffer = 64 - (Xscale * 6);
-	int zBuffer = 64 - (Zscale * 6);
+	int xBuffer = 64 - (Xscale * 1);
+	int zBuffer = 64 - (Zscale * 1);
 
 	float X = rand() % xBuffer - (xBuffer/2);
 	float Z = rand() % zBuffer - (zBuffer/2);
