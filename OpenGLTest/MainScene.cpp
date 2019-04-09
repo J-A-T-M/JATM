@@ -124,7 +124,8 @@ void MainScene::SpawnHazard() {
 	glm::vec3 pos = glm::vec3(rand() % 58 - 29, 10 + rand() % 10, rand() % 58 - 29);
 	float fallSpeed = 5.0f;
 
-	Hazard* hazard = new Hazard(pos, fallSpeed);
+//	Hazard* hazard = HazardFactory::buildCube(1);
+	Hazard* hazard = HazardFactory::buildPrism(glm::vec3(0, 0, 0));
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(hazard->renderable), false);
 	hazards.push_back(hazard);
 
