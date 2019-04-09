@@ -11,6 +11,8 @@
 #include "Renderable.h"
 #include "HazardFactory.h"
 #include "PhysicsManager.h"
+#include "Network.h"
+
 
 
 class MainScene : public Scene, ISubscriber{
@@ -34,7 +36,7 @@ class MainScene : public Scene, ISubscriber{
 		std::vector<Hazard*> hazards;
 		std::vector<Player*> players;
 		std::vector<InputSourceEnum> playerInputSources = { INPUT_LOCAL1, INPUT_LOCAL2, INPUT_CLIENT1, INPUT_CLIENT2, INPUT_CLIENT3, INPUT_CLIENT4, INPUT_CLIENT5, INPUT_CLIENT6 };
-		std::thread networkThread;
 		Camera camera;
 		DirectionalLight directionalLight;
+		NetworkManager *networkManager;
 };

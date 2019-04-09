@@ -1,17 +1,12 @@
 #include "MainScene.h"
-#include "Network.h"
 #include <glm/glm.hpp>
 #include "MenuScene.h"
+
 
 MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer), SERVER_IP(serverIP){
 	EventManager::subscribe(SPAWN_HAZARD, this);
 
-	initNetwork();
-	if (IS_SERVER) {
-		networkThread = std::thread(listenForClients);
-	} else {
-		networkThread = std::thread(ClientLoop, this->SERVER_IP);
-	}
+	networkManager = new NetworkManager(IS_SERVER, SERVER_IP);
 
 	glm::vec3 color[] = { Colour::FUCSHIA , Colour::ORANGE, Colour::BLUERA , Colour::GREENRA };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
@@ -49,7 +44,7 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 }
 
 MainScene::~MainScene() {
-	networkThreadShouldDie = true;
+	delete networkManager;
 	for (GameObject* gameObject : players) {
 		if (gameObject != nullptr) {
 			delete gameObject;
@@ -62,13 +57,12 @@ MainScene::~MainScene() {
 		}
 	}
 	delete floor;
-	networkThread.join();
 	std::cout << "MainScene cleaned up" << std::endl;
 }
 
 bool MainScene::checkDone() {
-	if (!IS_SERVER && time > MAX_DISCONNECT_TIME_MS / 1000.0f) {
-		if (!isConnectedToServer) {
+	if (!IS_SERVER && time > networkManager->MAX_DISCONNECT_TIME_MS / 1000.0f) {
+		if (!networkManager->isConnectedToServer) {
 			return true;
 		}
 	}
@@ -103,17 +97,19 @@ void MainScene::sendPlayerTransforms() {
 		packet.playerTransformPacket.playerTransforms[i].health = players[i]->getHealth();
 		packet.playerTransformPacket.playerTransforms[i].stunFrames = players[i]->getStunFrames();
 	}
-	sendToClients(packet);
+	
+	networkManager->SendToClients(packet);
+
 }
 
 void MainScene::movePlayersBasedOnNetworking() {
 	for (int i = 0; i < players.size(); i++) {
-		players[i]->setLocalPosition(serverState.playerTransforms[i].position);
-		players[i]->setLocalRotation(serverState.playerTransforms[i].rotation);
-		players[i]->setStunFrames(serverState.playerTransforms[i].stunFrames);
+		players[i]->setLocalPosition(networkManager->serverState.playerTransforms[i].position);
+		players[i]->setLocalRotation(networkManager->serverState.playerTransforms[i].rotation);
+		players[i]->setStunFrames(networkManager->serverState.playerTransforms[i].stunFrames);
 		// horrible hackjob by markus
 		// find a better way to send this
-		int damage = players[i]->getHealth() - serverState.playerTransforms[i].health;
+		int damage = players[i]->getHealth() - networkManager->serverState.playerTransforms[i].health;
 		if (damage != 0) {
 			players[i]->damageHealth(damage);
 		}
@@ -134,7 +130,7 @@ void MainScene::SpawnHazard() {
 	packet.type = PACKET_HAZARD_SPAWN;
 	packet.hazardSpawnPacket.spawnPosition = pos;
 	packet.hazardSpawnPacket.fallSpeed = fallSpeed;
-	sendToClients(packet);
+	networkManager->SendToClients(packet);
 }
 
 void MainScene::Update(const float delta) {
@@ -162,7 +158,7 @@ void MainScene::Update(const float delta) {
 	} else {
 		movePlayersBasedOnNetworking();
 		// send user input to server
-		sendToServer();
+		networkManager->SendToServer();
 	}
 
 	_done = checkDone();
