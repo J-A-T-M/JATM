@@ -37,6 +37,7 @@ struct PlayerTransformPacket {
 
 struct HazardSpawnPacket {
 	glm::vec3 spawnPosition;
+	glm::vec3 size;
 	float fallSpeed;
 };
 
@@ -88,6 +89,4 @@ private:
 
 	// socket for communicating with server
 	SOCKET clientSocket;
-
-
 };

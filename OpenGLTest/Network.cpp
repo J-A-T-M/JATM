@@ -264,6 +264,7 @@ void NetworkManager::ReceiveFromServer() {
 		case PACKET_HAZARD_SPAWN: {
 			Hazard* hazard = new Hazard(
 				packet.hazardSpawnPacket.spawnPosition,
+				packet.hazardSpawnPacket.size,
 				packet.hazardSpawnPacket.fallSpeed
 			);
 			hazard->clearRenderablePreviousTransforms();

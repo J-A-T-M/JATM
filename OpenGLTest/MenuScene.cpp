@@ -18,7 +18,7 @@ MenuScene::MenuScene() {
 
 	_isServer = true;
 
-	floor.setLocalScale(32.0f);
+	floor.setSize(32.0f);
 	floor.setLocalPosition(glm::vec3(0, -32, 0));
 	floor.addRenderable();
 	floor.renderable->roughness = 0.8;
@@ -28,7 +28,7 @@ MenuScene::MenuScene() {
 
 	_gameObjects = std::vector<GameObject>(X_INDEX_MAX);
 
-	_gameObjects[0].setLocalScale(2.0f);
+	_gameObjects[0].setSize(2.0f);
 	_gameObjects[0].setLocalPosition(glm::vec3(-30, 4, BASE_Z - _isServer * 5));
 	_gameObjects[0].addRenderable();
 	_gameObjects[0].renderable->roughness = 0.5;
@@ -40,7 +40,7 @@ MenuScene::MenuScene() {
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(_gameObjects[0].renderable), false);
 
 	for (int i = 1; i < _gameObjects.size(); ++i) {
-		_gameObjects[i].setLocalScale(2.0f);
+		_gameObjects[i].setSize(2.0f);
 		_gameObjects[i].setLocalPosition(glm::vec3(i * 5 - 30, 2, BASE_Z - _serverIP[i - 1] * 5));
 		_gameObjects[i].addRenderable();
 		_gameObjects[i].renderable->roughness = 0.5;

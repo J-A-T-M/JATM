@@ -16,7 +16,7 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 	}
 
 	floor = new GameObject();
-	floor->setLocalScale(32.0f);
+	floor->setSize(32.0f);
 	floor->setLocalPosition(glm::vec3(0, -32, 0));
 	floor->addRenderable();
 	floor->renderable->roughness = 0.8;
@@ -117,19 +117,17 @@ void MainScene::movePlayersBasedOnNetworking() {
 }
 
 void MainScene::SpawnHazard() {
-	glm::vec3 pos = glm::vec3(rand() % 58 - 29, 10 + rand() % 10, rand() % 58 - 29);
-	float fallSpeed = 5.0f;
-	float X = (rand() % 15) + 1;
-	float Z = (rand() % 15) + 1;
-//	Hazard* hazard = HazardFactory::buildCube(1);
-	Hazard* hazard = HazardFactory::buildPrism(glm::vec3(X, 1, Z));
+	float X = (rand() % 10) + 1;
+	float Z = 10 - X + 1;
+	Hazard* hazard = HazardFactory::buildPrism(glm::vec3(X, 1.0, Z));
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(hazard->renderable), false);
 	hazards.push_back(hazard);
 
 	ServerPacket packet;
 	packet.type = PACKET_HAZARD_SPAWN;
-	packet.hazardSpawnPacket.spawnPosition = pos;
-	packet.hazardSpawnPacket.fallSpeed = fallSpeed;
+	packet.hazardSpawnPacket.spawnPosition = hazard->getLocalPosition();
+	packet.hazardSpawnPacket.size = hazard->getSize();
+	packet.hazardSpawnPacket.fallSpeed = hazard->fallSpeed;
 	networkManager->SendToClients(packet);
 }
 
@@ -147,7 +145,7 @@ void MainScene::Update(const float delta) {
 	}
 
 	if (IS_SERVER) {
-		if (hazards.size() <= 5) {
+		if (hazards.size() <= 10) {
 			SpawnHazard();
 		}
 		movePlayersBasedOnInput(delta);

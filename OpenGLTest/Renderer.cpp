@@ -404,7 +404,7 @@ void Renderer::DrawUI() {
 	for (UIComponent *t : transparentList) {
 		DrawUIComponent(t);
 	}
-
+	glDepthFunc(GL_ALWAYS);
 	UIComponent* black = UIManager::GetComponentById("BlackOverlay");
 	if (black != nullptr && black->visible) {
 		DrawUIComponent(black);
