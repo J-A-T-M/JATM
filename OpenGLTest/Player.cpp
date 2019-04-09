@@ -123,8 +123,9 @@ void Player::damageHealth(int damage) {
 		EventManager::notify(PLAY_SE, &TypeParam<int>(0), false);
 		_invulnFrames = MAX_INVULN_FRAMES;
 		Player::setHealth(_health - damage);
-		//SoundSystemClass::SE_type()
-		//damage->SE_type(1);
+		if (_health <= 0) {
+			EventManager::notify(PLAY_SE, &TypeParam<int>(2), false);
+		}
 	}
 }
 
@@ -137,6 +138,7 @@ void Player::setHealth(int health) {
 }
 
 void Player::setStun() {
+
 	_stunFrames = MAX_STUN_FRAMES;
 }
 bool Player::getStun() {

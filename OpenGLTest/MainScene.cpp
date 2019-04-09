@@ -81,7 +81,9 @@ bool MainScene::checkDone() {
 			++count;
 		}
 	}
-
+	if (count <= 1) {
+		EventManager::notify(PLAY_SE, &TypeParam<int>(3), false);
+	}
 	return (count <= 1);
 }
 
