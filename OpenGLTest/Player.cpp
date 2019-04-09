@@ -125,6 +125,7 @@ void Player::damageHealth(int damage) {
 		Player::setHealth(_health - damage);
 		if (_health <= 0) {
 			EventManager::notify(PLAY_SE, &TypeParam<int>(2), false);
+			EventManager::notify(PLAY_BGM_N, &TypeParam<int>(2), false);
 		}
 	}
 }

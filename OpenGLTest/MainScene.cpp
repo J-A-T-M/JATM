@@ -142,6 +142,8 @@ void MainScene::SpawnHazard() {
 void MainScene::Update(const float delta) {
 	time += delta;
 
+	EventManager::notify(FADE, &TypeParam<float>(time), false);
+	
 	auto it = hazards.begin();
 	while (it != hazards.end()) {
 		if ((*it)->grounded()) {

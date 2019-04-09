@@ -11,6 +11,9 @@ public:
 	FMOD::System *m_pSystem;
 	FMOD::Channel *channel;
 	FMOD::Channel* currentSong;
+	int deathCount = 0;
+	bool fade_in = false, timestamp=true;
+	float currentT;
 	SoundSystemClass() {
 		if (FMOD::System_Create(&m_pSystem) != FMOD_OK) {
 			// Report Error
@@ -29,11 +32,13 @@ public:
 		m_pSystem->init(36, FMOD_INIT_NORMAL, nullptr);
 		EventManager::subscribe(PLAY_BGM_N, this);
 		EventManager::subscribe(PLAY_SE, this);
+		EventManager::subscribe(FADE, this);
 	}
 
 	~SoundSystemClass() {
 		EventManager::unsubscribe(PLAY_BGM_N, this);
 		EventManager::unsubscribe(PLAY_SE, this);
+		EventManager::unsubscribe(FADE, this);
 	}
 
 	void createSound(SoundClass *pSound, const char* pFile) {
@@ -85,6 +90,7 @@ private:
 				if (bgm_Type == 0) {  //Menu
 					std::cout<<"normal"<<std::endl;
 					createSound(&sound, "..\\assets\\sounds\\bgm_menu.wav");
+					//createSound(&sound, "..\\assets\\sounds\\bgm2.mp3");
 					playSoundMenu(sound, true);
 					createSound(&sound, "..\\assets\\sounds\\bgm1.wav");
 					playSound(sound, true);
@@ -104,11 +110,20 @@ private:
 						currentSong->setVolume(0.0f);
 					}
 				}
+				else if (bgm_Type == 2) {
+					if (deathCount >= 2) {
+						std::cout << "speed up" << std::endl;
+						currentSong->setVolume(0.0f);
+						createSound(&sound, "..\\assets\\sounds\\bgm2.mp3");
+						playSound(sound, true);
+						channel->setVolume(0.0f);
+						fade_in = true;
+					}
+				}
 				else {
 					createSound(&sound, " ");
 					std::cout << "BGM defines error!" << std::endl;
 				}
-				
 				
 				break;
 			}
@@ -125,15 +140,38 @@ private:
 				}
 				else if (se_Type == 2) {     //Death
 					createSound(&sound, "..\\assets\\sounds\\hit_death.wav");
+					deathCount += 1;
 				}
 				else if (se_Type == 3) {    //Finish!
 					createSound(&sound, "..\\assets\\sounds\\finish.wav");
+					deathCount = 0;
 				}
 				else {
 					createSound(&sound, " ");
 					std::cout << "SE defines error!" << std::endl;
 				}
 				playSound(sound, false);
+				break;
+			}
+			case FADE: {
+				TypeParam<float> *p = dynamic_cast<TypeParam<float> *>(params);
+				float elapsedT = p->Param;
+				
+				if (timestamp) {
+					currentT = elapsedT;
+				}
+				if (channel != 0 && fade_in) {
+					timestamp = false;
+					float volume;
+					channel->getVolume(&volume);
+					float nextVolume = /*volume +*/ (elapsedT-currentT) / 5.0f;
+					std::cout << volume << " + " << elapsedT-currentT << "  ";
+					if (nextVolume >= 1.0f) {
+						channel->setVolume(1.0f);
+						fade_in = false;
+					}
+					else channel->setVolume(nextVolume);
+				}
 				break;
 			}
 			default: {
