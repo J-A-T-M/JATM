@@ -2,8 +2,8 @@
 
 #pragma comment (lib, "Ws2_32.lib") // Needed to link with Ws2_32.lib
 
+#define MAX_PLAYERS 4
 #define MAX_CLIENTS 2
-#define NUM_LOCAL 2
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -32,7 +32,7 @@ struct PLAYER_TRANSFORM {
 };
 
 struct PlayerTransformPacket {
-	PLAYER_TRANSFORM playerTransforms[MAX_CLIENTS + NUM_LOCAL];
+	PLAYER_TRANSFORM playerTransforms[MAX_PLAYERS];
 };
 
 struct HazardSpawnPacket {
@@ -67,6 +67,7 @@ public:
 
 	//========================================== Server Functions ==========================================//
 	void SendToClients(ServerPacket packet);
+	void SendOldHazardsToClient(CLIENT &client);
 	void ReceiveFromClient(CLIENT &client);
 	SOCKET InitializeListenSocket();
 	int ListenForClients();
@@ -76,7 +77,7 @@ public:
 	void ReceiveFromServer();
 	SOCKET InitializeClientSocket(std::string serverIP);
 	int ClientLoop(std::string SERVER_IP);
-
+	std::vector<Hazard*>* hazards;
 private:
 	std::thread networkThread;
 

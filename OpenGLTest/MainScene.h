@@ -31,13 +31,13 @@ class MainScene : public Scene, ISubscriber{
 		void notify(EventName eventName, Param* params);
 		const bool IS_SERVER;
 		const std::string SERVER_IP;
-		const int _NUM_LOCAL;
-		const int _NUM_REMOTE;
+		const int NUM_LOCAL;
+		const int NUM_REMOTE;
 		float time;
 		GameObject* floor;
 		std::vector<Hazard*> hazards;
 		std::vector<Player*> players;
-		std::vector<InputSourceEnum> playerInputSources = { INPUT_LOCAL1, INPUT_LOCAL2, INPUT_CLIENT1, INPUT_CLIENT2, INPUT_CLIENT3, INPUT_CLIENT4, INPUT_CLIENT5, INPUT_CLIENT6 };
+		std::vector<InputSourceEnum> playerInputSources;
 		Camera camera;
 		DirectionalLight directionalLight;
 		NetworkManager *networkManager;
