@@ -168,6 +168,12 @@ void Player::update() {
 	renderable->fullBright = _invulnFrames % 2;
 	renderable->color = (_invulnFrames % 2) ? INVULN_COLOR : renderable->color;
 
+	if (_health == 0) {
+		renderable->color = STUN_COLOR;
+		renderable->roughness = STUN_ROUGHNESS;
+		renderable->metallic = STUN_METALLIC;
+	}
+
 	if (_invulnFrames > 0) {
 		--_invulnFrames;
 	}
