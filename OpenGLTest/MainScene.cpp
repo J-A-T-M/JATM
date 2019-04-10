@@ -2,8 +2,7 @@
 #include <glm/glm.hpp>
 #include "MenuScene.h"
 
-
-MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer), SERVER_IP(serverIP){
+MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numRemote) : IS_SERVER(isServer), SERVER_IP(serverIP), _NUM_LOCAL(numLocal), _NUM_REMOTE(numRemote) {
 	EventManager::subscribe(SPAWN_HAZARD, this);
 
 	networkManager = new NetworkManager(IS_SERVER, SERVER_IP);
@@ -188,7 +187,7 @@ void MainScene::Update(const float delta) {
 }
 
 Scene * MainScene::GetNext() {
-	return new MenuScene(SERVER_IP, IS_SERVER);
+	return new MenuScene(SERVER_IP, IS_SERVER, _NUM_LOCAL, _NUM_REMOTE, time);
 }
 
 void MainScene::notify(EventName eventName, Param* params) {

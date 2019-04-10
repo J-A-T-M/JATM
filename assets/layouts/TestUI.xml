@@ -2,12 +2,12 @@
 	<component id="BlackOverlay" width="100%" height="100%" alpha="1.0" visible="false">
 	</component>
 	<component id="MenuScene" width="100%" height="100%" visible="false">
-		<component width="60%" height="40%" anchor="center center">
+		<component id="highScoreBox" width="60%" height="40%" anchor="center center" visible="false">
 			<component width="100%" height="30%" alpha="0.75" anchor="top">
 				<text size="50%" anchor="center center">High Score</text>
 			</component>
 			<component width="100%" height="70%" alpha="0.5" anchor="bottom">
-				<text size="50%" anchor="center center">0.0s</text>
+				<text id="highScoreText" size="50%" anchor="center center">0.0s</text>
 			</component>
 		</component>
 		<component width="100%" height="20%" anchor="top center">

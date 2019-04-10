@@ -9,7 +9,13 @@
 #define BASE_Z 28
 #define UI_HIGHLIGHT_OFFSET 30
 
-MenuScene::MenuScene(std::string serverIP, bool isServer) {
+float MenuScene::_highScore = 0.0f;
+
+MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numRemote, float previousTime) {
+	if (previousTime > _highScore) {
+		_highScore = previousTime;
+	}
+
 	int n;
 	char c;
 	std::stringstream ss(serverIP);
@@ -24,6 +30,7 @@ MenuScene::MenuScene(std::string serverIP, bool isServer) {
 	}
 
 	_isServer = isServer;
+	_numPlayers = { numLocal, numRemote };
 
 	floor.setSize(32.0f);
 	floor.setLocalPosition(glm::vec3(0, -32, 0));
@@ -89,8 +96,12 @@ MenuScene::MenuScene(std::string serverIP, bool isServer) {
 	_numPlayersBox = UIManager::GetComponentById("numPlayerBox");
 	_numLocal = (TextComponent*)UIManager::GetComponentById("numLocal");
 	_numRemote = (TextComponent*)UIManager::GetComponentById("numRemote");
+	_highScoreBox = UIManager::GetComponentById("highScoreBox");
+	_highScoreText = (TextComponent*)UIManager::GetComponentById("highScoreText");
 	// set UI component values
 	_UImenuScene->visible = true;
+	_highScoreBox->visible = (_highScore > 0.0f);
+	_highScoreText->SetText(std::to_string(_highScore) + 's');
 	UpdateGameObjectPositions();
 	UpdateUIPositions();
 }
@@ -120,7 +131,7 @@ Scene * MenuScene::GetNext() {
 	strIP += std::to_string(_serverIP[6] * 100 + _serverIP[7] * 10 + _serverIP[8]);
 	strIP += '.';
 	strIP += std::to_string(_serverIP[9] * 100 + _serverIP[10] * 10 + _serverIP[11]);
-	return new MainScene(_isServer, strIP);
+	return new MainScene(_isServer, strIP, _numPlayers[0], _numPlayers[1]);
 }
 
 void MenuScene::UpdateGameObjectPositions() {
@@ -157,6 +168,9 @@ void MenuScene::UpdateUIPositions() {
 		if (_xIndex != 0) {
 			_UIserverIP[_xIndex - 1]->anchor.y = UI_HIGHLIGHT_OFFSET;
 		}
+	}
+	if (_highScore != 0.0f) {
+
 	}
 
 }

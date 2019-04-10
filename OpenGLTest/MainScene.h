@@ -16,7 +16,7 @@
 
 class MainScene : public Scene, ISubscriber{
 	public:
-		MainScene(bool isServer, std::string serverIP);
+		MainScene(bool isServer, std::string serverIP, int numLocal, int numRemote);
 		~MainScene();
 		void Update(const float delta);
 		Scene* GetNext();
@@ -31,6 +31,8 @@ class MainScene : public Scene, ISubscriber{
 		void notify(EventName eventName, Param* params);
 		const bool IS_SERVER;
 		const std::string SERVER_IP;
+		const int _NUM_LOCAL;
+		const int _NUM_REMOTE;
 		float time;
 		GameObject* floor;
 		std::vector<Hazard*> hazards;
