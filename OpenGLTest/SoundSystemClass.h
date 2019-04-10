@@ -137,7 +137,7 @@ private:
 						channel->setVolume(0.0f);
 						std::cout << "speed up" << std::endl;
 						finished = false;
-						createSound(&sound, "..\\assets\\sounds\\bgm2.mp3");
+						createSound(&sound, "..\\assets\\sounds\\bgm2.wav");
 						playSound(sound, true);
 						channel->setVolume(0.0f);
 						fade_in = true;
