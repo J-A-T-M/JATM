@@ -120,6 +120,7 @@ Scene * MenuScene::GetNext() {
 }
 
 void MenuScene::UIMoveY(int delta_y) {
+	EventManager::notify(PLAY_SE, &TypeParam<int>(0), false);
 	glm::vec3 pos = _gameObjects[_xIndex].getLocalPosition();
 	if (_xIndex == 0) {
 		_isServer = !_isServer;
@@ -138,6 +139,7 @@ void MenuScene::UIMoveY(int delta_y) {
 }
 
 void MenuScene::UIMoveX(int delta_x) {
+	EventManager::notify(PLAY_SE, &TypeParam<int>(0), false);
 	_gameObjects[_xIndex].setLocalPositionY(2.0f);
 	if (_xIndex > 0) {
 		_UIserverIP[_xIndex - 1]->position.y -= 16;
