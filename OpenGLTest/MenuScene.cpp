@@ -73,7 +73,7 @@ MenuScene::MenuScene() {
 	EventManager::subscribe(KEY_DOWN, this);
 
 	//sound
-	//EventManager::notify(PLAY_BGM_N, &TypeParam<int>(0), true);
+	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(0), false);
 	printf("????");
 
 	// grab UI components

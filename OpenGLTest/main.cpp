@@ -16,8 +16,9 @@ int main() {
 	AssetLoader::preloadAssets();
 	Renderer* renderer = new Renderer();
 	UIManager* uiManager = new UIManager(1600, 900);
-	StateMachine* stateMachine = new StateMachine(new MenuScene());
 	SoundSystemClass* soundSystem = new SoundSystemClass();
+	StateMachine* stateMachine = new StateMachine(new MenuScene());
+	
 	
 	const double FIXED_UPDATE_FREQUENCY = 20.0;
 	const double FIXED_DELTA_TIME = 1.0 / FIXED_UPDATE_FREQUENCY;

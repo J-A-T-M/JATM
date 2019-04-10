@@ -10,9 +10,10 @@ public:
 	// Pointer to the FMOD instance
 	FMOD::System *m_pSystem;
 	FMOD::Channel *channel;
-	FMOD::Channel* currentSong;
+	FMOD::Channel* menuChannel;
+	FMOD::Channel* seChannel;
 	int deathCount = 0;
-	bool fade_in = false, timestamp=true;
+	bool fade_in = false, fade_out = false, timestamp = true;
 	float currentT;
 	SoundSystemClass() {
 		if (FMOD::System_Create(&m_pSystem) != FMOD_OK) {
@@ -65,7 +66,18 @@ public:
 			pSound->setLoopCount(-1);
 		}
 
-		m_pSystem->playSound(pSound, nullptr, false, &currentSong);
+		m_pSystem->playSound(pSound, nullptr, false, &menuChannel);
+	}
+
+	void playSE(SoundClass pSound, bool bLoop = false) {
+		if (!bLoop)
+			pSound->setMode(FMOD_LOOP_OFF);
+		else {
+			pSound->setMode(FMOD_LOOP_NORMAL);
+			pSound->setLoopCount(-1);
+		}
+
+		m_pSystem->playSound(pSound, nullptr, false, &seChannel);
 	}
 
 	void releaseSound(SoundClass pSound) {
@@ -88,32 +100,41 @@ private:
 
 				SoundClass sound;
 				if (bgm_Type == 0) {  //Menu
-					std::cout<<"normal"<<std::endl;
+					/*if (channel != 0 || menuChannel!=0) {
+						createSound(&sound, "..\\assets\\sounds\\bgm1.wav");
+						playSound(sound, true);
+						channel->setPosition(5000,FMOD_TIMEUNIT_MS);
+						channel->setVolume(0.0f);
+						menuChannel->setPosition(5000, FMOD_TIMEUNIT_MS);
+						menuChannel->setVolume(0.7f);
+					}*/
 					createSound(&sound, "..\\assets\\sounds\\bgm_menu.wav");
-					//createSound(&sound, "..\\assets\\sounds\\bgm2.mp3");
 					playSoundMenu(sound, true);
 					createSound(&sound, "..\\assets\\sounds\\bgm1.wav");
 					playSound(sound, true);
 					if (channel != 0) {
 						channel->setVolume(0.0f);
 					}
-					//if (currentSong != 0) {
-						currentSong->setVolume(0.6f);
-					//}
+					if (menuChannel != 0) {
+						menuChannel->setVolume(0.7f);
+					}
 				}
 				else if (bgm_Type == 1) {  //In game Normal Type
 					std::cout << "11" << std::endl;
 					if (channel != 0) {
-						channel->setVolume(0.5f);
+						//channel->setVolume(0.0f);
+						fade_in = true;
 					}
-					if (currentSong != 0) {
-						currentSong->setVolume(0.0f);
+					if (menuChannel != 0) {
+						//menuChannel->setVolume(0.0f);
+						fade_out = true;
 					}
 				}
 				else if (bgm_Type == 2) {
 					if (deathCount >= 2) {
+						channel->setVolume(0.0f);
 						std::cout << "speed up" << std::endl;
-						currentSong->setVolume(0.0f);
+						//menuChannel->setVolume(0.0f);
 						createSound(&sound, "..\\assets\\sounds\\bgm2.mp3");
 						playSound(sound, true);
 						channel->setVolume(0.0f);
@@ -150,7 +171,7 @@ private:
 					createSound(&sound, " ");
 					std::cout << "SE defines error!" << std::endl;
 				}
-				playSound(sound, false);
+				playSE(sound, false);
 				break;
 			}
 			case FADE: {
@@ -164,14 +185,35 @@ private:
 					timestamp = false;
 					float volume;
 					channel->getVolume(&volume);
-					float nextVolume = /*volume +*/ (elapsedT-currentT) / 5.0f;
-					std::cout << volume << " + " << elapsedT-currentT << "  ";
-					if (nextVolume >= 1.0f) {
-						channel->setVolume(1.0f);
+					float nextVolume = /*volume +*/ (elapsedT-currentT) / 4.0f;
+					//std::cout << volume << " + " << elapsedT-currentT << "  \n";
+					if (nextVolume >= 0.7f) {
+						channel->setVolume(0.7f);
 						fade_in = false;
 					}
 					else channel->setVolume(nextVolume);
 				}
+				else if (menuChannel != 0 && fade_out) {
+					timestamp = false;
+					float volume,c_volume;
+					menuChannel->getVolume(&volume);
+					channel->getVolume(&c_volume);
+					float nextVolume = (elapsedT - currentT) / 1.0f; 
+					//std::cout << volume << " + " << elapsedT - currentT << "  \n";
+					if (0.7f - nextVolume <= 0.0f) {
+						menuChannel->setVolume(0.0f);
+						fade_out = false;
+					}
+					else menuChannel->setVolume(0.7f - nextVolume);
+				}
+				break;
+			}
+			case S_CLEAR: {
+				printf("exe");
+				channel->stop();
+				menuChannel->stop();
+				channel=0;
+				menuChannel = 0;
 				break;
 			}
 			default: {

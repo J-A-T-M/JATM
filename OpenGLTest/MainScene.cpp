@@ -47,7 +47,7 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color), false);
 
-	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(0), false);
+	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(1), false);
 }
 
 MainScene::~MainScene() {

@@ -15,5 +15,6 @@ enum EventName {
 	SPAWN_HAZARD,
 	PLAY_BGM_N,
 	PLAY_SE,
-	FADE
+	FADE,
+	S_CLEAR
 };
