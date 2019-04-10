@@ -2,6 +2,7 @@
 #include <FMOD/fmod_errors.h>  //only for error checking
 #include <iostream>
 #include "ISubscriber.h"
+#include <stdlib.h>
 
 typedef FMOD::Sound* SoundClass;
 
@@ -13,7 +14,7 @@ public:
 	FMOD::Channel* menuChannel;
 	FMOD::Channel* seChannel;
 	int deathCount = 0;
-	bool fade_in = false, fade_out = false, timestamp = true;
+	bool fade_in = false, fade_out = false, timestamp = true, finished=true;
 	float currentT;
 	SoundSystemClass() {
 		if (FMOD::System_Create(&m_pSystem) != FMOD_OK) {
@@ -34,12 +35,14 @@ public:
 		EventManager::subscribe(PLAY_BGM_N, this);
 		EventManager::subscribe(PLAY_SE, this);
 		EventManager::subscribe(FADE, this);
+		EventManager::subscribe(S_CLEAR, this);
 	}
 
 	~SoundSystemClass() {
 		EventManager::unsubscribe(PLAY_BGM_N, this);
 		EventManager::unsubscribe(PLAY_SE, this);
 		EventManager::unsubscribe(FADE, this);
+		EventManager::unsubscribe(S_CLEAR, this);
 	}
 
 	void createSound(SoundClass *pSound, const char* pFile) {
@@ -120,7 +123,6 @@ private:
 					}
 				}
 				else if (bgm_Type == 1) {  //In game Normal Type
-					std::cout << "11" << std::endl;
 					if (channel != 0) {
 						//channel->setVolume(0.0f);
 						fade_in = true;
@@ -134,7 +136,7 @@ private:
 					if (deathCount >= 2) {
 						channel->setVolume(0.0f);
 						std::cout << "speed up" << std::endl;
-						//menuChannel->setVolume(0.0f);
+						finished = false;
 						createSound(&sound, "..\\assets\\sounds\\bgm2.mp3");
 						playSound(sound, true);
 						channel->setVolume(0.0f);
@@ -155,23 +157,52 @@ private:
 				SoundClass sound;
 				if (se_Type == 0) {    //Hit(you)
 					createSound(&sound, "..\\assets\\sounds\\hit1.wav");
+					playSE(sound, false);
 				}
 				else if (se_Type == 1) {     //Hit(others)
 					createSound(&sound, "..\\assets\\sounds\\hit2.wav");
+					playSE(sound, false);
 				}
 				else if (se_Type == 2) {     //Death
-					createSound(&sound, "..\\assets\\sounds\\hit_death.wav");
 					deathCount += 1;
+					int random;
+					random = rand() % 6;
+					createSound(&sound, "..\\assets\\sounds\\hit_death.wav");
+					playSE(sound, false);
+					if (deathCount <= 1) {
+						if (random < 3 ) {
+							createSound(&sound, "..\\assets\\sounds\\one_player_down.wav");
+						}
+						else {
+							createSound(&sound, "..\\assets\\sounds\\first_blood.wav");
+						}
+						playSE(sound, false);
+					}
+					else if (deathCount == 2) {
+						if (random < 3) {
+							createSound(&sound, "..\\assets\\sounds\\another_player_down.wav");
+						}
+						else {
+							createSound(&sound, "..\\assets\\sounds\\only_two_players_left.wav");
+						}
+						playSE(sound, false);
+					}
 				}
 				else if (se_Type == 3) {    //Finish!
-					createSound(&sound, "..\\assets\\sounds\\finish.wav");
+					createSound(&sound, "..\\assets\\sounds\\match_finished.wav");
 					deathCount = 0;
+					finished = true;
+					playSE(sound, false);
+				}
+				else if (se_Type == 4) {     //Ready_GO
+					createSound(&sound, "..\\assets\\sounds\\ready_go.wav");
+					playSE(sound, false);
 				}
 				else {
 					createSound(&sound, " ");
 					std::cout << "SE defines error!" << std::endl;
 				}
-				playSE(sound, false);
+				
 				break;
 			}
 			case FADE: {
@@ -190,6 +221,7 @@ private:
 					if (nextVolume >= 0.7f) {
 						channel->setVolume(0.7f);
 						fade_in = false;
+						timestamp = true;
 					}
 					else channel->setVolume(nextVolume);
 				}
@@ -203,8 +235,19 @@ private:
 					if (0.7f - nextVolume <= 0.0f) {
 						menuChannel->setVolume(0.0f);
 						fade_out = false;
+						timestamp = true;
 					}
 					else menuChannel->setVolume(0.7f - nextVolume);
+				}
+				if (!finished) {
+					timestamp = false;
+					SoundClass sound;
+					if (elapsedT - currentT > 10) {
+						createSound(&sound, "..\\assets\\sounds\\match_point.wav");
+						playSE(sound, false);
+						timestamp = true;
+						finished = true;
+					}
 				}
 				break;
 			}
@@ -214,6 +257,8 @@ private:
 				menuChannel->stop();
 				channel=0;
 				menuChannel = 0;
+				//seChannel->stop();
+				//seChannel = 0;
 				break;
 			}
 			default: {

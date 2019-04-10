@@ -1,6 +1,7 @@
 #include "MainScene.h"
 #include <glm/glm.hpp>
 #include "MenuScene.h"
+#include <stdlib.h>
 
 MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numRemote) : 
 	IS_SERVER(isServer), 
@@ -63,6 +64,8 @@ MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numR
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color), false);
 
 	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(1), false);
+	EventManager::notify(PLAY_SE, &TypeParam<int>(4), false);
+	
 }
 
 MainScene::~MainScene() {
@@ -163,7 +166,6 @@ void MainScene::SpawnHazard() {
 
 void MainScene::Update(const float delta) {
 	time += delta;
-
 	EventManager::notify(FADE, &TypeParam<float>(time), false);
 	
 	auto it = hazards.begin();
