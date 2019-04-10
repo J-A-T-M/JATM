@@ -1,18 +1,13 @@
 #include "MainScene.h"
-#include "Network.h"
 #include <glm/glm.hpp>
 #include "MenuScene.h"
 #include <stdlib.h>
 
+
 MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer), SERVER_IP(serverIP){
 	EventManager::subscribe(SPAWN_HAZARD, this);
 
-	initNetwork();
-	if (IS_SERVER) {
-		networkThread = std::thread(listenForClients);
-	} else {
-		networkThread = std::thread(ClientLoop, this->SERVER_IP);
-	}
+	networkManager = new NetworkManager(IS_SERVER, SERVER_IP);
 
 	glm::vec3 color[] = { Colour::FUCSHIA , Colour::ORANGE, Colour::BLUERA , Colour::GREENRA };
 	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
@@ -22,7 +17,7 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 	}
 
 	floor = new GameObject();
-	floor->setLocalScale(32.0f);
+	floor->setSize(32.0f);
 	floor->setLocalPosition(glm::vec3(0, -32, 0));
 	floor->addRenderable();
 	floor->renderable->roughness = 0.8;
@@ -54,7 +49,7 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 }
 
 MainScene::~MainScene() {
-	networkThreadShouldDie = true;
+	delete networkManager;
 	for (GameObject* gameObject : players) {
 		if (gameObject != nullptr) {
 			delete gameObject;
@@ -67,13 +62,12 @@ MainScene::~MainScene() {
 		}
 	}
 	delete floor;
-	networkThread.join();
 	std::cout << "MainScene cleaned up" << std::endl;
 }
 
 bool MainScene::checkDone() {
-	if (!IS_SERVER && time > MAX_DISCONNECT_TIME_MS / 1000.0f) {
-		if (!isConnectedToServer) {
+	if (!IS_SERVER && time > networkManager->MAX_DISCONNECT_TIME_MS / 1000.0f) {
+		if (!networkManager->isConnectedToServer) {
 			return true;
 		}
 	}
@@ -110,17 +104,19 @@ void MainScene::sendPlayerTransforms() {
 		packet.playerTransformPacket.playerTransforms[i].health = players[i]->getHealth();
 		packet.playerTransformPacket.playerTransforms[i].stunFrames = players[i]->getStunFrames();
 	}
-	sendToClients(packet);
+	
+	networkManager->SendToClients(packet);
+
 }
 
 void MainScene::movePlayersBasedOnNetworking() {
 	for (int i = 0; i < players.size(); i++) {
-		players[i]->setLocalPosition(serverState.playerTransforms[i].position);
-		players[i]->setLocalRotation(serverState.playerTransforms[i].rotation);
-		players[i]->setStunFrames(serverState.playerTransforms[i].stunFrames);
+		players[i]->setLocalPosition(networkManager->serverState.playerTransforms[i].position);
+		players[i]->setLocalRotation(networkManager->serverState.playerTransforms[i].rotation);
+		players[i]->setStunFrames(networkManager->serverState.playerTransforms[i].stunFrames);
 		// horrible hackjob by markus
 		// find a better way to send this
-		int damage = players[i]->getHealth() - serverState.playerTransforms[i].health;
+		int damage = players[i]->getHealth() - networkManager->serverState.playerTransforms[i].health;
 		if (damage != 0) {
 			players[i]->damageHealth(damage);
 		}
@@ -128,18 +124,18 @@ void MainScene::movePlayersBasedOnNetworking() {
 }
 
 void MainScene::SpawnHazard() {
-	glm::vec3 pos = glm::vec3(rand() % 58 - 29, 10 + rand() % 10, rand() % 58 - 29);
-	float fallSpeed = 5.0f;
-
-	Hazard* hazard = new Hazard(pos, fallSpeed);
+	float X = (rand() % 10) + 1;
+	float Z = 10 - X + 1;
+	Hazard* hazard = HazardFactory::buildPrism(glm::vec3(X, 1.0, Z));
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(hazard->renderable), false);
 	hazards.push_back(hazard);
 
 	ServerPacket packet;
 	packet.type = PACKET_HAZARD_SPAWN;
-	packet.hazardSpawnPacket.spawnPosition = pos;
-	packet.hazardSpawnPacket.fallSpeed = fallSpeed;
-	sendToClients(packet);
+	packet.hazardSpawnPacket.spawnPosition = hazard->getLocalPosition();
+	packet.hazardSpawnPacket.size = hazard->getSize();
+	packet.hazardSpawnPacket.fallSpeed = hazard->fallSpeed;
+	networkManager->SendToClients(packet);
 }
 
 void MainScene::Update(const float delta) {
@@ -157,7 +153,7 @@ void MainScene::Update(const float delta) {
 	}
 
 	if (IS_SERVER) {
-		if (hazards.size() <= 5) {
+		if (hazards.size() <= 10) {
 			SpawnHazard();
 		}
 		movePlayersBasedOnInput(delta);
@@ -168,7 +164,7 @@ void MainScene::Update(const float delta) {
 	} else {
 		movePlayersBasedOnNetworking();
 		// send user input to server
-		sendToServer();
+		networkManager->SendToServer();
 	}
 
 	_done = checkDone();

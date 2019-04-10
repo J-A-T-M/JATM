@@ -3,14 +3,14 @@
 #include <glm/glm.hpp>
 Quadtree* PhysicsManager::quad = new Quadtree(0, new Rectangle(-32, -32, 32, 32));
 
-bool intersects(glm::vec2 distance, float radius, float size) {
-	if (distance.x > (size + radius)) { return false; }
-	if (distance.y > (size + radius)) { return false; }
+bool intersects(glm::vec2 distance, float radius, glm::vec3 size) {
+	if (distance.x > (size.x + radius)) { return false; }
+	if (distance.y > (size.z + radius)) { return false; }
 
-	if (distance.x <= size) { return true; }
-	if (distance.y <= size) { return true; }
+	if (distance.x <= size.x) { return true; }
+	if (distance.y <= size.z) { return true; }
 
-	glm::vec2 cornerDistance = distance - size;
+	glm::vec2 cornerDistance(distance.x - size.x, distance.y - size.z);
 	float cornerDistance_sq = glm::dot(cornerDistance * cornerDistance, glm::vec2(1.0));
 	return (cornerDistance_sq <= (radius * radius));
 }
@@ -104,8 +104,8 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 	for (int i = 0; i < hazards.size(); ++i)
 	{
 		glm::vec2 hazardPosition = hazards[i]->getLocalPositionXZ();
-		float size = hazards[i]->getLocalScale();
-		Rectangle* hRect = new Rectangle(i + 100, hazardPosition.x - size / 2.0, hazardPosition.y - size / 2.0, size, size);
+		glm::vec3 size = hazards[i]->getSize();
+		Rectangle* hRect = new Rectangle(i + 100, hazardPosition.x - size.x, hazardPosition.y - size.z, size.x * 2, size.z * 2);
 		PhysicsManager::quad->Insert(hRect);
 	}
 
@@ -133,10 +133,10 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 				glm::vec2 hazardPosition = hazards[hId]->getLocalPositionXZ();
 				glm::vec2 distance = glm::abs(playerPosition - hazardPosition);
 				float radius = players[i]->getRadius();
-				float size = hazards[hId]->getLocalScale();
+				glm::vec3 size = hazards[hId]->getSize();
 				float playerHeight = players[i]->getLocalPositionY();
 				float hazardHeight = hazards[hId]->getLocalPositionY();
-				if (hazardHeight <= playerHeight + size + radius) {
+				if (hazardHeight <= playerHeight + size.y + radius) {
 					if (intersects(distance, radius, size)) {
 						players[i]->damageHealth(25);
 					}

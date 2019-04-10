@@ -4,6 +4,7 @@
 #include <glm/gtc/color_space.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
 #include <iostream>
 #include <random>
 
@@ -19,10 +20,10 @@ glm::mat4 Renderer::CalculateModelMatrix(std::shared_ptr<Renderable> renderable)
 	if (renderable->interpolated) {
 		glm::vec3 interpolated_position = glm::mix(renderable->previousPosition, renderable->position, interp_value);
 		glm::quat interpolated_rotation = glm::slerp(renderable->previousRotation, renderable->rotation, interp_value);
-		float interpolated_scale = glm::mix(renderable->previousScale, renderable->scale, interp_value);
+		glm::vec3 interpolated_scale = glm::mix(renderable->previousScale, renderable->scale, interp_value);
 		m = glm::translate(m, interpolated_position);
 		m = m * (glm::mat4)interpolated_rotation;
-		m = glm::scale(m, glm::vec3(interpolated_scale));
+		m = glm::scale(m, interpolated_scale);
 	} else {
 		m = glm::translate(m, renderable->position);
 		m = m * (glm::mat4)renderable->rotation;
@@ -75,6 +76,10 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 	standardShader->setBool("u_fullBright", renderable->fullBright);
 	standardShader->setFloat("u_roughness", glm::max(renderable->roughness, 0.01f));
 	standardShader->setFloat("u_metallic", renderable->metallic);
+
+	glm::mat3 mn = m;
+	mn = glm::inverseTranspose(mn);
+	standardShader->setMat3("modelNormal", mn);
 
 	glDrawElements(GL_TRIANGLES, model->elements.size(), GL_UNSIGNED_INT, BUFFER_OFFSET(0));
 }
@@ -399,7 +404,7 @@ void Renderer::DrawUI() {
 	for (UIComponent *t : transparentList) {
 		DrawUIComponent(t);
 	}
-
+	glDepthFunc(GL_ALWAYS);
 	UIComponent* black = UIManager::GetComponentById("BlackOverlay");
 	if (black != nullptr && black->visible) {
 		DrawUIComponent(black);
