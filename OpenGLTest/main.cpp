@@ -17,7 +17,7 @@ int main() {
 	Renderer* renderer = new Renderer();
 	UIManager* uiManager = new UIManager(1600, 900);
 	SoundSystemClass* soundSystem = new SoundSystemClass();
-	StateMachine* stateMachine = new StateMachine(new MenuScene("127.0.0.1", true, 2, 2, 5.0f));
+	StateMachine* stateMachine = new StateMachine(new MenuScene());
 	
 	
 	const double FIXED_UPDATE_FREQUENCY = 20.0;
