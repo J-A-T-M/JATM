@@ -188,7 +188,7 @@ void MainScene::Update(const float delta) {
 }
 
 Scene * MainScene::GetNext() {
-	return new MenuScene();
+	return new MenuScene(SERVER_IP, IS_SERVER);
 }
 
 void MainScene::notify(EventName eventName, Param* params) {

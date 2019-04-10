@@ -1,22 +1,29 @@
 #include "MenuScene.h"
 
-#include <string>
+#include <sstream>
 #include "GLFW/glfw3.h"
 #include "MainScene.h"
 #include "Colour.h"
 #include "UI/UIManager.h"
 
 #define BASE_Z 28
+#define UI_HIGHLIGHT_OFFSET 30
 
-MenuScene::MenuScene() {
-	_serverIP = {
-			1,2,7,
-			0,0,0,
-			0,0,0,
-			0,0,1
-	};
+MenuScene::MenuScene(std::string serverIP, bool isServer) {
+	int n;
+	char c;
+	std::stringstream ss(serverIP);
+	for (int i = 0; i < 4; ++i) {
+		if (i != 0) {
+			ss >> c;
+		}
+		ss >> n;
+		_serverIP[i * 3] = n / 100;
+		_serverIP[i * 3 + 1] = n / 10 % 10;
+		_serverIP[i * 3 + 2] = n % 10;
+	}
 
-	_isServer = true;
+	_isServer = isServer;
 
 	floor.setSize(32.0f);
 	floor.setLocalPosition(glm::vec3(0, -32, 0));
@@ -26,10 +33,7 @@ MenuScene::MenuScene() {
 	floor.renderable->model = MODEL_CUBE;
 	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor.renderable), false);
 
-	_gameObjects = std::vector<GameObject>(X_INDEX_MAX);
-
 	_gameObjects[0].setSize(2.0f);
-	_gameObjects[0].setLocalPosition(glm::vec3(-30, 4, BASE_Z - _isServer * 5));
 	_gameObjects[0].addRenderable();
 	_gameObjects[0].renderable->roughness = 0.5;
 	_gameObjects[0].renderable->metallic = 1.0;
@@ -41,7 +45,6 @@ MenuScene::MenuScene() {
 
 	for (int i = 1; i < _gameObjects.size(); ++i) {
 		_gameObjects[i].setSize(2.0f);
-		_gameObjects[i].setLocalPosition(glm::vec3(i * 5 - 30, 2, BASE_Z - _serverIP[i - 1] * 5));
 		_gameObjects[i].addRenderable();
 		_gameObjects[i].renderable->roughness = 0.5;
 		_gameObjects[i].renderable->metallic = 1.0;
@@ -79,23 +82,24 @@ MenuScene::MenuScene() {
 	// grab UI components
 	_UImenuScene = UIManager::GetComponentById("MenuScene");
 	_UIisServer = (TextComponent*)UIManager::GetComponentById("isServerText");
-	_UIserverIP = std::vector<TextComponent*>(_serverIP.size());
 	for (int i = 0; i < _serverIP.size(); ++i) {
 		_UIserverIP[i] = (TextComponent*)UIManager::GetComponentById("ipDigit" + std::to_string(i));
 	}
-	_UIipBox = UIManager::GetComponentById("ipBox");
+	_ipBox = UIManager::GetComponentById("ipBox");
+	_numPlayersBox = UIManager::GetComponentById("numPlayerBox");
+	_numLocal = (TextComponent*)UIManager::GetComponentById("numLocal");
+	_numRemote = (TextComponent*)UIManager::GetComponentById("numRemote");
 	// set UI component values
-	for (int i = 0; i < _serverIP.size(); ++i) {
-		_UIserverIP[i]->SetText(std::to_string(_serverIP[i]));
-	}
-	_UIisServer->SetText((_isServer) ? "Server" : "client");
-	_UIipBox->visible = (_isServer) ? false : true;
 	_UImenuScene->visible = true;
-
+	UpdateGameObjectPositions();
+	UpdateUIPositions();
 }
 
 MenuScene::~MenuScene() {
 	EventManager::unsubscribe(KEY_DOWN, this);
+	for (int i = 0; i < _serverIP.size(); ++i) {
+		_UIserverIP[i]->anchor.y = 0;
+	}
 	_UImenuScene->visible = false;
 }
 
@@ -119,39 +123,79 @@ Scene * MenuScene::GetNext() {
 	return new MainScene(_isServer, strIP);
 }
 
+void MenuScene::UpdateGameObjectPositions() {
+	if (_isServer) {
+		_gameObjects[0].setLocalPosition(glm::vec3(-30, 2, BASE_Z - 5));
+		for (int i = 1; i < _gameObjects.size(); ++i) {
+			_gameObjects[i].setLocalPosition(glm::vec3(i * 5 - 30, 2, BASE_Z));
+		}
+		_gameObjects[1].setLocalPosition(glm::vec3(-25, 2, BASE_Z - 5 * _numPlayers[0]));
+		_gameObjects[2].setLocalPosition(glm::vec3(-20, 2, BASE_Z - 5 * _numPlayers[1]));
+	} else {
+		_gameObjects[0].setLocalPosition(glm::vec3(-30, 2, BASE_Z));
+		for (int i = 0; i < _serverIP.size(); ++i) {
+			_gameObjects[i + 1].setLocalPosition(glm::vec3(i * 5 - 25, 2, BASE_Z - _serverIP[i] * 5));
+		}
+	}
+	_gameObjects[_xIndex].setLocalPositionY(4);
+}
+void MenuScene::UpdateUIPositions() {
+	_UIisServer->SetText(_isServer ? "Server" : "Client");
+	_UIisServer->anchor.y = (_xIndex == 0) ? UI_HIGHLIGHT_OFFSET : 0;
+	_numPlayersBox->visible = _isServer;
+	_ipBox->visible = !_isServer;
+	if (_isServer) {
+		_numLocal->SetText(std::to_string(_numPlayers[0]));
+		_numLocal->anchor.y = (_xIndex == 1) ? UI_HIGHLIGHT_OFFSET : 0;
+		_numRemote->SetText(std::to_string(_numPlayers[1]));
+		_numRemote->anchor.y = (_xIndex == 2) ? UI_HIGHLIGHT_OFFSET : 0;
+	} else {
+		for (int i = 0; i < _UIserverIP.size(); ++i) {
+			_UIserverIP[i]->SetText(std::to_string(_serverIP[i]));
+			_UIserverIP[i]->anchor.y = 0;
+		}
+		if (_xIndex != 0) {
+			_UIserverIP[_xIndex - 1]->anchor.y = UI_HIGHLIGHT_OFFSET;
+		}
+	}
+
+}
+
 void MenuScene::UIMoveY(int delta_y) {
 	EventManager::notify(PLAY_SE, &TypeParam<int>(0), false);
-	glm::vec3 pos = _gameObjects[_xIndex].getLocalPosition();
+	// update values
 	if (_xIndex == 0) {
 		_isServer = !_isServer;
-		pos.z = BASE_Z - _isServer * 5;
-		_UIisServer->SetText((_isServer) ? "Server" : "Client");
-		_UIipBox->visible = (_isServer) ? false : true;
 	} else {
-		int value = _serverIP[_xIndex - 1] + delta_y;
-		if (value < 0) value = 10 + value;
-		if (value >= 10) value = value % 10;
-		_UIserverIP[_xIndex - 1]->SetText(std::to_string(value));
-		_serverIP[_xIndex - 1] = value;
-		pos.z = BASE_Z - value * 5;
+		if (_isServer) {
+			int value = _numPlayers[_xIndex - 1] + delta_y;
+			if (value < 0) value = 3 + value;
+			if (value >= 3) value = value % 3;
+			_numPlayers[_xIndex - 1] = value;
+		} else {
+			int value = _serverIP[_xIndex - 1] + delta_y;
+			if (value < 0) value = 10 + value;
+			if (value >= 10) value = value % 10;
+			_serverIP[_xIndex - 1] = value;
+		}
 	}
-	_gameObjects[_xIndex].setLocalPosition(pos);
 }
 
 void MenuScene::UIMoveX(int delta_x) {
 	EventManager::notify(PLAY_SE, &TypeParam<int>(0), false);
-	_gameObjects[_xIndex].setLocalPositionY(2.0f);
-	if (_xIndex > 0) {
-		_UIserverIP[_xIndex - 1]->position.y -= 16;
-	}
+	// update index
 	_xIndex += delta_x;
-	if (_isServer) _xIndex = 0;
-	if (_xIndex < 0) _xIndex = X_INDEX_MAX + _xIndex;
-	if (_xIndex >= X_INDEX_MAX) _xIndex = _xIndex % X_INDEX_MAX;
-	if (_xIndex > 0) {
-		_UIserverIP[_xIndex - 1]->position.y += 16;
+	if (_isServer) {
+		if (_xIndex < 0) {
+			_xIndex = 3 + _xIndex;
+		}
+		_xIndex %= 3;
+	} else {
+		if (_xIndex < 0) {
+			_xIndex = X_INDEX_MAX + _xIndex;
+		}
+		_xIndex %= X_INDEX_MAX;
 	}
-	_gameObjects[_xIndex].setLocalPositionY(4.0f);
 }
 
 void MenuScene::notify(EventName eventName, Param * params) {
@@ -181,5 +225,7 @@ void MenuScene::notify(EventName eventName, Param * params) {
 			default:
 				break;
 		}
+		UpdateGameObjectPositions();
+		UpdateUIPositions();
 	}
 }
