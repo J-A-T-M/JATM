@@ -6,8 +6,8 @@ NetworkManager::NetworkManager(bool isServer, std::string serverIP) {
 	//Initialize network
 	networkThreadShouldDie = false;
 	isConnectedToServer = false;
-	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
-		serverState.playerTransforms[i] = { glm::vec3(0), glm::vec3(0), 100 };
+	for (int i = 0; i < MAX_PLAYERS; i++) {
+		serverState.playerTransforms[i] = { glm::vec3(0, -2, 0), glm::vec3(0), 100 };
 	}
 
 	if (isServer) {
@@ -46,7 +46,19 @@ void NetworkManager::SendToClients(ServerPacket packet) {
 	}
 }
 
+void NetworkManager::SendOldHazardsToClient(CLIENT & client) {
+	for (int i = 0; i < hazards->size(); ++i) {
+		ServerPacket packet;
+		packet.type = PACKET_HAZARD_SPAWN;
+		packet.hazardSpawnPacket.spawnPosition = (*hazards)[i]->getLocalPosition();
+		packet.hazardSpawnPacket.size = (*hazards)[i]->getSize();
+		packet.hazardSpawnPacket.fallSpeed = (*hazards)[i]->fallSpeed;
+		send(client.socket, (char*)&packet, sizeof(ServerPacket), 0);
+	}
+}
+
 void NetworkManager::ReceiveFromClient(CLIENT &client) {
+	SendOldHazardsToClient(client);
 
 	std::cout << "Recieve thread for Client #" << client.id << " started" << std::endl;
 

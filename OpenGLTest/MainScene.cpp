@@ -2,18 +2,39 @@
 #include <glm/glm.hpp>
 #include "MenuScene.h"
 
-MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numRemote) : IS_SERVER(isServer), SERVER_IP(serverIP), _NUM_LOCAL(numLocal), _NUM_REMOTE(numRemote) {
+MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numRemote) : 
+	IS_SERVER(isServer), 
+	SERVER_IP(serverIP), 
+	NUM_LOCAL(isServer ? max(numLocal, 1): 2), 
+	NUM_REMOTE(isServer ? numRemote : 2) {
+
 	EventManager::subscribe(SPAWN_HAZARD, this);
 
 	networkManager = new NetworkManager(IS_SERVER, SERVER_IP);
+	// horrible hackjob so we can send existing hazards to new clients
+	networkManager->hazards = &hazards;
 
 	glm::vec3 color[] = { Colour::FUCSHIA , Colour::ORANGE, Colour::BLUERA , Colour::GREENRA };
-	for (int i = 0; i < MAX_CLIENTS + NUM_LOCAL; i++) {
-		Player* player = new Player(glm::vec2(10.0 * i - 15.0, 5.0), color[i % 4]);
+	for (int i = 0; i < NUM_LOCAL; ++i) {
+		playerInputSources.push_back(InputSourceEnum(INPUT_LOCAL1 + i));
+		Player* player = new Player(glm::vec2(-10.0 * i - 5, 5.0), color[i % 4]);
+		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player->renderable), false);
+		players.push_back(player);
+	}
+	for (int i = 0; i < NUM_REMOTE; ++i) {
+		playerInputSources.push_back(InputSourceEnum(INPUT_CLIENT1 + i));
+		Player* player = new Player(glm::vec2(10.0 * i + 5, 5.0), color[(i + 2) % 4]);
 		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player->renderable), false);
 		players.push_back(player);
 	}
 
+	if (!IS_SERVER) {
+		for (int i = 0; i < players.size(); ++i) {
+			players[i]->setLocalPositionY(-2);
+			players[i]->clearRenderablePreviousTransforms();
+		}
+	}
+	
 	floor = new GameObject();
 	floor->setSize(32.0f);
 	floor->setLocalPosition(glm::vec3(0, -32, 0));
@@ -187,7 +208,7 @@ void MainScene::Update(const float delta) {
 }
 
 Scene * MainScene::GetNext() {
-	return new MenuScene(SERVER_IP, IS_SERVER, _NUM_LOCAL, _NUM_REMOTE, time);
+	return new MenuScene(SERVER_IP, IS_SERVER, NUM_LOCAL, NUM_REMOTE, time);
 }
 
 void MainScene::notify(EventName eventName, Param* params) {
