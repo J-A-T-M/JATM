@@ -6,6 +6,8 @@
 #include "MenuScene.h"
 #include "UI/UIManager.h"
 
+#include "SoundSystemClass.h"
+
 using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
 using std::chrono::duration;
@@ -14,8 +16,10 @@ int main() {
 	AssetLoader::preloadAssets();
 	Renderer* renderer = new Renderer();
 	UIManager* uiManager = new UIManager(1600, 900);
+	SoundSystemClass* soundSystem = new SoundSystemClass();
 	StateMachine* stateMachine = new StateMachine(new MenuScene());
-
+	
+	
 	const double FIXED_UPDATE_FREQUENCY = 20.0;
 	const double FIXED_DELTA_TIME = 1.0 / FIXED_UPDATE_FREQUENCY;
 
@@ -32,6 +36,7 @@ int main() {
         }
     }
 
+	delete soundSystem;
 	delete stateMachine;
 	delete uiManager;
 	delete renderer;

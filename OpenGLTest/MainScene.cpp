@@ -41,6 +41,8 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(up_color), false);
 
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color), false);
+
+	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(1), false);
 }
 
 MainScene::~MainScene() {
@@ -73,7 +75,9 @@ bool MainScene::checkDone() {
 			++count;
 		}
 	}
-
+	if (count <= 1) {
+		EventManager::notify(PLAY_SE, &TypeParam<int>(3), false);
+	}
 	return (count <= 1);
 }
 
@@ -134,6 +138,8 @@ void MainScene::SpawnHazard() {
 void MainScene::Update(const float delta) {
 	time += delta;
 
+	EventManager::notify(FADE, &TypeParam<float>(time), false);
+	
 	auto it = hazards.begin();
 	while (it != hazards.end()) {
 		if ((*it)->grounded()) {
@@ -171,6 +177,8 @@ void MainScene::Update(const float delta) {
 		hazard->updateRenderableTransforms();
 	}
 	EventManager::notify(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, &TypeParam<float>(delta), false);
+	//std::cout << "aa" << std::endl;
+	//EventManager::subscribe(SOUND_P, this);
 }
 
 Scene * MainScene::GetNext() {

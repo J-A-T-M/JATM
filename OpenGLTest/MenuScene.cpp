@@ -72,6 +72,10 @@ MenuScene::MenuScene() {
 
 	EventManager::subscribe(KEY_DOWN, this);
 
+	//sound
+	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(0), false);
+	printf("????");
+
 	// grab UI components
 	_UImenuScene = UIManager::GetComponentById("MenuScene");
 	_UIisServer = (TextComponent*)UIManager::GetComponentById("isServerText");
@@ -87,6 +91,7 @@ MenuScene::MenuScene() {
 	_UIisServer->SetText((_isServer) ? "Server" : "client");
 	_UIipBox->visible = (_isServer) ? false : true;
 	_UImenuScene->visible = true;
+
 }
 
 MenuScene::~MenuScene() {

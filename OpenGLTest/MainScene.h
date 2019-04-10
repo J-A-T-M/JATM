@@ -14,13 +14,13 @@
 #include "Network.h"
 
 
-
 class MainScene : public Scene, ISubscriber{
 	public:
 		MainScene(bool isServer, std::string serverIP);
 		~MainScene();
 		void Update(const float delta);
 		Scene* GetNext();
+		
 	private:
 		bool checkDone();
 		void movePlayersBasedOnInput(const float delta);

@@ -5,6 +5,7 @@
 #include "EventManager.h"
 #include "GameObject.h"
 #include "UI/TextComponent.h"
+//#include "SoundSystemClass.h"
 
 class MenuScene : public Scene, ISubscriber {
 	public:

@@ -1,5 +1,8 @@
 #include "Player.h"
+//#include "SoundSystemClass.h"
 #include <algorithm>
+
+#include "EventManager.h"
 
 const float BASE_ROUGHNESS = 0.4f; 
 const float BASE_METALLIC = 1.0f;
@@ -117,8 +120,13 @@ int Player::getHealth() {
 
 void Player::damageHealth(int damage) {
 	if (_invulnFrames == 0 && _health != 0) {
+		EventManager::notify(PLAY_SE, &TypeParam<int>(0), false);
 		_invulnFrames = MAX_INVULN_FRAMES;
 		Player::setHealth(_health - damage);
+		if (_health <= 0) {
+			EventManager::notify(PLAY_SE, &TypeParam<int>(2), false);
+			EventManager::notify(PLAY_BGM_N, &TypeParam<int>(2), false);
+		}
 	}
 }
 
@@ -131,6 +139,7 @@ void Player::setHealth(int health) {
 }
 
 void Player::setStun() {
+
 	_stunFrames = MAX_STUN_FRAMES;
 }
 bool Player::getStun() {
