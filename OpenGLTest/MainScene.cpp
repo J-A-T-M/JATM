@@ -117,6 +117,12 @@ void MainScene::movePlayersBasedOnNetworking() {
 		if (damage != 0) {
 			players[i]->damageHealth(damage);
 		}
+		// horrible hackjob by markus
+		// find a better way to send this
+		int stun = networkManager->serverState.playerTransforms[i].stunFrames;
+		if (stun == Player::MAX_STUN_FRAMES) {
+			players[i]->setStun();
+		}
 	}
 }
 
