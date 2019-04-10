@@ -2,6 +2,7 @@
 #include "Network.h"
 #include <glm/glm.hpp>
 #include "MenuScene.h"
+#include <stdlib.h>
 
 MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer), SERVER_IP(serverIP){
 	EventManager::subscribe(SPAWN_HAZARD, this);
@@ -48,6 +49,8 @@ MainScene::MainScene(bool isServer, std::string serverIP) : IS_SERVER(isServer),
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color), false);
 
 	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(1), false);
+	EventManager::notify(PLAY_SE, &TypeParam<int>(4), false);
+	
 }
 
 MainScene::~MainScene() {
@@ -141,7 +144,6 @@ void MainScene::SpawnHazard() {
 
 void MainScene::Update(const float delta) {
 	time += delta;
-
 	EventManager::notify(FADE, &TypeParam<float>(time), false);
 	
 	auto it = hazards.begin();
