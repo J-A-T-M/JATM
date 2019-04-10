@@ -1,36 +1,64 @@
 <root>
-	<component id="BlackOverlay" width="100%" height="100%" alpha="1.0" color="000000" visible="false">
+	<component id="BlackOverlay" width="100%" height="100%" alpha="1.0" visible="false">
 	</component>
-	<component id="MenuScene" width="100%" height="100%" alpha="0.0" color="246DC2" visible="false">
-		<component width="100%" height="10%" anchor="top center">
-			<component width="100%" height="100%" anchor="center center">
-				<component id="isServerBox" height="100%" width="20%" alpha="0.75" color="000000" anchor="center left">
-					<text id="isServerText" size="30%" anchor="center center" color="FFFFFF">Server</text>
+	<component id="MenuScene" width="100%" height="100%" visible="false">
+		<component id="highScoreBox" width="60%" height="40%" anchor="center center" visible="false">
+			<component width="100%" height="30%" alpha="0.75" anchor="top">
+				<text size="50%" anchor="center center">High Score</text>
+			</component>
+			<component width="100%" height="70%" alpha="0.5" anchor="bottom">
+				<text id="highScoreText" size="50%" anchor="center center">0.0s</text>
+			</component>
+		</component>
+		<component width="100%" height="20%" anchor="top center">
+			<component height="50%" width="20%" alpha="0.75" anchor="top left">
+				<text id="isServerText" size="50%" anchor="center center"></text>
+			</component>
+			<component id="ipBox" height="100%" width="80%" anchor="top right" visible="false">
+				<component height="50%" width="100%" alpha="0.5" anchor="top">
+					<text id="ipDigit0" size="50%" anchor="center center" offset="-70% 0%"></text>
+					<text id="ipDigit1" size="50%" anchor="center center" offset="-60% 0%"></text>
+					<text id="ipDigit2" size="50%" anchor="center center" offset="-50% 0%"></text>
+					<text size="50%" anchor="center center" offset="-40% 0%">.</text>
+
+					<text id="ipDigit3" size="50%" anchor="center center" offset="-30% 0%"></text>
+					<text id="ipDigit4" size="50%" anchor="center center" offset="-20% 0%"></text>
+					<text id="ipDigit5" size="50%" anchor="center center" offset="-10% 0%"></text>
+					<text size="50%" anchor="center center" offset="0% 0%">.</text>
+
+					<text id="ipDigit6" size="50%" anchor="center center" offset="10% 0%"></text>
+					<text id="ipDigit7" size="50%" anchor="center center" offset="20% 0%"></text>
+					<text id="ipDigit8" size="50%" anchor="center center" offset="30% 0%"></text>
+					<text size="50%" anchor="center center" offset="40% 0%">.</text>
+
+					<text id="ipDigit9" size="50%" anchor="center center" offset="50% 0%"></text>
+					<text id="ipDigit10" size="50%" anchor="center center" offset="60% 0%"></text>
+					<text id="ipDigit11" size="50%" anchor="center center" offset="70% 0%"></text>
 				</component>
-				<component id="ipBox" height="100%" width="80%" alpha="0.5" color="000000" anchor="center right">
-					<text id="ipDigit0" size="50%" anchor="center left" offset="10% 0%" color="FFFFFF"></text>
-					<text id="ipDigit1" size="50%" anchor="center left" offset="20% 0%" color="FFFFFF"></text>
-					<text id="ipDigit2" size="50%" anchor="center left" offset="30% 0%" color="FFFFFF"></text>
-					<text size="50%" anchor="center left" offset="40% 0%" color="FFFFFF">.</text>
-
-					<text id="ipDigit3" size="50%" anchor="center left" offset="50% 0%" color="FFFFFF"></text>
-					<text id="ipDigit4" size="50%" anchor="center left" offset="60% 0%" color="FFFFFF"></text>
-					<text id="ipDigit5" size="50%" anchor="center left" offset="70% 0%" color="FFFFFF"></text>
-					<text size="50%" anchor="center left" offset="80% 0%" color="FFFFFF">.</text>
-
-					<text id="ipDigit6" size="50%" anchor="center left" offset="90% 0%" color="FFFFFF"></text>
-					<text id="ipDigit7" size="50%" anchor="center left" offset="100% 0%" color="FFFFFF"></text>
-					<text id="ipDigit8" size="50%" anchor="center left" offset="110% 0%" color="FFFFFF"></text>
-					<text size="50%" anchor="center left" offset="120% 0%" color="FFFFFF">.</text>
-
-					<text id="ipDigit9" size="50%" anchor="center left" offset="130% 0%" color="FFFFFF"></text>
-					<text id="ipDigit10" size="50%" anchor="center left" offset="140% 0%" color="FFFFFF"></text>
-					<text id="ipDigit11" size="50%" anchor="center left" offset="150% 0%" color="FFFFFF"></text>
-					<text size="50%" anchor="center left" offset="160% 0%" color="FFFFFF"></text>
+				<component height="50%" width="100%" alpha="0.75" anchor="bottom">
+					<text size="50%" anchor="center center">Server IP</text>
+				</component>
+			</component>
+			<component id="numPlayerBox" height="100%" width="80%" anchor="top right">
+				<component height="100%" width="50%" anchor="top left">
+					<component height="50%" width="100%" alpha="0.5" anchor="top">
+						<text id="numLocal" size="50%" anchor="center center">2</text>
+					</component>
+					<component height="50%" width="100%" alpha="0.75" anchor="bottom">
+						<text size="50%" anchor="center center">Local Players</text>
+					</component>
+				</component>
+				<component height="100%" width="50%" offset="50% 0%" anchor="top left">
+					<component height="50%" width="100%" alpha="0.5" anchor="top">
+						<text id="numRemote" size="50%" anchor="center center">2</text>
+					</component>
+					<component height="50%" width="100%" alpha="0.75" anchor="bottom">
+						<text size="50%" anchor="center center">Remote Players</text>
+					</component>
 				</component>
 			</component>
 		</component>
 	</component>
-	<component id="GameScene" width="100%" height="100%" alpha="0.0" color="246DC2" visible="false">
+	<component id="GameScene" width="100%" height="100%" visible="false">
 	</component>
 </root>

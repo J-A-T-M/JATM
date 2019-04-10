@@ -139,7 +139,7 @@ void Player::setHealth(int health) {
 }
 
 void Player::setStun() {
-
+	EventManager::notify(PLAY_SE, &TypeParam<int>(0), false);
 	_stunFrames = MAX_STUN_FRAMES;
 }
 bool Player::getStun() {
