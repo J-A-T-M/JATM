@@ -124,6 +124,12 @@ void MainScene::sendPlayerTransforms() {
 		packet.playerTransformPacket.playerTransforms[i].health = players[i]->getHealth();
 		packet.playerTransformPacket.playerTransforms[i].stunFrames = players[i]->getStunFrames();
 	}
+	// horrible hackjob by markus
+	// find a better way to send this
+	// hide other players underground
+	for (int i = players.size(); i < 4; i++) {
+		packet.playerTransformPacket.playerTransforms[i].position = glm::vec3(0.0f, -10.0f, 0.0f);
+	}
 	
 	networkManager->SendToClients(packet);
 
