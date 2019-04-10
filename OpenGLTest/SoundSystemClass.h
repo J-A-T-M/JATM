@@ -218,8 +218,8 @@ private:
 					channel->getVolume(&volume);
 					float nextVolume = /*volume +*/ (elapsedT-currentT) / 4.0f;
 					//std::cout << volume << " + " << elapsedT-currentT << "  \n";
-					if (nextVolume >= 0.7f) {
-						channel->setVolume(0.7f);
+					if (nextVolume >= 0.5f) {
+						channel->setVolume(0.5f);
 						fade_in = false;
 						timestamp = true;
 					}
