@@ -1,5 +1,7 @@
 #include "StateMachine.h"
 
+#include "UI/UIManager.h"
+
 StateMachine::StateMachine(Scene* scene) {
 	_scene = scene;
 }
@@ -23,8 +25,11 @@ void StateMachine::Update(const float delta) {
 	_scene->Update(delta);
 
 	if (_scene->Done()) {
+		UIComponent *blackOverlay = UIManager::GetComponentById("BlackOverlay");
+		blackOverlay->visible = true;
 		Scene* nextScene = _scene->GetNext();
 		delete _scene;
 		_scene = nextScene;
+		blackOverlay->visible = false;
 	}
 }

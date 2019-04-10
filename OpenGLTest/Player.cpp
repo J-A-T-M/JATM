@@ -14,7 +14,7 @@ const float STUN_METALLIC = 0.0f;
 Player::Player(glm::vec2 xz, glm::vec3 color, float radius) : BASE_COLOR(color) {
 	setLocalPositionXZ(xz);
 	setLocalPositionY(radius);
-	setLocalScale(radius);
+	setSize(radius);
 	
 	_invulnFrames = 0;
 	_stunFrames = 0;
