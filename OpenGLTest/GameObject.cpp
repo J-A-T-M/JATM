@@ -1,5 +1,4 @@
 #include "GameObject.h"
-#include <iostream>
 #include "EventManager.h"
 
 GameObject::GameObject() {
@@ -52,6 +51,9 @@ void GameObject::setLocalPositionY(float y) {
 	for (GameObject* child : children) {
 		child->setParentPosition(_position);
 	}
+	if (renderable != nullptr) {
+		renderable->pos = _position;
+	}
 }
 
 void GameObject::setLocalPositionXZ(glm::vec2 xz) {
@@ -61,6 +63,9 @@ void GameObject::setLocalPositionXZ(glm::vec2 xz) {
 	for (GameObject* child : children) {
 		child->setParentPosition(_position);
 	}
+	if (renderable != nullptr) {
+		renderable->pos = _position;
+	}
 }
 
 void GameObject::setLocalPosition(glm::vec3 position) {
@@ -69,6 +74,9 @@ void GameObject::setLocalPosition(glm::vec3 position) {
 	for (GameObject* child : children) {
 		child->setParentPosition(_position);
 	}
+	if (renderable != nullptr) {
+		renderable->pos = _position;
+	}
 }
 
 void GameObject::setParentPosition(glm::vec3 position) {
@@ -76,6 +84,9 @@ void GameObject::setParentPosition(glm::vec3 position) {
 	_position = _parentPosition + _parentRotation * _localPosition * _parentScale;
 	for (GameObject* child : children) {
 		child->setParentPosition(_position);
+	}
+	if (renderable != nullptr) {
+		renderable->pos = _position;
 	}
 }
 #pragma endregion
@@ -92,6 +103,9 @@ void GameObject::setLocalRotation(glm::vec3 rotation) {
 	for (GameObject* child : children) {
 		child->setParentRotation(_rotation);
 	}
+	if (renderable != nullptr) {
+		renderable->rot = _rotation;
+	}
 }
 
 void GameObject::setParentRotation(glm::quat rotation) {
@@ -100,6 +114,9 @@ void GameObject::setParentRotation(glm::quat rotation) {
 	_position = _parentPosition + _parentRotation * _localPosition * _parentScale;
 	for (GameObject* child : children) {
 		child->setParentRotation(_rotation);
+	}
+	if (renderable != nullptr) {
+		renderable->rot = _rotation;
 	}
 }
 #pragma endregion
@@ -119,6 +136,10 @@ void GameObject::setLocalScale(float scale) {
 	for (GameObject* child : children) {
 		child->setParentScale(_scale);
 	}
+	if (renderable != nullptr) {
+		renderable->pos = _position;
+		renderable->size = _scale * _size;
+	}
 }
 
 void GameObject::setParentScale(float scale) {
@@ -128,23 +149,34 @@ void GameObject::setParentScale(float scale) {
 	for (GameObject* child : children) {
 		child->setParentScale(_scale);
 	}
+	if (renderable != nullptr) {
+		renderable->pos = _position;
+		renderable->size = _scale * _size;
+	}
 }
 
 void GameObject::setSize(glm::vec3 size) {
 	_size = size;
+	if (renderable != nullptr) {
+		renderable->size = _scale * _size;
+	}
 }
 void GameObject::setSize(float size) {
 	_size = glm::vec3(size);
+	if (renderable != nullptr) {
+		renderable->size = _scale * _size;
+	}
 }
 glm::vec3 GameObject::getSize() {
 	return _size;
 }
 #pragma endregion
 
-void GameObject::addRenderable() {
+void GameObject::addRenderable(glm::vec3 color, ModelEnum model, TextureEnum texture, float roughness, float metallic) {
 	renderable.reset();
-	renderable = std::make_shared<Renderable>();
+	renderable = std::make_shared<Renderable>(color, model, texture, roughness, metallic);
 	clearRenderablePreviousTransforms();
+	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(renderable));
 }
 
 void GameObject::addChild(GameObject* child) {
@@ -152,18 +184,13 @@ void GameObject::addChild(GameObject* child) {
 	child->setParentPosition(_position);
 	child->setParentRotation(_rotation);
 	child->setParentScale(_scale);
-	child->updateRenderableTransforms();
 }
 
 void GameObject::updateRenderableTransforms() {
 	if (renderable != nullptr) {
-		renderable->previousPosition = renderable->position;
-		renderable->previousRotation = renderable->rotation;
-		renderable->previousScale = renderable->scale;
-
-		renderable->position = _position;
-		renderable->rotation = _rotation;
-		renderable->scale = _scale * _size;
+		renderable->pos = _position;
+		renderable->rot = _rotation;
+		renderable->size = _scale * _size;
 	}
 
 	for (GameObject* child : children) {
@@ -173,13 +200,15 @@ void GameObject::updateRenderableTransforms() {
 
 void GameObject::clearRenderablePreviousTransforms() {
 	if (renderable != nullptr) {
-		renderable->previousPosition = _position;
-		renderable->previousRotation = _rotation;
-		renderable->previousScale = _scale * _size;
-
-		renderable->position = _position;
-		renderable->rotation = _rotation;
-		renderable->scale = _scale * _size;
+		renderable->pos = _position;
+		renderable->rot = _rotation;
+		renderable->size = _scale * _size;
+		renderable->renderPositionCur = renderable->pos;
+		renderable->renderRotationCur = renderable->rot;
+		renderable->renderScaleCur = renderable->size;
+		renderable->renderPositionPrev = renderable->pos;
+		renderable->renderRotationPrev = renderable->rot;
+		renderable->renderScalePrev = renderable->size;
 	}
 
 	for (GameObject* child : children) {

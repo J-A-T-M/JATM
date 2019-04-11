@@ -5,13 +5,8 @@ Hazard::Hazard(glm::vec3 spawnPosition, glm::vec3 size, float fall_speed) {
 
 	setLocalPosition(spawnPosition);
 	setSize(size);
-	addRenderable();
-	renderable->roughness = 0.25;
-	renderable->color = Colour::PLATINUM;
-	renderable->model = MODEL_CUBE_BEVEL;
-	renderable->interpolated = true;
-
-	clearRenderablePreviousTransforms();
+	addRenderable(Colour::PLATINUM, MODEL_CUBE_BEVEL, TEXTURE_NONE, 0.25f, 0.0f);
+	renderable->interpolated_ = true;
 }
 
 Hazard::~Hazard() {

@@ -7,7 +7,6 @@ typedef unsigned char GLubyte;
 typedef unsigned int GLuint;
 typedef float GLfloat;
 #include <glm/gtc/quaternion.hpp>
-#include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include "Enums.h"
@@ -48,24 +47,27 @@ struct Texture {
 
 class Renderable {
 	public:
-		Renderable();
+		Renderable(glm::vec3 color = Colour::GREY, ModelEnum model = MODEL_CUBE, TextureEnum texture = TEXTURE_NONE, float roughness = 0.5f, float metallic = 0.0f);
 
-		ModelEnum model;
-		TextureEnum texture;
+		ModelEnum model_;
+		TextureEnum texture_;
 
+		glm::vec3 pos;
+		glm::quat rot;
+		glm::vec3 size;
 		// transform
-		glm::vec3 position;
-		glm::quat rotation;
-		glm::vec3 scale;
+		glm::vec3 renderPositionCur;
+		glm::quat renderRotationCur;
+		glm::vec3 renderScaleCur;
 		// stuff to allow renderer to interpolate positions
-		bool interpolated;
-		glm::vec3 previousPosition;
-		glm::quat previousRotation;
-		glm::vec3 previousScale;
+		bool interpolated_;
+		glm::vec3 renderPositionPrev;
+		glm::quat renderRotationPrev;
+		glm::vec3 renderScalePrev;
 
 		// material
-		glm::vec3 color;
-		bool fullBright;
-		float roughness;
-		float metallic;
+		glm::vec3 color_;
+		bool fullBright_;
+		float roughness_;
+		float metallic_;
 };

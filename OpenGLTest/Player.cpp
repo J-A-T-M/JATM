@@ -24,12 +24,8 @@ Player::Player(glm::vec2 xz, glm::vec3 color, float radius) : BASE_COLOR(color) 
 	_bounceUp = false;
 	_health = STARTING_HEALTH;
 
-	addRenderable();
-	renderable->color = BASE_COLOR;
-	renderable->roughness = BASE_ROUGHNESS;
-	renderable->metallic = BASE_METALLIC;
-	renderable->model = MODEL_SUZANNE;
-	renderable->interpolated = true;
+	addRenderable(BASE_COLOR, MODEL_SUZANNE, TEXTURE_NONE, BASE_ROUGHNESS, BASE_METALLIC);
+	renderable->interpolated_ = true;
 }
 
 Player::~Player() {}
@@ -120,12 +116,12 @@ int Player::getHealth() {
 
 void Player::damageHealth(int damage) {
 	if (_invulnFrames == 0 && _health != 0) {
-		EventManager::notify(PLAY_SE, &TypeParam<int>(0), false);
+		EventManager::notify(PLAY_SE, &TypeParam<int>(0));
 		_invulnFrames = MAX_INVULN_FRAMES;
 		Player::setHealth(_health - damage);
 		if (_health <= 0) {
-			EventManager::notify(PLAY_SE, &TypeParam<int>(2), false);
-			EventManager::notify(PLAY_BGM_N, &TypeParam<int>(2), false);
+			EventManager::notify(PLAY_SE, &TypeParam<int>(2));
+			EventManager::notify(PLAY_BGM_N, &TypeParam<int>(2));
 		}
 	}
 }
@@ -139,7 +135,7 @@ void Player::setHealth(int health) {
 }
 
 void Player::setStun() {
-	EventManager::notify(PLAY_SE, &TypeParam<int>(0), false);
+	EventManager::notify(PLAY_SE, &TypeParam<int>(0));
 	_stunFrames = MAX_STUN_FRAMES;
 }
 bool Player::getStun() {
@@ -159,19 +155,19 @@ int Player::getStunFrames() {
 
 void Player::update() {
 	// visual response for being stunned
-	renderable->metallic = (_stunFrames == 0) ? BASE_METALLIC : STUN_METALLIC;
-	renderable->roughness = (_stunFrames == 0) ? BASE_ROUGHNESS : STUN_ROUGHNESS;
+	renderable->metallic_ = (_stunFrames == 0) ? BASE_METALLIC : STUN_METALLIC;
+	renderable->roughness_ = (_stunFrames == 0) ? BASE_ROUGHNESS : STUN_ROUGHNESS;
 	float mixFactor = _stunFrames / (float)MAX_STUN_FRAMES;
-	renderable->color = glm::mix(BASE_COLOR, STUN_COLOR, mixFactor);
+	renderable->color_ = glm::mix(BASE_COLOR, STUN_COLOR, mixFactor);
 
 	// visual response for being invulnerable
-	renderable->fullBright = _invulnFrames % 2;
-	renderable->color = (_invulnFrames % 2) ? INVULN_COLOR : renderable->color;
+	renderable->fullBright_ = _invulnFrames % 2;
+	renderable->color_ = (_invulnFrames % 2) ? INVULN_COLOR : renderable->color_;
 
 	if (_health == 0) {
-		renderable->color = STUN_COLOR;
-		renderable->roughness = STUN_ROUGHNESS;
-		renderable->metallic = STUN_METALLIC;
+		renderable->color_ = STUN_COLOR;
+		renderable->roughness_ = STUN_ROUGHNESS;
+		renderable->metallic_ = STUN_METALLIC;
 	}
 
 	if (_invulnFrames > 0) {

@@ -17,17 +17,17 @@
 
 glm::mat4 Renderer::CalculateModelMatrix(std::shared_ptr<Renderable> renderable) {
 	glm::mat4 m = glm::mat4(1.0);
-	if (renderable->interpolated) {
-		glm::vec3 interpolated_position = glm::mix(renderable->previousPosition, renderable->position, interp_value);
-		glm::quat interpolated_rotation = glm::slerp(renderable->previousRotation, renderable->rotation, interp_value);
-		glm::vec3 interpolated_scale = glm::mix(renderable->previousScale, renderable->scale, interp_value);
+	if (renderable->interpolated_) {
+		glm::vec3 interpolated_position = glm::mix(renderable->renderPositionPrev, renderable->renderPositionCur, interp_value);
+		glm::quat interpolated_rotation = glm::slerp(renderable->renderRotationPrev, renderable->renderRotationCur, interp_value);
+		glm::vec3 interpolated_scale = glm::mix(renderable->renderScalePrev, renderable->renderScaleCur, interp_value);
 		m = glm::translate(m, interpolated_position);
 		m = m * (glm::mat4)interpolated_rotation;
 		m = glm::scale(m, interpolated_scale);
 	} else {
-		m = glm::translate(m, renderable->position);
-		m = m * (glm::mat4)renderable->rotation;
-		m = glm::scale(m, glm::vec3(renderable->scale));
+		m = glm::translate(m, renderable->renderPositionCur);
+		m = m * (glm::mat4)renderable->renderRotationCur;
+		m = glm::scale(m, glm::vec3(renderable->renderScaleCur));
 	}
 	return m;
 }
@@ -57,8 +57,8 @@ void Renderer::DrawUIComponent(UIComponent* UIrenderable) {
 }
 
 void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
-	Model* model = &AssetLoader::models[renderable->model];
-	Texture* texture = &AssetLoader::textures[renderable->texture];
+	Model* model = &AssetLoader::models[renderable->model_];
+	Texture* texture = &AssetLoader::textures[renderable->texture_];
 
 	glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
@@ -72,10 +72,10 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 
 	glm::mat4 m = CalculateModelMatrix(renderable);
 	standardShader->setMat4("model", m);
-	standardShader->setVec3("u_color", glm::convertSRGBToLinear(renderable->color));
-	standardShader->setBool("u_fullBright", renderable->fullBright);
-	standardShader->setFloat("u_roughness", glm::max(renderable->roughness, 0.01f));
-	standardShader->setFloat("u_metallic", renderable->metallic);
+	standardShader->setVec3("u_color", glm::convertSRGBToLinear(renderable->color_));
+	standardShader->setBool("u_fullBright", renderable->fullBright_);
+	standardShader->setFloat("u_roughness", glm::max(renderable->roughness_, 0.01f));
+	standardShader->setFloat("u_metallic", renderable->metallic_);
 
 	glm::mat3 mn = m;
 	mn = glm::inverseTranspose(mn);
@@ -85,7 +85,7 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 }
 
 void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
-	Model* model = &AssetLoader::models[renderable->model];
+	Model* model = &AssetLoader::models[renderable->model_];
 
 	glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
@@ -479,15 +479,19 @@ void Renderer::notify(EventName eventName, Param* params) {
 			break;
 		}
 
-		case FIXED_UPDATE_STARTED_UPDATING_RENDERABLES: {
+		case FIXED_UPDATE_FINISHED: {
 			renderables_mutex.lock();
-			break;
-		}
-
-		case FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES: {
 			TypeParam<float> *p = dynamic_cast<TypeParam<float> *>(params);
 			interp_duration = p->Param;
 			interp_start = std::chrono::high_resolution_clock::now();
+			for (auto &renderable : renderables) {
+				renderable->renderPositionPrev = renderable->renderPositionCur;
+				renderable->renderRotationPrev = renderable->renderRotationCur;
+				renderable->renderScalePrev = renderable->renderScaleCur;
+				renderable->renderPositionCur = renderable->pos;
+				renderable->renderRotationCur = renderable->rot;
+				renderable->renderScaleCur = renderable->size;
+			}
 			renderables_mutex.unlock();
 			break;
 		}
@@ -505,8 +509,7 @@ Renderer::Renderer() {
 	EventManager::subscribe(RENDERER_SET_DIRECTIONAL_LIGHT, this);
 	EventManager::subscribe(RENDERER_SET_AMBIENT_UP, this);
 	EventManager::subscribe(RENDERER_SET_FLOOR_COLOR, this);
-	EventManager::subscribe(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, this);
-	EventManager::subscribe(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, this);
+	EventManager::subscribe(FIXED_UPDATE_FINISHED, this);
 }
 
 Renderer::~Renderer() {
@@ -517,6 +520,5 @@ Renderer::~Renderer() {
 	EventManager::unsubscribe(RENDERER_SET_DIRECTIONAL_LIGHT, this);
 	EventManager::unsubscribe(RENDERER_SET_AMBIENT_UP, this);
 	EventManager::unsubscribe(RENDERER_SET_FLOOR_COLOR, this);
-	EventManager::unsubscribe(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, this);
-	EventManager::unsubscribe(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, this);
+	EventManager::unsubscribe(FIXED_UPDATE_FINISHED, this);
 }

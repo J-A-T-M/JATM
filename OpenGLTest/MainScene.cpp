@@ -1,7 +1,9 @@
 #include "MainScene.h"
+
 #include <glm/glm.hpp>
 #include "MenuScene.h"
-#include <stdlib.h>
+#include "HazardFactory.h"
+#include "EventManager.h"
 
 MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numRemote) : 
 	IS_SERVER(isServer), 
@@ -19,13 +21,11 @@ MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numR
 	for (int i = 0; i < NUM_LOCAL; ++i) {
 		playerInputSources.push_back(InputSourceEnum(INPUT_LOCAL1 + i));
 		Player* player = new Player(glm::vec2(-10.0 * i - 5, 5.0), color[i % 4]);
-		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player->renderable), false);
 		players.push_back(player);
 	}
 	for (int i = 0; i < NUM_REMOTE; ++i) {
 		playerInputSources.push_back(InputSourceEnum(INPUT_CLIENT1 + i));
 		Player* player = new Player(glm::vec2(10.0 * i + 5, 5.0), color[(i + 2) % 4]);
-		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(player->renderable), false);
 		players.push_back(player);
 	}
 
@@ -39,32 +39,28 @@ MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numR
 	floor = new GameObject();
 	floor->setSize(32.0f);
 	floor->setLocalPosition(glm::vec3(0, -32, 0));
-	floor->addRenderable();
-	floor->renderable->roughness = 0.8;
-	floor->renderable->color = Colour::BEIGE;
-	floor->renderable->model = MODEL_CUBE;
-	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor->renderable), false);
+	floor->addRenderable(Colour::BEIGE, MODEL_CUBE, TEXTURE_NONE, 0.8f, 0.0f);
 
 	camera.position = glm::vec3(0.0f, 64.0f, 100.0f);
 	camera.target = glm::vec3(0.0f, 0.0f, 0.0f);
 	camera.FOV = 25.0f;
 	camera.nearClip = 0.1f;
 	camera.farClip = 1000.0f;
-	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera), false);
+	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera));
 
 	directionalLight.direction = glm::normalize(glm::vec3(1.0f, -0.5f, -0.25f));
 	directionalLight.color = Colour::BEIGARA;
 	directionalLight.nearclip = -50.0f;
 	directionalLight.farclip = 50.0f;
-	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight), false);
+	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight));
 
 	glm::vec3 up_color = Colour::BROWN;
-	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(up_color), false);
+	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(up_color));
 
-	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color), false);
+	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color_));
 
-	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(1), false);
-	EventManager::notify(PLAY_SE, &TypeParam<int>(4), false);
+	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(1));
+	EventManager::notify(PLAY_SE, &TypeParam<int>(4));
 	
 }
 
@@ -99,7 +95,7 @@ bool MainScene::checkDone() {
 		}
 	}
 	if (count <= 1) {
-		EventManager::notify(PLAY_SE, &TypeParam<int>(3), false);
+		EventManager::notify(PLAY_SE, &TypeParam<int>(3));
 	}
 	return (count <= 1);
 }
@@ -159,7 +155,6 @@ void MainScene::SpawnHazard() {
 	float X = (rand() % 10) + 1;
 	float Z = 10 - X + 1;
 	Hazard* hazard = HazardFactory::buildPrism(glm::vec3(X, 1.0, Z));
-	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(hazard->renderable), false);
 	hazards.push_back(hazard);
 
 	ServerPacket packet;
@@ -172,7 +167,7 @@ void MainScene::SpawnHazard() {
 
 void MainScene::Update(const float delta) {
 	time += delta;
-	EventManager::notify(FADE, &TypeParam<float>(time), false);
+	EventManager::notify(FADE, &TypeParam<float>(time));
 	
 	auto it = hazards.begin();
 	while (it != hazards.end()) {
@@ -201,18 +196,12 @@ void MainScene::Update(const float delta) {
 
 	_done = checkDone();
 
-	EventManager::notify(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, NULL, false);
 	for (Player* player : players) {
 		player->update();
-		player->updateRenderableTransforms();
 	}
 	for (Hazard* hazard : hazards) {
 		hazard->update(delta);
-		hazard->updateRenderableTransforms();
 	}
-	EventManager::notify(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, &TypeParam<float>(delta), false);
-	//std::cout << "aa" << std::endl;
-	//EventManager::subscribe(SOUND_P, this);
 }
 
 Scene * MainScene::GetNext() {
@@ -224,7 +213,6 @@ void MainScene::notify(EventName eventName, Param* params) {
 		case SPAWN_HAZARD: {
 			TypeParam<Hazard*> *p = dynamic_cast<TypeParam<Hazard*> *>(params);
 			Hazard* hazard = p->Param;
-			EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(hazard->renderable), false);
 			hazards.push_back(hazard);
 			break;
 		}

@@ -34,31 +34,17 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 
 	floor.setSize(32.0f);
 	floor.setLocalPosition(glm::vec3(0, -32, 0));
-	floor.addRenderable();
-	floor.renderable->roughness = 0.8;
-	floor.renderable->color = Colour::BLUERA;
-	floor.renderable->model = MODEL_CUBE;
-	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(floor.renderable), false);
+	floor.addRenderable(Colour::BLUERA, MODEL_CUBE, TEXTURE_NONE, 0.8f, 0.0f);
 
 	_gameObjects[0].setSize(2.0f);
-	_gameObjects[0].addRenderable();
-	_gameObjects[0].renderable->roughness = 0.5;
-	_gameObjects[0].renderable->metallic = 1.0;
-	_gameObjects[0].renderable->color = Colour::GOLD;
-	_gameObjects[0].renderable->model = MODEL_CUBE_BEVEL;
-	_gameObjects[0].renderable->interpolated = true;
+	_gameObjects[0].addRenderable(Colour::GOLD, MODEL_CUBE_BEVEL, TEXTURE_NONE, 0.5f, 1.0f);
+	_gameObjects[0].renderable->interpolated_ = true;
 	_gameObjects[0].updateRenderableTransforms();
-	EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(_gameObjects[0].renderable), false);
 
 	for (int i = 1; i < _gameObjects.size(); ++i) {
 		_gameObjects[i].setSize(2.0f);
-		_gameObjects[i].addRenderable();
-		_gameObjects[i].renderable->roughness = 0.5;
-		_gameObjects[i].renderable->metallic = 1.0;
-		_gameObjects[i].renderable->color = Colour::SILVER;
-		_gameObjects[i].renderable->model = MODEL_CUBE_BEVEL;
-		_gameObjects[i].renderable->interpolated = true;
-		EventManager::notify(RENDERER_ADD_TO_RENDERABLES, &TypeParam<std::shared_ptr<Renderable>>(_gameObjects[i].renderable), false);
+		_gameObjects[i].addRenderable(Colour::SILVER, MODEL_CUBE_BEVEL, TEXTURE_NONE, 0.5f, 1.0f);
+		_gameObjects[i].renderable->interpolated_ = true;
 	}
 
 	Camera camera;
@@ -67,24 +53,24 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 	camera.FOV = 25.0f;
 	camera.nearClip = 0.1f;
 	camera.farClip = 1000.0f;
-	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera), false);
+	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera));
 
 	DirectionalLight directionalLight;
 	directionalLight.direction = glm::normalize(glm::vec3(1.0f, -0.5f, -0.25f));
 	directionalLight.color = Colour::BEIGARA;
 	directionalLight.nearclip = -50.0f;
 	directionalLight.farclip = 50.0f;
-	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight), false);
+	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight));
 
-	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(glm::vec3(0.1f, 0.15f, 0.25f)), false);
+	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(glm::vec3(0.1f, 0.15f, 0.25f)));
 
-	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor.renderable->color), false);
+	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor.renderable->color_));
 
 	EventManager::subscribe(KEY_DOWN, this);
 
 	//sound
-	EventManager::notify(S_CLEAR, NULL, false);
-	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(0), false);
+	EventManager::notify(S_CLEAR, NULL);
+	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(0));
 	printf("????");
 
 	// grab UI components
@@ -116,11 +102,6 @@ MenuScene::~MenuScene() {
 }
 
 void MenuScene::Update(const float delta) {
-	EventManager::notify(FIXED_UPDATE_STARTED_UPDATING_RENDERABLES, NULL, false);
-	for (GameObject &gameObject : _gameObjects) {
-		gameObject.updateRenderableTransforms();
-	}
-	EventManager::notify(FIXED_UPDATE_FINISHED_UPDATING_RENDERABLES, &TypeParam<float>(delta), false);
 }
 
 Scene * MenuScene::GetNext() {
@@ -177,7 +158,7 @@ void MenuScene::UpdateUIPositions() {
 }
 
 void MenuScene::UIMoveY(int delta_y) {
-	EventManager::notify(PLAY_SE, &TypeParam<int>(0), false);
+	EventManager::notify(PLAY_SE, &TypeParam<int>(0));
 	// update values
 	if (_xIndex == 0) {
 		_isServer = !_isServer;
@@ -197,7 +178,7 @@ void MenuScene::UIMoveY(int delta_y) {
 }
 
 void MenuScene::UIMoveX(int delta_x) {
-	EventManager::notify(PLAY_SE, &TypeParam<int>(0), false);
+	EventManager::notify(PLAY_SE, &TypeParam<int>(0));
 	// update index
 	_xIndex += delta_x;
 	if (_isServer) {

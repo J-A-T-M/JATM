@@ -280,7 +280,7 @@ void NetworkManager::ReceiveFromServer() {
 				packet.hazardSpawnPacket.fallSpeed
 			);
 			hazard->clearRenderablePreviousTransforms();
-			EventManager::notify(SPAWN_HAZARD, &TypeParam<Hazard*>(hazard), false);
+			EventManager::notify(SPAWN_HAZARD, &TypeParam<Hazard*>(hazard));
 			break;
 		}
 		}

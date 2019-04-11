@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include "GameObject.h"
 #include "Rectangle.h"
 
 class Quadtree

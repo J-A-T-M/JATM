@@ -1,16 +1,13 @@
 #pragma once
 #include "Scene.h"
 
-#include <memory>
 #include <vector>
 
 #include "Enums.h"
-#include "EventManager.h"
+#include "PhysicsManager.h"
 #include "GameObject.h"
 #include "Player.h"
 #include "Renderable.h"
-#include "HazardFactory.h"
-#include "PhysicsManager.h"
 #include "Network.h"
 
 

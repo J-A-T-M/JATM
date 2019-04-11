@@ -1,6 +1,7 @@
 #include "StateMachine.h"
 
 #include "UI/UIManager.h"
+#include "EventManager.h"
 
 StateMachine::StateMachine(Scene* scene) {
 	_scene = scene;
@@ -23,6 +24,7 @@ void StateMachine::Update(const float delta) {
 	}
 
 	_scene->Update(delta);
+	EventManager::notify(FIXED_UPDATE_FINISHED, &TypeParam<float>(delta));
 
 	if (_scene->Done()) {
 		UIComponent *blackOverlay = UIManager::GetComponentById("BlackOverlay");

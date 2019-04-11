@@ -1,15 +1,17 @@
 #include "Renderable.h"
 
-Renderable::Renderable() {
-	model = {};
-	texture = TEXTURE_NONE;
-	position = glm::vec3(0.0f);
-	rotation = glm::vec3(0.0f);
-	previousPosition = glm::vec3(0.0f);
-	interpolated = false;
-	scale = glm::vec3(1.0f);
-	color = glm::vec3(1.0f);
-	fullBright = false;
-	roughness = 0.5f;
-	metallic = 0.0f;
+Renderable::Renderable(glm::vec3 color, ModelEnum model, TextureEnum texture, float roughness, float metallic) {
+	color_ = color;
+	model_ = model;
+	texture_ = texture;
+	roughness_ = roughness;
+	metallic_ = metallic;
+
+	interpolated_ = false;
+	fullBright_ = false;
+
+	renderPositionCur = glm::vec3(0.0f);
+	renderRotationCur = glm::vec3(0.0f);
+	renderPositionPrev = glm::vec3(0.0f);
+	renderRotationPrev = glm::vec3(0.0f);
 }

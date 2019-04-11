@@ -2,7 +2,6 @@
 #include <FMOD/fmod_errors.h>  //only for error checking
 #include <iostream>
 #include "ISubscriber.h"
-#include <stdlib.h>
 
 typedef FMOD::Sound* SoundClass;
 

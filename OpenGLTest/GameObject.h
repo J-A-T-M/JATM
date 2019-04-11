@@ -35,7 +35,7 @@ class GameObject {
 		void setSize(float size);
 		glm::vec3 getSize();
 
-		void addRenderable();
+		void addRenderable(glm::vec3 color = Colour::GREY, ModelEnum model = MODEL_CUBE, TextureEnum texture = TEXTURE_NONE, float roughness = 0.5f, float metallic = 0.0f);
 		void addChild(GameObject* child);
 		void updateRenderableTransforms();
 		void clearRenderablePreviousTransforms();
