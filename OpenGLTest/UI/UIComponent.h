@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Renderable.h"
-#include "stb_image.h"
 #include <string>
 #include <vector>
 

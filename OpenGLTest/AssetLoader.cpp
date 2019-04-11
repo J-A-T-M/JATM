@@ -4,8 +4,9 @@
 #include <assimp/postprocess.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-
 #include <iostream>
+
+#include "Enums.h"
 
 Model AssetLoader::models[NUM_MODELS];
 Texture AssetLoader::textures[NUM_TEXTURES];

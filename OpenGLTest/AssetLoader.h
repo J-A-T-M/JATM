@@ -1,7 +1,6 @@
 #pragma once
 #include <assimp/scene.h>
 #include "Renderable.h"
-#include "Enums.h"
 
 class AssetLoader {
 	public:

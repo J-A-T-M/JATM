@@ -1,6 +1,5 @@
 #pragma once
 
-#include "AssetLoader.h"
 #include "UIComponent.h"
 
 class ImageComponent : public UIComponent {
