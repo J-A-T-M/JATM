@@ -53,25 +53,22 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 	camera.FOV = 25.0f;
 	camera.nearClip = 0.1f;
 	camera.farClip = 1000.0f;
-	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera));
+
 
 	DirectionalLight directionalLight;
 	directionalLight.direction = glm::normalize(glm::vec3(1.0f, -0.5f, -0.25f));
 	directionalLight.color = Colour::BEIGARA;
 	directionalLight.nearclip = -50.0f;
 	directionalLight.farclip = 50.0f;
+
+	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera));
 	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight));
-
 	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(glm::vec3(0.1f, 0.15f, 0.25f)));
-
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor.renderable->color));
-
-	EventManager::subscribe(KEY_DOWN, this);
 
 	//sound
 	EventManager::notify(S_CLEAR, NULL);
 	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(0));
-	printf("????");
 
 	// grab UI components
 	_UImenuScene = UIManager::GetComponentById("MenuScene");
@@ -91,6 +88,8 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 	_highScoreText->SetText(std::to_string(_highScore) + 's');
 	UpdateGameObjectPositions();
 	UpdateUIPositions();
+
+	EventManager::subscribe(KEY_DOWN, this);
 }
 
 MenuScene::~MenuScene() {
@@ -101,8 +100,7 @@ MenuScene::~MenuScene() {
 	_UImenuScene->visible = false;
 }
 
-void MenuScene::Update(const float delta) {
-}
+void MenuScene::Update(const float delta) {}
 
 Scene * MenuScene::GetNext() {
 	std::string strIP;
@@ -132,6 +130,7 @@ void MenuScene::UpdateGameObjectPositions() {
 	}
 	_gameObjects[_xIndex].setLocalPositionY(4);
 }
+
 void MenuScene::UpdateUIPositions() {
 	_UIisServer->SetText(_isServer ? "Server" : "Client");
 	_UIisServer->anchor.y = (_xIndex == 0) ? UI_HIGHLIGHT_OFFSET : 0;
@@ -151,10 +150,6 @@ void MenuScene::UpdateUIPositions() {
 			_UIserverIP[_xIndex - 1]->anchor.y = UI_HIGHLIGHT_OFFSET;
 		}
 	}
-	if (_highScore != 0.0f) {
-
-	}
-
 }
 
 void MenuScene::UIMoveY(int delta_y) {
