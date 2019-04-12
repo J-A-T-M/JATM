@@ -17,7 +17,7 @@
 
 glm::mat4 Renderer::CalculateModelMatrix(std::shared_ptr<Renderable> renderable) {
 	glm::mat4 m = glm::mat4(1.0);
-	if (renderable->interpolated_) {
+	if (renderable->interpolated) {
 		glm::vec3 interpolated_position = glm::mix(renderable->renderPositionPrev, renderable->renderPositionCur, interp_value);
 		glm::quat interpolated_rotation = glm::slerp(renderable->renderRotationPrev, renderable->renderRotationCur, interp_value);
 		glm::vec3 interpolated_scale = glm::mix(renderable->renderScalePrev, renderable->renderScaleCur, interp_value);
@@ -57,8 +57,8 @@ void Renderer::DrawUIComponent(UIComponent* UIrenderable) {
 }
 
 void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
-	Model* model = &AssetLoader::models[renderable->model_];
-	Texture* texture = &AssetLoader::textures[renderable->texture_];
+	Model* model = &AssetLoader::models[renderable->model];
+	Texture* texture = &AssetLoader::textures[renderable->texture];
 
 	glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
@@ -72,10 +72,10 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 
 	glm::mat4 m = CalculateModelMatrix(renderable);
 	standardShader->setMat4("model", m);
-	standardShader->setVec3("u_color", glm::convertSRGBToLinear(renderable->color_));
-	standardShader->setBool("u_fullBright", renderable->fullBright_);
-	standardShader->setFloat("u_roughness", glm::max(renderable->roughness_, 0.01f));
-	standardShader->setFloat("u_metallic", renderable->metallic_);
+	standardShader->setVec3("u_color", glm::convertSRGBToLinear(renderable->color));
+	standardShader->setBool("u_fullBright", renderable->fullBright);
+	standardShader->setFloat("u_roughness", glm::max(renderable->roughness, 0.01f));
+	standardShader->setFloat("u_metallic", renderable->metallic);
 
 	glm::mat3 mn = m;
 	mn = glm::inverseTranspose(mn);
@@ -85,7 +85,7 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 }
 
 void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
-	Model* model = &AssetLoader::models[renderable->model_];
+	Model* model = &AssetLoader::models[renderable->model];
 
 	glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
@@ -485,7 +485,7 @@ void Renderer::notify(EventName eventName, Param* params) {
 			interp_duration = p->Param;
 			interp_start = std::chrono::high_resolution_clock::now();
 			for (auto &renderable : renderables) {
-				if (renderable->interpolated_) {
+				if (renderable->interpolated) {
 					renderable->renderPositionPrev = renderable->renderPositionCur;
 					renderable->renderRotationPrev = renderable->renderRotationCur;
 					renderable->renderScalePrev = renderable->renderScaleCur;
