@@ -15,7 +15,7 @@ bool intersects(glm::vec2 distance, float radius, glm::vec3 size) {
 	return (cornerDistance_sq <= (radius * radius));
 }
 
-void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> &hazards, const float delta)
+void PhysicsManager::Update(std::vector<std::shared_ptr<Player>> &players, std::vector<std::shared_ptr<Hazard>> &hazards, const float delta)
 {
 	const float PLAYER_ACCELERATION = 90.0;
 	const float PLAYER_MAX_SPEED = 30.0;

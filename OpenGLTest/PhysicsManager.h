@@ -11,5 +11,5 @@ class PhysicsManager
 private:
 	static Quadtree* quad;
 public:
-	static void Update(std::vector<Player*> &players, std::vector<Hazard*> &hazards, const float delta);
+	static void Update(std::vector<std::shared_ptr<Player>> &players, std::vector<std::shared_ptr<Hazard>> &hazards, const float delta);
 };

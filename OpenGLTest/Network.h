@@ -77,7 +77,7 @@ public:
 	void ReceiveFromServer();
 	SOCKET InitializeClientSocket(std::string serverIP);
 	int ClientLoop(std::string SERVER_IP);
-	std::vector<Hazard*>* hazards;
+	std::vector<std::shared_ptr<Hazard>>* hazards;
 private:
 	std::thread networkThread;
 

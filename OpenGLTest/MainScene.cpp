@@ -12,8 +12,6 @@ MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numR
 	NUM_LOCAL(isServer ? max(numLocal, 1): 2), 
 	NUM_REMOTE(isServer ? numRemote : 2) {
 
-	EventManager::subscribe(SPAWN_HAZARD, this);
-
 	networkManager = new NetworkManager(IS_SERVER, SERVER_IP);
 	// horrible hackjob so we can send existing hazards to new clients
 	networkManager->hazards = &hazards;
@@ -21,12 +19,12 @@ MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numR
 	glm::vec3 color[] = { Colour::FUCSHIA , Colour::ORANGE, Colour::BLUERA , Colour::GREENRA };
 	for (int i = 0; i < NUM_LOCAL; ++i) {
 		playerInputSources.push_back(InputSourceEnum(INPUT_LOCAL1 + i));
-		Player* player = new Player(glm::vec2(-10.0 * i - 5, 5.0), color[i % 4]);
+		std::shared_ptr<Player> player = std::make_shared<Player>(glm::vec2(-10.0 * i - 5, 5.0), color[i % 4]);
 		players.push_back(player);
 	}
 	for (int i = 0; i < NUM_REMOTE; ++i) {
 		playerInputSources.push_back(InputSourceEnum(INPUT_CLIENT1 + i));
-		Player* player = new Player(glm::vec2(10.0 * i + 5, 5.0), color[(i + 2) % 4]);
+		std::shared_ptr<Player> player = std::make_shared<Player>(glm::vec2(10.0 * i + 5, 5.0), color[(i + 2) % 4]);
 		players.push_back(player);
 	}
 
@@ -37,48 +35,37 @@ MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numR
 		}
 	}
 	
-	floor = new GameObject();
+	floor = std::make_shared<GameObject>();
 	floor->setSize(32.0f);
 	floor->setLocalPosition(glm::vec3(0, -32, 0));
 	floor->addRenderable(Colour::BEIGE, MODEL_CUBE, TEXTURE_NONE, 0.8f, 0.0f);
 
+	Camera camera;
 	camera.position = glm::vec3(0.0f, 64.0f, 100.0f);
 	camera.target = glm::vec3(0.0f, 0.0f, 0.0f);
 	camera.FOV = 25.0f;
 	camera.nearClip = 0.1f;
 	camera.farClip = 1000.0f;
-	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera));
 
+	DirectionalLight directionalLight;
 	directionalLight.direction = glm::normalize(glm::vec3(1.0f, -0.5f, -0.25f));
 	directionalLight.color = Colour::BEIGARA;
 	directionalLight.nearclip = -50.0f;
 	directionalLight.farclip = 50.0f;
+
+	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera));
 	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight));
-
-	glm::vec3 up_color = Colour::BROWN;
-	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(up_color));
-
+	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(Colour::BROWN));
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color));
-
 	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(1));
 	EventManager::notify(PLAY_SE, &TypeParam<int>(4));
 	
+	EventManager::subscribe(SPAWN_HAZARD, this);
 }
 
 MainScene::~MainScene() {
 	delete networkManager;
-	for (GameObject* gameObject : players) {
-		if (gameObject != nullptr) {
-			delete gameObject;
-		}
-	}
 	EventManager::unsubscribe(SPAWN_HAZARD, this);
-	for (GameObject* gameObject : hazards) {
-		if (gameObject != nullptr) {
-			delete gameObject;
-		}
-	}
-	delete floor;
 	std::cout << "MainScene cleaned up" << std::endl;
 }
 
@@ -90,7 +77,7 @@ bool MainScene::checkDone() {
 	}
 
 	int count = 0;
-	for (Player* player : players) {
+	for (auto &player : players) {
 		if (player->getHealth() != 0) {
 			++count;
 		}
@@ -129,7 +116,6 @@ void MainScene::sendPlayerTransforms() {
 	}
 	
 	networkManager->SendToClients(packet);
-
 }
 
 void MainScene::movePlayersBasedOnNetworking() {
@@ -156,7 +142,7 @@ void MainScene::SpawnHazard() {
 	float X = (rand() % 10) + 1;
 	float Z = 10 - X + 1;
 	Hazard* hazard = HazardFactory::buildPrism(glm::vec3(X, 1.0, Z));
-	hazards.push_back(hazard);
+	hazards.push_back(std::shared_ptr<Hazard>(hazard));
 
 	ServerPacket packet;
 	packet.type = PACKET_HAZARD_SPAWN;
@@ -173,7 +159,6 @@ void MainScene::Update(const float delta) {
 	auto it = hazards.begin();
 	while (it != hazards.end()) {
 		if ((*it)->grounded()) {
-			delete (*it);
 			it = hazards.erase(it);
 		} else {
 			++it;
@@ -195,14 +180,14 @@ void MainScene::Update(const float delta) {
 		networkManager->SendToServer();
 	}
 
-	_done = checkDone();
-
-	for (Player* player : players) {
+	for (auto player : players) {
 		player->update();
 	}
-	for (Hazard* hazard : hazards) {
+	for (auto hazard : hazards) {
 		hazard->update(delta);
 	}
+
+	_done = checkDone();
 }
 
 Scene * MainScene::GetNext() {
@@ -214,11 +199,7 @@ void MainScene::notify(EventName eventName, Param* params) {
 		case SPAWN_HAZARD: {
 			TypeParam<Hazard*> *p = dynamic_cast<TypeParam<Hazard*> *>(params);
 			Hazard* hazard = p->Param;
-			hazards.push_back(hazard);
-			break;
-		}
-
-		default: {
+			hazards.push_back(std::shared_ptr<Hazard>(hazard));
 			break;
 		}
 	}

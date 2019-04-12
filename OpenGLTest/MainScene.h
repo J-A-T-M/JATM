@@ -1,6 +1,7 @@
 #pragma once
 #include "Scene.h"
 
+#include <memory>
 #include <vector>
 
 #include "Enums.h"
@@ -22,18 +23,17 @@ class MainScene : public Scene, ISubscriber{
 		void sendPlayerTransforms();
 		void movePlayersBasedOnNetworking();
 		void SpawnHazard();
-		// Overrides ISubscriber::notify
 		void notify(EventName eventName, Param* params);
+
 		const bool IS_SERVER;
 		const std::string SERVER_IP;
 		const int NUM_LOCAL;
 		const int NUM_REMOTE;
-		float time;
-		GameObject* floor;
-		std::vector<Hazard*> hazards;
-		std::vector<Player*> players;
-		std::vector<InputSourceEnum> playerInputSources;
-		Camera camera;
-		DirectionalLight directionalLight;
+
 		NetworkManager *networkManager;
+		float time;
+		std::shared_ptr<GameObject> floor;
+		std::vector<std::shared_ptr<Hazard>> hazards;
+		std::vector<std::shared_ptr<Player>> players;
+		std::vector<InputSourceEnum> playerInputSources;
 };
