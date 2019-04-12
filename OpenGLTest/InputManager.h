@@ -21,6 +21,7 @@ class InputManager {
 		static void addKeyRepeatBinding(int key, const Callback& callback);
 		static Input const getInput(InputSourceEnum index);
 		static void setInput(Input input, InputSourceEnum index);
+		static void clearInputs();
 	private:
 		static Input inputs[NUM_INPUTS];
 		static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);

@@ -107,3 +107,9 @@ void InputManager::setInput(Input input, InputSourceEnum index) {
 		inputs[index] = input;
 	}
 }
+
+void InputManager::clearInputs() {
+	for (int i = 0; i < NUM_INPUTS; ++i) {
+		inputs[i] = {};
+	}
+}

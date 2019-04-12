@@ -16,6 +16,8 @@ MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numR
 	// horrible hackjob so we can send existing hazards to new clients
 	networkManager->hazards = &hazards;
 
+	InputManager::clearInputs();
+
 	glm::vec3 color[] = { Colour::FUCSHIA , Colour::ORANGE, Colour::BLUERA , Colour::GREENRA };
 	for (int i = 0; i < NUM_LOCAL; ++i) {
 		playerInputSources.push_back(InputSourceEnum(INPUT_LOCAL1 + i));
