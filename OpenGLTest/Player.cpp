@@ -25,7 +25,7 @@ Player::Player(glm::vec2 xz, glm::vec3 color, float radius) : BASE_COLOR(color) 
 	_health = STARTING_HEALTH;
 
 	addRenderable(BASE_COLOR, MODEL_SUZANNE, TEXTURE_NONE, BASE_ROUGHNESS, BASE_METALLIC);
-	renderable->interpolated_ = true;
+	renderable->interpolated = true;
 }
 
 Player::~Player() {}
@@ -155,19 +155,19 @@ int Player::getStunFrames() {
 
 void Player::update() {
 	// visual response for being stunned
-	renderable->metallic_ = (_stunFrames == 0) ? BASE_METALLIC : STUN_METALLIC;
-	renderable->roughness_ = (_stunFrames == 0) ? BASE_ROUGHNESS : STUN_ROUGHNESS;
+	renderable->metallic = (_stunFrames == 0) ? BASE_METALLIC : STUN_METALLIC;
+	renderable->roughness = (_stunFrames == 0) ? BASE_ROUGHNESS : STUN_ROUGHNESS;
 	float mixFactor = _stunFrames / (float)MAX_STUN_FRAMES;
-	renderable->color_ = glm::mix(BASE_COLOR, STUN_COLOR, mixFactor);
+	renderable->color = glm::mix(BASE_COLOR, STUN_COLOR, mixFactor);
 
 	// visual response for being invulnerable
-	renderable->fullBright_ = _invulnFrames % 2;
-	renderable->color_ = (_invulnFrames % 2) ? INVULN_COLOR : renderable->color_;
+	renderable->fullBright = _invulnFrames % 2;
+	renderable->color = (_invulnFrames % 2) ? INVULN_COLOR : renderable->color;
 
 	if (_health == 0) {
-		renderable->color_ = STUN_COLOR;
-		renderable->roughness_ = STUN_ROUGHNESS;
-		renderable->metallic_ = STUN_METALLIC;
+		renderable->color = STUN_COLOR;
+		renderable->roughness = STUN_ROUGHNESS;
+		renderable->metallic = STUN_METALLIC;
 	}
 
 	if (_invulnFrames > 0) {

@@ -38,13 +38,13 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 
 	_gameObjects[0].setSize(2.0f);
 	_gameObjects[0].addRenderable(Colour::GOLD, MODEL_CUBE_BEVEL, TEXTURE_NONE, 0.5f, 1.0f);
-	_gameObjects[0].renderable->interpolated_ = true;
+	_gameObjects[0].renderable->interpolated = true;
 	_gameObjects[0].updateRenderableTransforms();
 
 	for (int i = 1; i < _gameObjects.size(); ++i) {
 		_gameObjects[i].setSize(2.0f);
 		_gameObjects[i].addRenderable(Colour::SILVER, MODEL_CUBE_BEVEL, TEXTURE_NONE, 0.5f, 1.0f);
-		_gameObjects[i].renderable->interpolated_ = true;
+		_gameObjects[i].renderable->interpolated = true;
 	}
 
 	Camera camera;
@@ -64,7 +64,7 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 
 	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(glm::vec3(0.1f, 0.15f, 0.25f)));
 
-	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor.renderable->color_));
+	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor.renderable->color));
 
 	EventManager::subscribe(KEY_DOWN, this);
 

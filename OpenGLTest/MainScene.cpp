@@ -57,7 +57,7 @@ MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numR
 	glm::vec3 up_color = Colour::BROWN;
 	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(up_color));
 
-	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color_));
+	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color));
 
 	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(1));
 	EventManager::notify(PLAY_SE, &TypeParam<int>(4));
