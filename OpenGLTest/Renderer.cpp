@@ -10,26 +10,30 @@
 
 #include "AssetLoader.h"
 #include "Enums.h"
+#include "GameObject.h"
 #include "InputManager.h"
 #include "UI/UIManager.h"
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
-glm::mat4 Renderer::CalculateModelMatrix(std::shared_ptr<Renderable> renderable) {
-	glm::mat4 m = glm::mat4(1.0);
-	if (renderable->interpolated) {
-		glm::vec3 interpolated_position = glm::mix(renderable->renderPositionPrev, renderable->renderPositionCur, interp_value);
-		glm::quat interpolated_rotation = glm::slerp(renderable->renderRotationPrev, renderable->renderRotationCur, interp_value);
-		glm::vec3 interpolated_scale = glm::mix(renderable->renderScalePrev, renderable->renderScaleCur, interp_value);
-		m = glm::translate(m, interpolated_position);
-		m = m * (glm::mat4)interpolated_rotation;
-		m = glm::scale(m, interpolated_scale);
-	} else {
-		m = glm::translate(m, renderable->renderPositionCur);
-		m = m * (glm::mat4)renderable->renderRotationCur;
-		m = glm::scale(m, glm::vec3(renderable->renderScaleCur));
+void Renderer::UpdateTransform(std::shared_ptr<Renderable> renderable) {
+	if (renderable->parent != nullptr) {
+		renderable->prevPos = renderable->currPos;
+		renderable->prevRot = renderable->currRot;
+		renderable->prevScale = renderable->currSize;
+		renderable->currPos = renderable->parent->getPosition();
+		renderable->currRot = renderable->parent->getRotation();
+		renderable->currSize = renderable->parent->getSize() * renderable->parent->getScale();
 	}
-	return m;
+}
+void Renderer::UpdateModelMatrix(std::shared_ptr<Renderable> renderable) {
+	glm::vec3 pos = glm::mix(renderable->prevPos, renderable->currPos, interp_value);
+	glm::quat rot = glm::slerp(renderable->prevRot, renderable->currRot, interp_value);
+	glm::vec3 size = glm::mix(renderable->prevScale, renderable->currSize, interp_value);
+	glm::mat4 m = glm::translate(glm::mat4(1.0), pos);
+	m = m * (glm::mat4)rot;
+	m = glm::scale(m, size);
+	renderable->m = m;
 }
 
 void Renderer::DrawUIComponent(UIComponent* UIrenderable) {
@@ -70,15 +74,13 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 
 	glBindTexture(GL_TEXTURE_2D, texture->loc);
 
-	glm::mat4 m = CalculateModelMatrix(renderable);
-	standardShader->setMat4("model", m);
+	standardShader->setMat4("model", renderable->m);
 	standardShader->setVec3("u_color", glm::convertSRGBToLinear(renderable->color));
 	standardShader->setBool("u_fullBright", renderable->fullBright);
 	standardShader->setFloat("u_roughness", glm::max(renderable->roughness, 0.01f));
 	standardShader->setFloat("u_metallic", renderable->metallic);
 
-	glm::mat3 mn = m;
-	mn = glm::inverseTranspose(mn);
+	glm::mat3 mn = glm::inverseTranspose(renderable->m);
 	standardShader->setMat3("modelNormal", mn);
 
 	glDrawElements(GL_TRIANGLES, model->elements.size(), GL_UNSIGNED_INT, BUFFER_OFFSET(0));
@@ -91,8 +93,7 @@ void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->elementLoc);
 
-	glm::mat4 m = CalculateModelMatrix(renderable);
-	depthMapShader->setMat4("model", m);
+	depthMapShader->setMat4("model", renderable->m);
 
 	glDrawElements(GL_TRIANGLES, model->elements.size(), GL_UNSIGNED_INT, BUFFER_OFFSET(0));
 }
@@ -105,6 +106,10 @@ void Renderer::Draw() {
 		ambient_color_down += -L.y * glm::convertSRGBToLinear(directionalLight[i].color);
 	}
 	ambient_color_down *= floor_color;
+
+	for (auto renderable : renderables) {
+		UpdateModelMatrix(renderable);
+	}
 
 	glm::mat4 camera_view = glm::lookAt(camera.position, camera.target, glm::vec3(0, 1, 0));
 	glm::mat4 camera_projection = glm::perspective(glm::radians(camera.FOV), (GLfloat)windowWidth / (GLfloat)windowHeight, camera.nearClip, camera.farClip);
@@ -484,15 +489,8 @@ void Renderer::notify(EventName eventName, Param* params) {
 			TypeParam<float> *p = dynamic_cast<TypeParam<float> *>(params);
 			interp_duration = p->Param;
 			interp_start = std::chrono::high_resolution_clock::now();
-			for (auto &renderable : renderables) {
-				if (renderable->interpolated) {
-					renderable->renderPositionPrev = renderable->renderPositionCur;
-					renderable->renderRotationPrev = renderable->renderRotationCur;
-					renderable->renderScalePrev = renderable->renderScaleCur;
-				}
-				renderable->renderPositionCur = renderable->pos;
-				renderable->renderRotationCur = renderable->rot;
-				renderable->renderScaleCur = renderable->size;
+			for (auto renderable : renderables) {
+				UpdateTransform(renderable);
 			}
 			renderables_mutex.unlock();
 			break;

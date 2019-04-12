@@ -25,7 +25,6 @@ Player::Player(glm::vec2 xz, glm::vec3 color, float radius) : BASE_COLOR(color) 
 	_health = STARTING_HEALTH;
 
 	addRenderable(BASE_COLOR, MODEL_SUZANNE, TEXTURE_NONE, BASE_ROUGHNESS, BASE_METALLIC);
-	renderable->interpolated = true;
 }
 
 Player::~Player() {}

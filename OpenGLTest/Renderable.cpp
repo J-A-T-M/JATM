@@ -7,17 +7,14 @@ Renderable::Renderable(glm::vec3 color, ModelEnum model, TextureEnum texture, fl
 	this->roughness = roughness;
 	this->metallic = metallic;
 
-	interpolated = false;
 	fullBright = false;
 
-	pos = glm::vec3(0.0f);
-	rot = glm::vec3(0.0f);
-	size = glm::vec3(1.0f);
-
-	renderPositionCur = glm::vec3(0.0f);
-	renderRotationCur = glm::vec3(0.0f);
-	renderScaleCur = glm::vec3(1.0f);
-	renderPositionPrev = glm::vec3(0.0f);
-	renderRotationPrev = glm::vec3(0.0f);
-	renderScalePrev = glm::vec3(1.0f);
+	m = {};
+	parent = nullptr;
+	currPos = glm::vec3(0.0f);
+	currRot = glm::vec3(0.0f);
+	currSize = glm::vec3(1.0f);
+	prevPos = glm::vec3(0.0f);
+	prevRot = glm::vec3(0.0f);
+	prevScale = glm::vec3(1.0f);
 }

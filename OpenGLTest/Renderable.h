@@ -9,6 +9,7 @@ typedef float GLfloat;
 #include <glm/gtc/quaternion.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 #include "Enums.h"
 #include "Colour.h"
 
@@ -45,6 +46,8 @@ struct Texture {
 	GLuint loc;
 };
 
+class GameObject;
+
 class Renderable {
 	public:
 		Renderable(glm::vec3 color = Colour::GREY, ModelEnum model = MODEL_CUBE, TextureEnum texture = TEXTURE_NONE, float roughness = 0.5f, float metallic = 0.0f);
@@ -52,18 +55,15 @@ class Renderable {
 		ModelEnum model;
 		TextureEnum texture;
 
-		glm::vec3 pos;
-		glm::quat rot;
-		glm::vec3 size;
-		// transform
-		glm::vec3 renderPositionCur;
-		glm::quat renderRotationCur;
-		glm::vec3 renderScaleCur;
 		// stuff to allow renderer to interpolate positions
-		bool interpolated;
-		glm::vec3 renderPositionPrev;
-		glm::quat renderRotationPrev;
-		glm::vec3 renderScalePrev;
+		glm::mat4 m;
+		GameObject* parent;
+		glm::vec3 currPos;
+		glm::quat currRot;
+		glm::vec3 currSize;
+		glm::vec3 prevPos;
+		glm::quat prevRot;
+		glm::vec3 prevScale;
 
 		// material
 		glm::vec3 color;

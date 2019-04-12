@@ -22,6 +22,7 @@ class GameObject {
 		void setLocalPosition(glm::vec3 position);
 		void setParentPosition(glm::vec3 position);
 
+		glm::quat getRotation();
 		glm::vec3 getLocalRotation();
 		void setLocalRotation(glm::vec3 rotation);
 		void setParentRotation(glm::quat rotation);
@@ -37,8 +38,7 @@ class GameObject {
 
 		void addRenderable(glm::vec3 color = Colour::GREY, ModelEnum model = MODEL_CUBE, TextureEnum texture = TEXTURE_NONE, float roughness = 0.5f, float metallic = 0.0f);
 		void addChild(GameObject* child);
-		void updateRenderableTransforms();
-		void clearRenderablePreviousTransforms();
+		void clearRenderableTransforms();
 
 		std::shared_ptr<Renderable> renderable;
 		std::vector<GameObject*> children;

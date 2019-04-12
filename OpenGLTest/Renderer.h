@@ -25,7 +25,8 @@ class Renderer : public ISubscriber {
 		void Draw();
 		void DrawRenderable(std::shared_ptr<Renderable> renderable);
 		void DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable);
-		glm::mat4 CalculateModelMatrix(std::shared_ptr<Renderable> renderable);
+		void UpdateTransform(std::shared_ptr<Renderable> renderable);
+		void UpdateModelMatrix(std::shared_ptr<Renderable> renderable);
 		// Overrides ISubscriber::notify
 		void notify(EventName eventName, Param* params);
 

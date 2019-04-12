@@ -36,15 +36,12 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 	floor.setLocalPosition(glm::vec3(0, -32, 0));
 	floor.addRenderable(Colour::BLUERA, MODEL_CUBE, TEXTURE_NONE, 0.8f, 0.0f);
 
+	UpdateGameObjectPositions();
 	_gameObjects[0].setSize(2.0f);
 	_gameObjects[0].addRenderable(Colour::GOLD, MODEL_CUBE_BEVEL, TEXTURE_NONE, 0.5f, 1.0f);
-	_gameObjects[0].renderable->interpolated = true;
-	_gameObjects[0].updateRenderableTransforms();
-
 	for (int i = 1; i < _gameObjects.size(); ++i) {
 		_gameObjects[i].setSize(2.0f);
 		_gameObjects[i].addRenderable(Colour::SILVER, MODEL_CUBE_BEVEL, TEXTURE_NONE, 0.5f, 1.0f);
-		_gameObjects[i].renderable->interpolated = true;
 	}
 
 	Camera camera;
@@ -86,7 +83,6 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 	_UImenuScene->visible = true;
 	_highScoreBox->visible = (_highScore > 0.0f);
 	_highScoreText->SetText(std::to_string(_highScore) + 's');
-	UpdateGameObjectPositions();
 	UpdateUIPositions();
 
 	EventManager::subscribe(KEY_DOWN, this);

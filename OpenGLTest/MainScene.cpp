@@ -33,7 +33,7 @@ MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numR
 	if (!IS_SERVER) {
 		for (int i = 0; i < players.size(); ++i) {
 			players[i]->setLocalPositionY(-2);
-			players[i]->clearRenderablePreviousTransforms();
+			players[i]->clearRenderableTransforms();
 		}
 	}
 	
