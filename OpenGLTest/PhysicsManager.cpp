@@ -1,7 +1,7 @@
 #include "PhysicsManager.h"
 
 #include <glm/glm.hpp>
-Quadtree* PhysicsManager::quad = new Quadtree(0, new Rectangle(-32, -32, 32, 32));
+Quadtree* PhysicsManager::quad = new Quadtree(0, new Rect(-32, -32, 32, 32));
 
 bool intersects(glm::vec2 distance, float radius, glm::vec3 size) {
 	if (distance.x > (size.x + radius)) { return false; }
@@ -98,14 +98,14 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 	{
 		float radius = players[i]->getRadius();
 		glm::vec2 playerPosition = players[i]->getLocalPositionXZ();
-		Rectangle* pRect = new Rectangle(i, playerPosition.x - radius, playerPosition.y - radius, radius * 2, radius * 2);
+		Rect* pRect = new Rect(i, playerPosition.x - radius, playerPosition.y - radius, radius * 2, radius * 2);
 		PhysicsManager::quad->Insert(pRect);
 	}
 	for (int i = 0; i < hazards.size(); ++i)
 	{
 		glm::vec2 hazardPosition = hazards[i]->getLocalPositionXZ();
 		glm::vec3 size = hazards[i]->getSize();
-		Rectangle* hRect = new Rectangle(i + 100, hazardPosition.x - size.x, hazardPosition.y - size.z, size.x * 2, size.z * 2);
+		Rect* hRect = new Rect(i + 100, hazardPosition.x - size.x, hazardPosition.y - size.z, size.x * 2, size.z * 2);
 		PhysicsManager::quad->Insert(hRect);
 	}
 
@@ -117,7 +117,7 @@ void PhysicsManager::Update(std::vector<Player*> &players, std::vector<Hazard*> 
 
 		float radius = players[i]->getRadius();
 		glm::vec2 playerPosition = players[i]->getLocalPositionXZ();
-		Rectangle* pRect = new Rectangle(i, playerPosition.x - radius, playerPosition.y - radius, radius * 2, radius * 2);
+		Rect* pRect = new Rect(i, playerPosition.x - radius, playerPosition.y - radius, radius * 2, radius * 2);
 
 		PhysicsManager::quad->Retrieve(&closeBy, pRect);
 

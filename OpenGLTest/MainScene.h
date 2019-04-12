@@ -4,12 +4,10 @@
 #include <vector>
 
 #include "Enums.h"
-#include "PhysicsManager.h"
 #include "GameObject.h"
 #include "Player.h"
 #include "Renderable.h"
 #include "Network.h"
-
 
 class MainScene : public Scene, ISubscriber{
 	public:

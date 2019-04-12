@@ -78,6 +78,12 @@
     <ClCompile Include="HazardFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Quadtree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Rect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="../assets/shaders/ShadowMap.psh">
@@ -172,13 +178,13 @@
     <ClInclude Include="Quadtree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Rectangle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SoundSystemClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="HazardFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Rect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

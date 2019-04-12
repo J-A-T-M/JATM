@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include "MenuScene.h"
 #include "HazardFactory.h"
+#include "PhysicsManager.h"
 #include "EventManager.h"
 
 MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numRemote) : 

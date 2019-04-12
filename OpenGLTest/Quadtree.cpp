@@ -1,6 +1,6 @@
 #include "Quadtree.h"
 
-Quadtree::Quadtree(int level, Rectangle * bounds) {
+Quadtree::Quadtree(int level, Rect * bounds) {
 	objects = {};
 	nodes = {};
 	this->level = level;
@@ -13,7 +13,7 @@ Quadtree::~Quadtree() {
 }
 
 void Quadtree::Clear() {
-	for (Rectangle* object : objects) {
+	for (Rect* object : objects) {
 		delete object;
 	}
 	objects.clear();
@@ -24,7 +24,7 @@ void Quadtree::Clear() {
 	nodes.clear();
 }
 
-void Quadtree::Insert(Rectangle * rect) {
+void Quadtree::Insert(Rect * rect) {
 	if (nodes.size() > 0 && nodes[0] != nullptr) {
 		int index = GetIndex(rect);
 
@@ -52,7 +52,7 @@ void Quadtree::Insert(Rectangle * rect) {
 	}
 }
 
-std::vector<int>* Quadtree::Retrieve(std::vector<int>* result, Rectangle * rect) {
+std::vector<int>* Quadtree::Retrieve(std::vector<int>* result, Rect * rect) {
 	// push back object IDs from this quadtree
 	for (int i = 0; i < objects.size(); ++i) {
 		result->push_back(objects[i]->id);
@@ -82,10 +82,10 @@ void Quadtree::Split() {
 	int x = bounds->x;
 	int y = bounds->y;
 
-	Quadtree* subQuad1 = new Quadtree(level + 1, new Rectangle(x, y + subHeight, subWidth, subHeight));
-	Quadtree* subQuad2 = new Quadtree(level + 1, new Rectangle(x + subWidth, y + subHeight, subWidth, subHeight));
-	Quadtree* subQuad3 = new Quadtree(level + 1, new Rectangle(x, y, subWidth, subHeight));
-	Quadtree* subQuad4 = new Quadtree(level + 1, new Rectangle(x + subWidth, y, subWidth, subHeight));
+	Quadtree* subQuad1 = new Quadtree(level + 1, new Rect(x, y + subHeight, subWidth, subHeight));
+	Quadtree* subQuad2 = new Quadtree(level + 1, new Rect(x + subWidth, y + subHeight, subWidth, subHeight));
+	Quadtree* subQuad3 = new Quadtree(level + 1, new Rect(x, y, subWidth, subHeight));
+	Quadtree* subQuad4 = new Quadtree(level + 1, new Rect(x + subWidth, y, subWidth, subHeight));
 
 	nodes.push_back(subQuad1);
 	nodes.push_back(subQuad2);
@@ -93,7 +93,7 @@ void Quadtree::Split() {
 	nodes.push_back(subQuad4);
 }
 
-int Quadtree::GetIndex(Rectangle * rect) {
+int Quadtree::GetIndex(Rect * rect) {
 	double horizontalMidpoint = bounds->x + bounds->width * 0.5;
 	double verticalMidpoint = bounds->y + bounds->height * 0.5;
 
