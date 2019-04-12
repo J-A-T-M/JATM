@@ -485,9 +485,11 @@ void Renderer::notify(EventName eventName, Param* params) {
 			interp_duration = p->Param;
 			interp_start = std::chrono::high_resolution_clock::now();
 			for (auto &renderable : renderables) {
-				renderable->renderPositionPrev = renderable->renderPositionCur;
-				renderable->renderRotationPrev = renderable->renderRotationCur;
-				renderable->renderScalePrev = renderable->renderScaleCur;
+				if (renderable->interpolated_) {
+					renderable->renderPositionPrev = renderable->renderPositionCur;
+					renderable->renderRotationPrev = renderable->renderRotationCur;
+					renderable->renderScalePrev = renderable->renderScaleCur;
+				}
 				renderable->renderPositionCur = renderable->pos;
 				renderable->renderRotationCur = renderable->rot;
 				renderable->renderScaleCur = renderable->size;
