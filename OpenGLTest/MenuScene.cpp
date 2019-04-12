@@ -6,8 +6,8 @@
 #include "Colour.h"
 #include "UI/UIManager.h"
 
-#define BASE_Z 28
-#define UI_HIGHLIGHT_OFFSET 30
+#define BASE_Z 28.0f
+#define UI_HIGHLIGHT_OFFSET 30.0f
 
 float MenuScene::_highScore = 0.0f;
 
@@ -39,7 +39,7 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 	UpdateGameObjectPositions();
 	_gameObjects[0].setSize(2.0f);
 	_gameObjects[0].addRenderable(Colour::GOLD, MODEL_CUBE_BEVEL, TEXTURE_NONE, 0.5f, 1.0f);
-	for (int i = 1; i < _gameObjects.size(); ++i) {
+	for (size_t i = 1; i < _gameObjects.size(); ++i) {
 		_gameObjects[i].setSize(2.0f);
 		_gameObjects[i].addRenderable(Colour::SILVER, MODEL_CUBE_BEVEL, TEXTURE_NONE, 0.5f, 1.0f);
 	}
@@ -70,7 +70,7 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 	// grab UI components
 	_UImenuScene = UIManager::GetComponentById("MenuScene");
 	_UIisServer = (TextComponent*)UIManager::GetComponentById("isServerText");
-	for (int i = 0; i < _serverIP.size(); ++i) {
+	for (size_t i = 0; i < _serverIP.size(); ++i) {
 		_UIserverIP[i] = (TextComponent*)UIManager::GetComponentById("ipDigit" + std::to_string(i));
 	}
 	_ipBox = UIManager::GetComponentById("ipBox");
@@ -90,7 +90,7 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 
 MenuScene::~MenuScene() {
 	EventManager::unsubscribe(KEY_DOWN, this);
-	for (int i = 0; i < _serverIP.size(); ++i) {
+	for (size_t i = 0; i < _serverIP.size(); ++i) {
 		_UIserverIP[i]->anchor.y = 0;
 	}
 	_UImenuScene->visible = false;
@@ -129,16 +129,16 @@ void MenuScene::UpdateGameObjectPositions() {
 
 void MenuScene::UpdateUIPositions() {
 	_UIisServer->SetText(_isServer ? "Server" : "Client");
-	_UIisServer->anchor.y = (_xIndex == 0) ? UI_HIGHLIGHT_OFFSET : 0;
+	_UIisServer->anchor.y = (_xIndex == 0) ? UI_HIGHLIGHT_OFFSET : 0.0f;
 	_numPlayersBox->visible = _isServer;
 	_ipBox->visible = !_isServer;
 	if (_isServer) {
 		_numLocal->SetText(std::to_string(_numPlayers[0]));
-		_numLocal->anchor.y = (_xIndex == 1) ? UI_HIGHLIGHT_OFFSET : 0;
+		_numLocal->anchor.y = (_xIndex == 1) ? UI_HIGHLIGHT_OFFSET : 0.0f;
 		_numRemote->SetText(std::to_string(_numPlayers[1]));
-		_numRemote->anchor.y = (_xIndex == 2) ? UI_HIGHLIGHT_OFFSET : 0;
+		_numRemote->anchor.y = (_xIndex == 2) ? UI_HIGHLIGHT_OFFSET : 0.0f;
 	} else {
-		for (int i = 0; i < _UIserverIP.size(); ++i) {
+		for (size_t i = 0; i < _UIserverIP.size(); ++i) {
 			_UIserverIP[i]->SetText(std::to_string(_serverIP[i]));
 			_UIserverIP[i]->anchor.y = 0;
 		}

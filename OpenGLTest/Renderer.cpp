@@ -305,9 +305,9 @@ int Renderer::Init() {
 	std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
 	std::default_random_engine generator;
 	generator.seed(2);
-	int num_samples = 8;
+	size_t num_samples = 8;
 	std::vector<glm::vec3> ssaoKernel;
-	for (unsigned int i = 0; i < num_samples; ++i) {
+	for (size_t i = 0; i < num_samples; ++i) {
 		glm::vec3 sample(
 			randomFloats(generator) * 2.0 - 1.0,
 			randomFloats(generator) * 2.0 - 1.0,

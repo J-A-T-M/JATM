@@ -40,7 +40,7 @@ void Quadtree::Insert(Rect * rect) {
 		if (nodes.size() == 0 || nodes[0] == NULL)
 			Split();
 
-		int i = 0;
+		size_t i = 0;
 		while (i < objects.size()) {
 			int index = GetIndex(objects[i]);
 			if (index != -1) {
@@ -54,19 +54,19 @@ void Quadtree::Insert(Rect * rect) {
 
 std::vector<int>* Quadtree::Retrieve(std::vector<int>* result, Rect * rect) {
 	// push back object IDs from this quadtree
-	for (int i = 0; i < objects.size(); ++i) {
+	for (size_t i = 0; i < objects.size(); ++i) {
 		result->push_back(objects[i]->id);
 	}
 
 	int index = GetIndex(rect);
 	if (index == -1) { // push back object IDs from all children
-		for (int i = 0; i < nodes.size(); ++i) {
+		for (size_t i = 0; i < nodes.size(); ++i) {
 			if (nodes[i] != NULL) {
 				nodes[i]->Retrieve(result, rect);
 			}
 		}
 	} else { // push back object IDs from child given by index
-		if (index < nodes.size()) {
+		if (nodes.size() != 0) {
 			if (nodes[index] != NULL) {
 				nodes[index]->Retrieve(result, rect);
 			}
@@ -77,10 +77,10 @@ std::vector<int>* Quadtree::Retrieve(std::vector<int>* result, Rect * rect) {
 }
 
 void Quadtree::Split() {
-	float subWidth = bounds->width / 2.0;
-	float subHeight = bounds->height / 2.0;
-	int x = bounds->x;
-	int y = bounds->y;
+	float subWidth = bounds->width / 2.0f;
+	float subHeight = bounds->height / 2.0f;
+	float x = bounds->x;
+	float y = bounds->y;
 
 	Quadtree* subQuad1 = new Quadtree(level + 1, new Rect(x, y + subHeight, subWidth, subHeight));
 	Quadtree* subQuad2 = new Quadtree(level + 1, new Rect(x + subWidth, y + subHeight, subWidth, subHeight));

@@ -24,7 +24,7 @@ void PhysicsManager::Update(std::vector<std::shared_ptr<Player>> &players, std::
 	const float PLAYER_BOUNCE_INCREMENT = 10.0;
 	const float PLAYER_BASE_HEIGHT = 2.0;
 
-	for (int i = 0; i < players.size(); ++i) {
+	for (size_t i = 0; i < players.size(); ++i) {
 		glm::vec3 rot = players[i]->getLocalRotation();
 		glm::vec3 pos = players[i]->getLocalPosition();
 		glm::vec3 force = players[i]->getForce();
@@ -94,14 +94,14 @@ void PhysicsManager::Update(std::vector<std::shared_ptr<Player>> &players, std::
 
 	// insert players and hazards into quadtree
 	PhysicsManager::quad->Clear();
-	for (int i = 0; i < players.size(); ++i)
+	for (size_t i = 0; i < players.size(); ++i)
 	{
 		float radius = players[i]->getRadius();
 		glm::vec2 playerPosition = players[i]->getLocalPositionXZ();
 		Rect* pRect = new Rect(i, playerPosition.x - radius, playerPosition.y - radius, radius * 2, radius * 2);
 		PhysicsManager::quad->Insert(pRect);
 	}
-	for (int i = 0; i < hazards.size(); ++i)
+	for (size_t i = 0; i < hazards.size(); ++i)
 	{
 		glm::vec2 hazardPosition = hazards[i]->getLocalPositionXZ();
 		glm::vec3 size = hazards[i]->getSize();
@@ -111,7 +111,7 @@ void PhysicsManager::Update(std::vector<std::shared_ptr<Player>> &players, std::
 
 	// fetch from quadtree and do collision detection
 	std::vector<int> closeBy;
-	for (int i = 0; i < players.size(); ++i)
+	for (size_t i = 0; i < players.size(); ++i)
 	{
 		closeBy.clear();
 
@@ -121,7 +121,7 @@ void PhysicsManager::Update(std::vector<std::shared_ptr<Player>> &players, std::
 
 		PhysicsManager::quad->Retrieve(&closeBy, pRect);
 
-		for (int j = 0; j < closeBy.size(); ++j)
+		for (size_t j = 0; j < closeBy.size(); ++j)
 		{
 			int goId = closeBy[j];
 

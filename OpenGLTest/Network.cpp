@@ -47,7 +47,7 @@ void NetworkManager::SendToClients(ServerPacket packet) {
 }
 
 void NetworkManager::SendOldHazardsToClient(CLIENT & client) {
-	for (int i = 0; i < hazards->size(); ++i) {
+	for (size_t i = 0; i < hazards->size(); ++i) {
 		ServerPacket packet;
 		packet.type = PACKET_HAZARD_SPAWN;
 		packet.hazardSpawnPacket.spawnPosition = (*hazards)[i]->getLocalPosition();

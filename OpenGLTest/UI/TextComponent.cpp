@@ -87,7 +87,7 @@ void TextComponent::generateVertices() {
 	model.UVs.clear();
     model.elements.clear();
 
-    for (int i = 0; i < _text.length(); ++i) {
+    for (size_t i = 0; i < _text.length(); ++i) {
         uv = getUVfromChar(_text[i]);
 		model.positions.push_back(glm::vec3(screenPosition.x + fontWidth * i, screenPosition.y + screenSize.y, 0)); // Top Left
 		model.positions.push_back(glm::vec3(screenPosition.x + fontWidth * i + fontWidth, screenPosition.y + screenSize.y, 0)); // Top Right

@@ -31,7 +31,7 @@ MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numR
 	}
 
 	if (!IS_SERVER) {
-		for (int i = 0; i < players.size(); ++i) {
+		for (size_t i = 0; i < players.size(); ++i) {
 			players[i]->setLocalPositionY(-2);
 			players[i]->clearRenderableTransforms();
 		}
@@ -91,12 +91,12 @@ bool MainScene::checkDone() {
 }
 
 void MainScene::movePlayersBasedOnInput(const float delta) {
-	for (int i = 0; i < players.size(); i++) {
+	for (size_t i = 0; i < players.size(); i++) {
 		if (i < playerInputSources.size()) {
 			Input input = InputManager::getInput(playerInputSources[i]);
-			float xAxis = input.right - input.left;
-			float zAxis = input.down - input.up;
-			players[i]->setForce(glm::vec3(xAxis, 0.0f, zAxis));
+			int xAxis = input.right - input.left;
+			int zAxis = input.down - input.up;
+			players[i]->setForce(glm::vec3(xAxis, 0, zAxis));
 		}
 	}
 }
@@ -104,7 +104,7 @@ void MainScene::movePlayersBasedOnInput(const float delta) {
 void MainScene::sendPlayerTransforms() {
 	ServerPacket packet;
 	packet.type = PACKET_PLAYER_TRANSFORM;
-	for (int i = 0; i < players.size(); i++) {
+	for (size_t i = 0; i < players.size(); i++) {
 		packet.playerTransformPacket.playerTransforms[i].position = players[i]->getLocalPosition();
 		packet.playerTransformPacket.playerTransforms[i].rotation = players[i]->getLocalRotation();
 		packet.playerTransformPacket.playerTransforms[i].health = players[i]->getHealth();
@@ -121,7 +121,7 @@ void MainScene::sendPlayerTransforms() {
 }
 
 void MainScene::movePlayersBasedOnNetworking() {
-	for (int i = 0; i < players.size(); i++) {
+	for (size_t i = 0; i < players.size(); i++) {
 		players[i]->setLocalPosition(networkManager->serverState.playerTransforms[i].position);
 		players[i]->setLocalRotation(networkManager->serverState.playerTransforms[i].rotation);
 		players[i]->setStunFrames(networkManager->serverState.playerTransforms[i].stunFrames);
@@ -141,9 +141,9 @@ void MainScene::movePlayersBasedOnNetworking() {
 }
 
 void MainScene::SpawnHazard() {
-	float X = (rand() % 10) + 1;
-	float Z = 10 - X + 1;
-	Hazard* hazard = HazardFactory::buildPrism(glm::vec3(X, 1.0, Z));
+	int X = (rand() % 10) + 1;
+	int Z = 10 - X + 1;
+	Hazard* hazard = HazardFactory::buildPrism(glm::vec3(X, 1, Z));
 	hazards.push_back(std::shared_ptr<Hazard>(hazard));
 
 	ServerPacket packet;

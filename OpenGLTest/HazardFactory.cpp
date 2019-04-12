@@ -11,12 +11,12 @@ Hazard* HazardFactory::buildCube(float size) {
 }
 
 Hazard* HazardFactory::buildPrism(glm::vec3 size) {
-	int MAX_X = floorSize[0] - size.x;
-	int MAX_Z = floorSize[1] - size.z;
+	int MAX_X = int(floorSize[0] - size.x);
+	int MAX_Z = int(round(floorSize[1] - size.z));
 
-	float X = randInRange(-MAX_X, MAX_X);
+	int X = randInRange(-MAX_X, MAX_X);
 	float Y = randInRange(20, 30) + size.y;
-	float Z = randInRange(-MAX_Z, MAX_Z);
+	int Z = randInRange(-MAX_Z, MAX_Z);
 	glm::vec3 pos = glm::vec3(X, Y, Z);
 	float fallSpeed = 5.0f;
 
