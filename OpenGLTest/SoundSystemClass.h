@@ -31,17 +31,17 @@ public:
 
 		// Initialize our Instance with 36 Channels
 		m_pSystem->init(36, FMOD_INIT_NORMAL, nullptr);
-		EventManager::subscribe(PLAY_BGM_N, this);
-		EventManager::subscribe(PLAY_SE, this);
-		EventManager::subscribe(FADE, this);
-		EventManager::subscribe(S_CLEAR, this);
+		EventManager::subscribe(SOUND_PLAY_BGM, this);
+		EventManager::subscribe(SOUND_PLAY_SE, this);
+		EventManager::subscribe(SOUND_FADE, this);
+		EventManager::subscribe(SOUND_CLEAR, this);
 	}
 
 	~SoundSystemClass() {
-		EventManager::unsubscribe(PLAY_BGM_N, this);
-		EventManager::unsubscribe(PLAY_SE, this);
-		EventManager::unsubscribe(FADE, this);
-		EventManager::unsubscribe(S_CLEAR, this);
+		EventManager::unsubscribe(SOUND_PLAY_BGM, this);
+		EventManager::unsubscribe(SOUND_PLAY_SE, this);
+		EventManager::unsubscribe(SOUND_FADE, this);
+		EventManager::unsubscribe(SOUND_CLEAR, this);
 	}
 
 	void createSound(SoundClass *pSound, const char* pFile) {
@@ -95,7 +95,7 @@ private:
 
 	void notify(EventName eventName, Param* params) {
 		switch (eventName) {
-			case PLAY_BGM_N: {
+			case SOUND_PLAY_BGM: {
 				TypeParam<int> *p = dynamic_cast<TypeParam<int> *>(params);
 				int bgm_Type = p->Param;
 				//FMOD::Channel* currentSong;
@@ -149,7 +149,7 @@ private:
 				
 				break;
 			}
-			case PLAY_SE: {
+			case SOUND_PLAY_SE: {
 				TypeParam<int> *p = dynamic_cast<TypeParam<int> *>(params);
 				int se_Type = p->Param;
 
@@ -204,7 +204,7 @@ private:
 				
 				break;
 			}
-			case FADE: {
+			case SOUND_FADE: {
 				TypeParam<float> *p = dynamic_cast<TypeParam<float> *>(params);
 				float elapsedT = p->Param;
 				
@@ -250,7 +250,7 @@ private:
 				}
 				break;
 			}
-			case S_CLEAR: {
+			case SOUND_CLEAR: {
 				printf("exe");
 				channel->stop();
 				menuChannel->stop();

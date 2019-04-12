@@ -64,8 +64,8 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor.renderable->color));
 
 	//sound
-	EventManager::notify(S_CLEAR, NULL);
-	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(0));
+	EventManager::notify(SOUND_CLEAR, NULL);
+	EventManager::notify(SOUND_PLAY_BGM, &TypeParam<int>(0));
 
 	// grab UI components
 	_UImenuScene = UIManager::GetComponentById("MenuScene");
@@ -149,7 +149,7 @@ void MenuScene::UpdateUIPositions() {
 }
 
 void MenuScene::UIMoveY(int delta_y) {
-	EventManager::notify(PLAY_SE, &TypeParam<int>(0));
+	EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(0));
 	// update values
 	if (_xIndex == 0) {
 		_isServer = !_isServer;
@@ -169,7 +169,7 @@ void MenuScene::UIMoveY(int delta_y) {
 }
 
 void MenuScene::UIMoveX(int delta_x) {
-	EventManager::notify(PLAY_SE, &TypeParam<int>(0));
+	EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(0));
 	// update index
 	_xIndex += delta_x;
 	if (_isServer) {

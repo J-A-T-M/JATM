@@ -59,8 +59,8 @@ MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numR
 	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight));
 	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(Colour::BROWN));
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color));
-	EventManager::notify(PLAY_BGM_N, &TypeParam<int>(1));
-	EventManager::notify(PLAY_SE, &TypeParam<int>(4));
+	EventManager::notify(SOUND_PLAY_BGM, &TypeParam<int>(1));
+	EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(4));
 	
 	EventManager::subscribe(SPAWN_HAZARD, this);
 }
@@ -85,7 +85,7 @@ bool MainScene::checkDone() {
 		}
 	}
 	if (count <= 1) {
-		EventManager::notify(PLAY_SE, &TypeParam<int>(3));
+		EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(3));
 	}
 	return (count <= 1);
 }
@@ -156,7 +156,7 @@ void MainScene::SpawnHazard() {
 
 void MainScene::Update(const float delta) {
 	time += delta;
-	EventManager::notify(FADE, &TypeParam<float>(time));
+	EventManager::notify(SOUND_FADE, &TypeParam<float>(time));
 	
 	auto it = hazards.begin();
 	while (it != hazards.end()) {
