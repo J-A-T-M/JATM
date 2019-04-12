@@ -1,14 +1,14 @@
 #include "Renderable.h"
 
 Renderable::Renderable(glm::vec3 color, ModelEnum model, TextureEnum texture, float roughness, float metallic) {
-	this->color_ = color;
-	this->model_ = model;
-	this->texture_ = texture;
-	this->roughness_ = roughness;
-	this->metallic_ = metallic;
+	this->color = color;
+	this->model = model;
+	this->texture = texture;
+	this->roughness = roughness;
+	this->metallic = metallic;
 
-	interpolated_ = false;
-	fullBright_ = false;
+	interpolated = false;
+	fullBright = false;
 
 	pos = glm::vec3(0.0f);
 	rot = glm::vec3(0.0f);

@@ -49,8 +49,8 @@ class Renderable {
 	public:
 		Renderable(glm::vec3 color = Colour::GREY, ModelEnum model = MODEL_CUBE, TextureEnum texture = TEXTURE_NONE, float roughness = 0.5f, float metallic = 0.0f);
 
-		ModelEnum model_;
-		TextureEnum texture_;
+		ModelEnum model;
+		TextureEnum texture;
 
 		glm::vec3 pos;
 		glm::quat rot;
@@ -60,14 +60,14 @@ class Renderable {
 		glm::quat renderRotationCur;
 		glm::vec3 renderScaleCur;
 		// stuff to allow renderer to interpolate positions
-		bool interpolated_;
+		bool interpolated;
 		glm::vec3 renderPositionPrev;
 		glm::quat renderRotationPrev;
 		glm::vec3 renderScalePrev;
 
 		// material
-		glm::vec3 color_;
-		bool fullBright_;
-		float roughness_;
-		float metallic_;
+		glm::vec3 color;
+		bool fullBright;
+		float roughness;
+		float metallic;
 };
