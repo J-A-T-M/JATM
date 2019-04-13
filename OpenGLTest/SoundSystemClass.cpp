@@ -46,7 +46,6 @@ void SoundSystemClass::Update(float delta) {
 
 	if (fadeIn) {
 		float nextVolume = std::min((time - fadeStart) / fadeDuration, 1.0f);
-		std::cout << nextVolume;
 		bgm1->setVolume(nextVolume);
 		bgm2->setVolume(1.0f - nextVolume);
 
