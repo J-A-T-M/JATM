@@ -3,8 +3,16 @@
 // Enumerated type used for indexing and referencing events
 enum EventName {
 	RENDERER_ADD_TO_RENDERABLES,
-    RENDERER_ADD_TO_UIRENDERABLES, // Tell renderer to add renderable to list
-    RENDERER_POPULATE_BUFFERS, // Tell renderer to repopulate buffers for a renderable
-    RENDERER_SET_CAMERA, // Set Camera Position
-    RENDERER_REPOPULATE_BUFFERS,
+    RENDERER_SET_CAMERA,
+    RENDERER_SET_DIRECTIONAL_LIGHT,
+	RENDERER_SET_AMBIENT_UP,
+	RENDERER_SET_FLOOR_COLOR,
+	FIXED_UPDATE_FINISHED,
+	KEY_DOWN,
+	KEY_REPEAT,
+	KEY_UP,
+	SPAWN_HAZARD,
+	SOUND_SET_NEXT_BGM,
+	SOUND_FADE_NEXT_BGM,
+	SOUND_PLAY_SE
 };

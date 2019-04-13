@@ -3,10 +3,30 @@
 
 #include <vector>
 
-#include <GLEW/glew.h>
+typedef unsigned char GLubyte;
+typedef unsigned int GLuint;
+typedef float GLfloat;
+#include <glm/gtc/quaternion.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
+#include "Enums.h"
+#include "Colour.h"
+
+struct Camera {
+	glm::vec3 position;
+	glm::vec3 target;
+	GLfloat FOV;
+	GLfloat nearClip;
+	GLfloat farClip;
+};
+
+struct DirectionalLight {
+	glm::vec3 direction;
+	glm::vec3 color;
+	GLfloat nearclip;
+	GLfloat	farclip;
+};
 
 struct Model {
 	std::vector<glm::vec3> positions;
@@ -26,25 +46,28 @@ struct Texture {
 	GLuint loc;
 };
 
+class GameObject;
+
 class Renderable {
 	public:
-		Renderable();
-		glm::vec3 getPosition3();
+		Renderable(glm::vec3 color = Colour::GREY, ModelEnum model = MODEL_CUBE, TextureEnum texture = TEXTURE_NONE, float roughness = 0.5f, float metallic = 0.0f);
 
-		Model model;
-		Texture texture;
-		bool invalidated;
+		ModelEnum model;
+		TextureEnum texture;
 
-		// transform
-		glm::vec2 position;
-		float z;
-		glm::vec3 rotation;
-		glm::vec3 scale;
+		// stuff to allow renderer to interpolate positions
+		glm::mat4 m;
+		GameObject* parent;
+		glm::vec3 currPos;
+		glm::quat currRot;
+		glm::vec3 currSize;
+		glm::vec3 prevPos;
+		glm::quat prevRot;
+		glm::vec3 prevScale;
 
 		// material
-		glm::vec4 color;
+		glm::vec3 color;
 		bool fullBright;
 		float roughness;
 		float metallic;
-		float f0;
 };

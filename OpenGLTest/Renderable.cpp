@@ -1,19 +1,20 @@
 #include "Renderable.h"
 
-Renderable::Renderable() {
-	model = {};
-	texture = {};
-	invalidated = false;
-	position = glm::vec3(0.0f);
-	z = 0.0f;
-	scale = glm::vec3(1.0f);
-	color = glm::vec4(1.0f);
-	fullBright = false;
-	roughness = 0.5f;
-	metallic = 0.0f;
-	f0 = 0.04;
-}
+Renderable::Renderable(glm::vec3 color, ModelEnum model, TextureEnum texture, float roughness, float metallic) {
+	this->color = color;
+	this->model = model;
+	this->texture = texture;
+	this->roughness = roughness;
+	this->metallic = metallic;
 
-glm::vec3 Renderable::getPosition3() {
-	return glm::vec3(position, z);
+	fullBright = false;
+
+	m = {};
+	parent = nullptr;
+	currPos = glm::vec3(0.0f);
+	currRot = glm::vec3(0.0f);
+	currSize = glm::vec3(1.0f);
+	prevPos = glm::vec3(0.0f);
+	prevRot = glm::vec3(0.0f);
+	prevScale = glm::vec3(1.0f);
 }

@@ -1,0 +1,175 @@
+#version 330 core
+#define M_PI 3.1415926535897932384626433832795
+#define MAX_SAMPLES 64
+#define NUM_LIGHTS 2
+
+in vec2 v_texCoord;
+in vec3 v_position;
+in vec3 v_normal;
+in vec4 v_lightSpace_position[NUM_LIGHTS];
+
+uniform vec3 u_color;
+uniform bool u_fullBright;
+uniform float u_roughness;
+uniform float u_metallic;
+uniform sampler2D u_textureSampler;
+
+uniform vec3 u_up;
+uniform vec3 u_ambientColorUp;
+uniform vec3 u_ambientColorDown;
+
+uniform sampler2DShadow u_shadowMapSampler[NUM_LIGHTS];
+uniform vec3 u_lightDirection[NUM_LIGHTS];
+uniform vec3 u_lightColor[NUM_LIGHTS];
+uniform float u_shadowMapTexelSize;
+
+uniform mat4 projection;
+uniform sampler2D u_depthMapSampler;
+uniform int u_numSamples;
+uniform vec3 u_samples[MAX_SAMPLES];
+
+out vec4 o_fragColor;
+
+float schlick(float f0, float theta) {
+	return mix(f0, 1.0, pow(1.0 - theta, 5.0));
+}
+vec3 schlick(vec3 f0, float theta) {
+	return mix(f0, vec3(1.0), pow(1.0 - theta, 5.0));
+}
+// Hash without Sine
+// stolen from here https://www.shadertoy.com/view/4djSRW
+#define HASHSCALE1 .1031
+float hash12(vec2 p) {
+	vec3 p3 = fract(vec3(p.xyx) * HASHSCALE1);
+	p3 += dot(p3, p3.yzx + 19.19);
+	return fract((p3.x + p3.y) * p3.z);
+}
+// Hash without Sine
+// stolen from here https://www.shadertoy.com/view/4djSRW
+#define HASHSCALE3 vec3(.1031, .1030, .0973)
+vec2 hash22(vec2 p) {
+	vec3 p3 = fract(vec3(p.xyx) * HASHSCALE3);
+	p3 += dot(p3, p3.yzx + 19.19);
+	return fract((p3.xx + p3.yz) * p3.zy);
+}
+vec3 dither(vec3 color) {
+	color *= 0.975 + 0.05 * (hash12(gl_FragCoord.xy) + hash12(gl_FragCoord.xy + 3.1337) - 0.5);
+	return color;
+}
+float linearize_depth(float d, float zNear, float zFar) {
+	return zNear * zFar / (zFar + d * (zNear - zFar));
+}
+
+float G1V(float dotNV, float k) {
+	return 1.0 / (dotNV*(1.0 - k) + k);
+}
+vec3 GGX(vec3 N, vec3 V, vec3 L, float roughness, vec3 F0) {
+	float alpha = roughness*roughness;
+
+	vec3 H = normalize(V + L);
+
+	float dotNL = max(dot(N, L), 0.0);
+	float dotNV = max(dot(N, V), 0.0);
+	float dotNH = max(dot(N, H), 0.0);
+	float dotLH = max(dot(L, H), 0.0);
+
+	// D (normal distribution term)
+	float alphaSqr = alpha*alpha;
+	float denom = dotNH * dotNH *(alphaSqr - 1.0) + 1.0;
+	float D = alphaSqr / (M_PI * denom * denom);
+
+	// F (fresnel term)
+	vec3 F = schlick(F0, dotLH);
+
+	// V (visibility term)
+	float k = alpha / 2.0f;
+	float vis = G1V(dotNL, k)*G1V(dotNV, k);
+
+	vec3 specular = dotNL * D * F * vis;
+	return specular;
+}
+
+float shadow(int light_index) {
+	vec3 projCoords = (v_lightSpace_position[light_index].xyz / v_lightSpace_position[light_index].w) * 0.5 + 0.5;
+
+	float visibility = 0.0;
+	for (int x = -1; x <= 1; ++x) {
+		for (int y = -1; y <= 1; ++y) {
+			vec3 offset = vec3(x * u_shadowMapTexelSize, y * u_shadowMapTexelSize, -0.015);
+			visibility += texture(u_shadowMapSampler[light_index], projCoords + offset, 0.0);
+		}
+	}
+	visibility /= 9.0;
+
+	return visibility;
+}
+
+float occlusion(vec3 N) {
+	vec3 rvec = vec3(hash22(gl_FragCoord.xy) * 2.0 - 1.0, 0.0);
+	vec3 tangent = normalize(rvec - N * dot(rvec, N));
+	vec3 bitangent = cross(N, tangent);
+	mat3 tbn = mat3(tangent, bitangent, N);
+
+	float originDepth = linearize_depth(gl_FragCoord.z, 0.1, 1000.0);
+	vec3 origin = v_position;
+
+	float bias = 0.0;
+	float radius = 5;
+
+	float occlusion = 0;
+	for (int i = 0; i < u_numSamples; ++i) {
+		// get sample position:
+		vec3 sample = tbn * u_samples[i];
+		sample = sample * radius + origin;
+		// project sample position:
+		vec4 offset = vec4(sample, 1.0);
+		offset = projection * offset;
+		offset.xy /= offset.w;
+		offset.xy = offset.xy * 0.5 + 0.5;
+		// get sample depth:
+		float sampleDepth = texture(u_depthMapSampler, offset.xy).r;
+		sampleDepth = linearize_depth(sampleDepth, 0.1, 1000.0);
+		// range check & accumulate:
+		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(originDepth - sampleDepth));
+		occlusion += (bias + sampleDepth < -sample.z ? 1.0 : 0.0) * rangeCheck;
+	}
+
+	return 1.0 - (occlusion / u_numSamples);
+}
+
+void main() {
+	vec3 color = u_color;
+
+	if (textureSize(u_textureSampler, 0).x > 1) { // check if texture is bound
+		color *= texture(u_textureSampler, v_texCoord).xyz;
+	}
+
+	if (u_fullBright) {
+		o_fragColor = vec4(color, 1.0);
+		return;
+	}
+
+	vec3 N = normalize(v_normal);
+	vec3 V = normalize(-v_position);
+	vec3 R = reflect(-V, N);
+	vec3 F0 = mix(vec3(0.04), color, u_metallic);
+	float dotNV = max(dot(N, V), 0.0);
+
+	vec3 lighting = vec3(0);
+	lighting += color * mix(u_ambientColorDown, u_ambientColorUp, dot(u_up, N) * 0.5 + 0.5) * (1.0 - u_metallic);
+	lighting += schlick(F0, dotNV) * mix(u_ambientColorDown, u_ambientColorUp, dot(u_up, R) * 0.5 + 0.5);
+	lighting *= occlusion(N);
+
+	for (int i = 0; i < NUM_LIGHTS; ++i) {
+		vec3 L = normalize(-u_lightDirection[i]);
+		float dotNL = max(dot(N, L), 0.0);
+
+		vec3 direct = vec3(0);
+		direct += color * dotNL * (1.0 - schlick(0.04, dotNL)) * (1.0 - u_metallic);
+		direct += GGX(N, V, L, u_roughness, F0);
+		direct *= u_lightColor[i] * shadow(i);
+		lighting += direct;
+	}
+
+	o_fragColor = vec4(dither(lighting), 1.0);
+}

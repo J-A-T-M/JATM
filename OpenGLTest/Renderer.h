@@ -1,66 +1,70 @@
 #pragma once
-//uses UIComponents, Renderables
-#include <list>
-#include <mutex>
 
+#include <chrono>
 #define GLEW_STATIC
 #include <GLEW/glew.h>
 #include <GLFW/glfw3.h>
+#include <list>
+#include <mutex>
 
 #include "EventManager.h"
 #include "Renderable.h"
-
-
 #include "shader.h"
-
-
-extern std::mutex mtx;
-extern std::condition_variable cv;
-extern GLFWwindow *window;
+#include "UI\UIComponent.h"
 
 class Renderer : public ISubscriber {
 	public:
 		Renderer();
-		int RenderLoop();
+		bool Done();
 		~Renderer();
 
-		glm::vec3 cameraPosition = { 64.0f, 64.0f, 64.0f };
-		GLfloat cameraFOV = 90.0f;
-		GLfloat nearClip = 0.1f;
-		GLfloat farClip = 1000.0f;
-
-		glm::vec3 ambient_color = { 0.1, 0.1, 0.1 };
-
-		glm::vec3 light_position = { 0.0f, 200.0f, 64.0f };
-		glm::vec3 light_target = { 182.5f, 90.0f, 0.0f };
-		glm::vec3 light_color = { 1.0f, 1.0f, 1.0f };
-		GLfloat light_brightness = 40000.0f;
-		GLfloat light_FOV = 90.0f;
-		GLfloat light_nearclip = 0.1f;
-		GLfloat	light_farclip = 1000.0f;
 	private:
-		void draw();
-
-		void GenerateBuffers(std::shared_ptr<Renderable> renderable);
-		void PopulateBuffers(std::shared_ptr<Renderable> renderable);
-
-        void AddToRenderables(std::shared_ptr<Renderable> renderable);
-
+		int RenderLoop();
+		int Init();
+		void PreloadAssetBuffers();
+		void Draw();
 		void DrawRenderable(std::shared_ptr<Renderable> renderable);
-		void DrawRenderable_ShadowMap(std::shared_ptr<Renderable> renderable);
+		void DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable);
+		void UpdateTransform(std::shared_ptr<Renderable> renderable);
+		void UpdateModelMatrix(std::shared_ptr<Renderable> renderable);
+		// Overrides ISubscriber::notify
+		void notify(EventName eventName, Param* params);
 
-		void CreateShaderProgram(GLuint & programLoc, const char * vertexShaderPath, const char * fragmentShaderPath);
+		GLFWwindow* window;
+		GLuint VAO;
+		Shader* standardShader;
+		Shader* depthMapShader;
+		Shader* uiShader;
+		int windowWidth = 1600;
+		int windowHeight = 900;
 
-        void notify(EventName eventName, Param* params);    // Overrides ISubscriber::notify
+		// stuff for renderable transform interpolation
+		void updateInterpolationValue();
+		std::chrono::time_point<std::chrono::high_resolution_clock> interp_start;
+		float interp_duration;
+		float interp_value;
 
-		std::mutex renderables_waitList_mutex;
-		std::list<std::shared_ptr<Renderable>> renderables_waitList;
+		glm::vec3 floor_color;
+		glm::vec3 ambient_color_up;
+		glm::vec3 ambient_color_down;
+		Camera camera;
+
+		std::thread renderThread;
+		bool renderThreadDone;
+
 		std::list<std::shared_ptr<Renderable>> renderables;
-		const GLuint WIDTH = 1600;
-		const GLuint HEIGHT = 900;
-		GLuint mainProgram, VAO;
-		const GLuint SHADOW_WIDTH = 1024;
-		const GLuint SHADOW_HEIGHT = 1024;
-		GLuint shadowProgram, depthMap, depthMapFBO;
-		GLuint uiProgram;
+		std::mutex renderables_mutex;
+
+		static const int NUM_LIGHTS = 2;
+		DirectionalLight directionalLight[NUM_LIGHTS];
+		GLuint shadowMap[NUM_LIGHTS], shadowMapFBO[NUM_LIGHTS];
+		const GLuint SHADOW_SIZE = 1024;
+
+		GLuint depthMap, depthMapFBO;
+
+		void DrawUIComponent(UIComponent * uiComponent);
+		void TraverseUIComponent(UIComponent * uiComponent);
+		void DrawUI();
+		void InitUIComponent(UIComponent * uiComponent);
+		std::list<UIComponent*> transparentList;
 };
