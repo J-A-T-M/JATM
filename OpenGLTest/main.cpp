@@ -31,6 +31,7 @@ int main() {
         while (accumulator >= FIXED_DELTA_TIME) {
             accumulator -= FIXED_DELTA_TIME;
 			stateMachine->Update(FIXED_DELTA_TIME);
+			soundSystem->Update(FIXED_DELTA_TIME);
         }
     }
 

@@ -64,8 +64,9 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor.renderable->color));
 
 	//sound
-	EventManager::notify(SOUND_CLEAR, NULL);
-	EventManager::notify(SOUND_PLAY_BGM, &TypeParam<int>(0));
+	EventManager::notify(SOUND_SET_NEXT_BGM, &TypeParam<int>(0));
+	EventManager::notify(SOUND_FADE_NEXT_BGM, &TypeParam<float>(4.0f));
+	EventManager::notify(SOUND_SET_NEXT_BGM, &TypeParam<int>(1));
 
 	// grab UI components
 	_UImenuScene = UIManager::GetComponentById("MenuScene");

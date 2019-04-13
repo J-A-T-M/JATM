@@ -12,6 +12,8 @@ MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numR
 	NUM_LOCAL(isServer ? max(numLocal, 1): 2), 
 	NUM_REMOTE(isServer ? numRemote : 2) {
 
+	livePlayers = NUM_LOCAL + NUM_REMOTE;
+
 	networkManager = new NetworkManager(IS_SERVER, SERVER_IP);
 	// horrible hackjob so we can send existing hazards to new clients
 	networkManager->hazards = &hazards;
@@ -59,8 +61,8 @@ MainScene::MainScene(bool isServer, std::string serverIP, int numLocal, int numR
 	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight));
 	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(Colour::BROWN));
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor->renderable->color));
-	EventManager::notify(SOUND_PLAY_BGM, &TypeParam<int>(1));
-	EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(4));
+	EventManager::notify(SOUND_FADE_NEXT_BGM, &TypeParam<float>(4.0f));
+	EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(3));
 	
 	EventManager::subscribe(SPAWN_HAZARD, this);
 }
@@ -78,16 +80,7 @@ bool MainScene::checkDone() {
 		}
 	}
 
-	int count = 0;
-	for (auto &player : players) {
-		if (player->getHealth() != 0) {
-			++count;
-		}
-	}
-	if (count <= 1) {
-		EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(3));
-	}
-	return (count <= 1);
+	return (livePlayers <= 1);
 }
 
 void MainScene::movePlayersBasedOnInput(const float delta) {
@@ -128,9 +121,7 @@ void MainScene::movePlayersBasedOnNetworking() {
 		// horrible hackjob by markus
 		// find a better way to send this
 		int damage = players[i]->getHealth() - networkManager->serverState.playerTransforms[i].health;
-		if (damage != 0) {
-			players[i]->damageHealth(damage);
-		}
+		players[i]->damageHealth(damage);
 		// horrible hackjob by markus
 		// find a better way to send this
 		int stun = networkManager->serverState.playerTransforms[i].stunFrames;
@@ -156,7 +147,6 @@ void MainScene::SpawnHazard() {
 
 void MainScene::Update(const float delta) {
 	time += delta;
-	EventManager::notify(SOUND_FADE, &TypeParam<float>(time));
 	
 	auto it = hazards.begin();
 	while (it != hazards.end()) {
@@ -182,9 +172,32 @@ void MainScene::Update(const float delta) {
 		networkManager->SendToServer();
 	}
 
+	int count = 0;
 	for (auto player : players) {
+		if (player->getHealth() != 0) {
+			++count;
+		}
 		player->update();
 	}
+	if (count < livePlayers) {
+		livePlayers = count;
+		// context dependant Carl quote
+		if (livePlayers <= 1) { //Finish!
+			EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(2));
+		} else if (livePlayers == NUM_LOCAL + NUM_REMOTE - 1) { //First blood
+			EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(4));
+		} else if (livePlayers == 2) { //Two players left
+			EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(6));
+		} else { //Another player down
+			EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(5));
+		}
+
+		if (livePlayers == 2) { //fast music
+			EventManager::notify(SOUND_SET_NEXT_BGM, &TypeParam<int>(2));
+			EventManager::notify(SOUND_FADE_NEXT_BGM, &TypeParam<float>(4.0f));
+		}
+	}
+
 	for (auto hazard : hazards) {
 		hazard->update(delta);
 	}

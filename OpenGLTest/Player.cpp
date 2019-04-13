@@ -114,22 +114,19 @@ int Player::getHealth() {
 }
 
 void Player::damageHealth(int damage) {
-	if (_invulnFrames == 0 && _health != 0) {
-		EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(0));
+	if (damage > 0 && _invulnFrames == 0 && _health != 0) {
 		_invulnFrames = MAX_INVULN_FRAMES;
 		Player::setHealth(_health - damage);
-		if (_health <= 0) {
-			EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(2));
-			EventManager::notify(SOUND_PLAY_BGM, &TypeParam<int>(2));
-		}
 	}
 }
 
 void Player::setHealth(int health) {
-	if (health >= 0) {
+	if (health > 0) {
 		_health = health;
+		EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(0));
 	} else {
 		_health = 0;
+		EventManager::notify(SOUND_PLAY_SE, &TypeParam<int>(1));
 	}
 }
 

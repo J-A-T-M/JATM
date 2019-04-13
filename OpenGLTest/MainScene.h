@@ -32,6 +32,7 @@ class MainScene : public Scene, ISubscriber{
 
 		NetworkManager *networkManager;
 		float time;
+		int livePlayers;
 		std::shared_ptr<GameObject> floor;
 		std::vector<std::shared_ptr<Hazard>> hazards;
 		std::vector<std::shared_ptr<Player>> players;
