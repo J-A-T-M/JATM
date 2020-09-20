@@ -44,7 +44,7 @@ class Renderer : public ISubscriber {
 		float interp_duration;
 		float interp_value;
 
-		float exposure = 0.5;
+		float exposure = 1.0f;
 		glm::vec3 floor_color;
 		glm::vec3 ambient_color_up;
 		glm::vec3 ambient_color_down;
