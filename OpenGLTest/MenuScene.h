@@ -24,6 +24,7 @@ class MenuScene : public Scene, ISubscriber {
 		static const int X_INDEX_MAX = 13;
 
 		GameObject floor;
+		std::shared_ptr<Camera> camera;
 		std::array<GameObject, X_INDEX_MAX> _gameObjects;
 
 		UIComponent* _UImenuScene;

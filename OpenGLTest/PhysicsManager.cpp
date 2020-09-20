@@ -1,7 +1,7 @@
 #include "PhysicsManager.h"
 
 #include <glm/glm.hpp>
-Quadtree* PhysicsManager::quad = new Quadtree(0, new Rect(-32, -32, 32, 32));
+Quadtree* PhysicsManager::quad = new Quadtree(0, Rect(-32, -32, 32, 32));
 
 bool intersects(glm::vec2 distance, float radius, glm::vec3 size) {
 	if (distance.x > (size.x + radius)) { return false; }

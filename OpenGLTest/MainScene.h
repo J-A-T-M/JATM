@@ -34,6 +34,7 @@ class MainScene : public Scene, ISubscriber{
 		float time;
 		int livePlayers;
 		std::shared_ptr<GameObject> floor;
+		std::shared_ptr<Camera> camera;
 		std::vector<std::shared_ptr<Hazard>> hazards;
 		std::vector<std::shared_ptr<Player>> players;
 		std::vector<InputSourceEnum> playerInputSources;

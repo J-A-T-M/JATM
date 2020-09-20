@@ -14,7 +14,9 @@ typedef float GLfloat;
 #include "Colour.h"
 
 struct Camera {
+	glm::vec3 newPosition;
 	glm::vec3 position;
+	glm::vec3 previousPosition;
 	glm::vec3 target;
 	GLfloat FOV;
 	GLfloat nearClip;
@@ -32,10 +34,14 @@ struct Model {
 	std::vector<glm::vec3> positions;
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec2> UVs;
+	std::vector<glm::vec3> tangents;
+	std::vector<glm::vec3> bitangents;
 	std::vector<GLuint> elements;
 	GLuint positionLoc;
 	GLuint UVLoc;
 	GLuint normalLoc;
+	GLuint tangentLoc;
+	GLuint bitangentLoc;
 	GLuint elementLoc;
 };
 
@@ -43,6 +49,7 @@ struct Texture {
 	std::vector<GLubyte> data;
 	int width;
 	int height;
+	bool sRGB;
 	GLuint loc;
 };
 
@@ -50,10 +57,13 @@ class GameObject;
 
 class Renderable {
 	public:
-		Renderable(glm::vec3 color = Colour::GREY, ModelEnum model = MODEL_CUBE, TextureEnum texture = TEXTURE_NONE, float roughness = 0.5f, float metallic = 0.0f);
+		Renderable(glm::vec3 color = Colour::GREY, ModelEnum model = MODEL_CUBE, TextureEnum texture = TEXTURE_NONE, float roughness = 0.5f, float metallic = 0.0f, TextureEnum normalMap = TEXTURE_NONE, TextureEnum dispMap = TEXTURE_NONE);
 
 		ModelEnum model;
 		TextureEnum texture;
+		TextureEnum normalMap;
+		TextureEnum dispMap;
+		TextureEnum roughnessMap;
 
 		// stuff to allow renderer to interpolate positions
 		glm::mat4 m;
