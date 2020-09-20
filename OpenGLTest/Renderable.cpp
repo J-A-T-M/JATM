@@ -1,9 +1,12 @@
 #include "Renderable.h"
 
-Renderable::Renderable(glm::vec3 color, ModelEnum model, TextureEnum texture, float roughness, float metallic) {
+Renderable::Renderable(glm::vec3 color, ModelEnum model, TextureEnum texture, float roughness, float metallic, TextureEnum normalMap, TextureEnum dispMap) {
 	this->color = color;
 	this->model = model;
 	this->texture = texture;
+	this->normalMap = normalMap;
+	this->dispMap = dispMap;
+	this->roughnessMap = TEXTURE_NONE;
 	this->roughness = roughness;
 	this->metallic = metallic;
 

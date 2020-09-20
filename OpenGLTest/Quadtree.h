@@ -4,7 +4,7 @@
 
 class Quadtree {
 	public:
-		Quadtree(int level, Rect* bounds);
+		Quadtree(int level, Rect bounds);
 		~Quadtree();
 		void Clear();
 		void Insert(Rect* rect);
@@ -14,7 +14,7 @@ class Quadtree {
 		static const int MAX_LEVELS = 8;
 
 		int level;
-		Rect* bounds;
+		Rect bounds;
 		std::vector<Rect*> objects;
 		std::vector<Quadtree*> nodes;
 

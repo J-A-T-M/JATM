@@ -63,21 +63,40 @@ void Renderer::DrawUIComponent(UIComponent* UIrenderable) {
 void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 	Model* model = &AssetLoader::models[renderable->model];
 	Texture* texture = &AssetLoader::textures[renderable->texture];
+	Texture* normalMap = &AssetLoader::textures[renderable->normalMap];
+	Texture* dispMap = &AssetLoader::textures[renderable->dispMap];
+	Texture* roughnessMap = &AssetLoader::textures[renderable->roughnessMap];
 
 	glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
+
 	glBindBuffer(GL_ARRAY_BUFFER, model->UVLoc);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), BUFFER_OFFSET(0));
+
 	glBindBuffer(GL_ARRAY_BUFFER, model->normalLoc);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
+
+	glBindBuffer(GL_ARRAY_BUFFER, model->tangentLoc);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
+
+	glBindBuffer(GL_ARRAY_BUFFER, model->bitangentLoc);
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
+
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->elementLoc);
 
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture->loc);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, normalMap->loc);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, dispMap->loc);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, roughnessMap->loc);
 
 	standardShader->setMat4("model", renderable->m);
 	standardShader->setVec3("u_color", glm::convertSRGBToLinear(renderable->color));
 	standardShader->setBool("u_fullBright", renderable->fullBright);
-	standardShader->setFloat("u_roughness", glm::max(renderable->roughness, 0.01f));
+	standardShader->setFloat("u_roughness", glm::max(renderable->roughness, 0.05f));
 	standardShader->setFloat("u_metallic", renderable->metallic);
 
 	glm::mat3 mn = glm::inverseTranspose(renderable->m);
@@ -99,7 +118,7 @@ void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
 }
 
 void Renderer::Draw() {
-	glClearColor(ambient_color_up.r, ambient_color_up.g, ambient_color_up.b, 1.0f);
+	glClearColor(ambient_color_up.r * exposure, ambient_color_up.g * exposure, ambient_color_up.b * exposure, 1.0f);
 	ambient_color_down = ambient_color_up;
 	for (int i = 0; i < NUM_LIGHTS; ++i) {
 		glm::vec3 L = glm::normalize(directionalLight[i].direction);
@@ -111,11 +130,13 @@ void Renderer::Draw() {
 		UpdateModelMatrix(renderable);
 	}
 
-	glm::mat4 camera_view = glm::lookAt(camera.position, camera.target, glm::vec3(0, 1, 0));
-	glm::mat4 camera_projection = glm::perspective(glm::radians(camera.FOV), (GLfloat)windowWidth / (GLfloat)windowHeight, camera.nearClip, camera.farClip);
+	glm::vec3 camera_pos = glm::mix(camera->previousPosition, camera->position, interp_value);
+	glm::mat4 camera_view = glm::lookAt(camera_pos, camera->target, glm::vec3(0, 1, 0));
+	glm::mat4 camera_projection = glm::perspective(glm::radians(camera->FOV), (GLfloat)windowWidth / (GLfloat)windowHeight, camera->nearClip, camera->farClip);
 	glm::mat4 camera_viewProjection = camera_projection * camera_view;
 	glm::vec3 camera_upDir = camera_view * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
 
+	// draw light depthmaps
 	glm::mat4 lightViewProjections[NUM_LIGHTS];
 	glm::vec3 lightDirections[NUM_LIGHTS];
 	glm::vec3 lightColors[NUM_LIGHTS];
@@ -151,6 +172,7 @@ void Renderer::Draw() {
 
 	// draw 3d objects
 	standardShader->use();
+	standardShader->setFloat("u_exposure", exposure);
 	standardShader->setMat4("view", camera_view);
 	standardShader->setMat4("projection", camera_projection);
 	standardShader->setVec3("u_up", camera_upDir);
@@ -159,22 +181,19 @@ void Renderer::Draw() {
 	standardShader->setMat4("lightSpace", lightViewProjections[0], NUM_LIGHTS);
 	standardShader->setVec3("u_lightDirection", lightDirections[0], NUM_LIGHTS);
 	standardShader->setVec3("u_lightColor", lightColors[0], NUM_LIGHTS);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, shadowMap[0]);
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, shadowMap[1]);
-	glActiveTexture(GL_TEXTURE3);
+	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
-	glActiveTexture(GL_TEXTURE0);
+	for (int i = 0; i < NUM_LIGHTS; ++i) {
+		glActiveTexture(GL_TEXTURE5 + i);
+		glBindTexture(GL_TEXTURE_2D, shadowMap[i]);
+	}
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, windowWidth, windowHeight);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	for (auto renderable : renderables) {
 		DrawRenderable(renderable);
 	}
-	
-	// draw 2d objects
-	DrawUI();
 }
 
 void Renderer::PreloadAssetBuffers() {
@@ -183,25 +202,39 @@ void Renderer::PreloadAssetBuffers() {
 		glGenBuffers(1, &model->positionLoc);
 		glGenBuffers(1, &model->UVLoc);
 		glGenBuffers(1, &model->normalLoc);
+		glGenBuffers(1, &model->tangentLoc);
+		glGenBuffers(1, &model->bitangentLoc);
 		glGenBuffers(1, &model->elementLoc);
+
 		glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
 		glBufferData(GL_ARRAY_BUFFER, model->positions.size() * sizeof(glm::vec3), model->positions.data(), GL_STATIC_DRAW);
+
 		glBindBuffer(GL_ARRAY_BUFFER, model->UVLoc);
 		glBufferData(GL_ARRAY_BUFFER, model->UVs.size() * sizeof(glm::vec2), model->UVs.data(), GL_STATIC_DRAW);
+
 		glBindBuffer(GL_ARRAY_BUFFER, model->normalLoc);
 		glBufferData(GL_ARRAY_BUFFER, model->normals.size() * sizeof(glm::vec3), model->normals.data(), GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ARRAY_BUFFER, model->tangentLoc);
+		glBufferData(GL_ARRAY_BUFFER, model->tangents.size() * sizeof(glm::vec3), model->tangents.data(), GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ARRAY_BUFFER, model->bitangentLoc);
+		glBufferData(GL_ARRAY_BUFFER, model->bitangents.size() * sizeof(glm::vec3), model->bitangents.data(), GL_STATIC_DRAW);
+
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->elementLoc);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->elements.size() * sizeof(GLuint), model->elements.data(), GL_STATIC_DRAW);
 	}
 	for (int i = 0; i < NUM_TEXTURES; i++) {
-		Texture* texture = &AssetLoader::textures[i];
-		glGenTextures(1, &texture->loc);
-		glBindTexture(GL_TEXTURE_2D, texture->loc);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		Texture& texture = AssetLoader::textures[i];
+		glGenTextures(1, &texture.loc);
+		glBindTexture(GL_TEXTURE_2D, texture.loc);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, texture->width, texture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->data.data());
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
+		GLint internalFormat = texture.sRGB ? GL_SRGB_ALPHA : GL_RGBA;
+		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, texture.width, texture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture.data.data());
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 }
@@ -268,6 +301,8 @@ int Renderer::Init() {
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(3);
+	glEnableVertexAttribArray(4);
 
 	standardShader->use();
 	// shadow stuff
@@ -286,7 +321,6 @@ int Renderer::Init() {
 		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap[i], 0);
-		standardShader->setInt("u_shadowMapSampler[" + std::to_string(i) + "]", i + 1);
 	}
 	// ssao stuff
 	glGenFramebuffers(1, &depthMapFBO);
@@ -299,8 +333,16 @@ int Renderer::Init() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-	// binds UNIFORM_DEPTHMAP_SAMPLER to GL_TEXTURE3
-	standardShader->setInt("u_depthMapSampler", 3);
+	// binds uniform samplers to texture units
+	standardShader->setInt("u_textureSampler", 0);
+	standardShader->setInt("u_normalMapSampler", 1);
+	standardShader->setInt("u_dispMapSampler", 2);
+	standardShader->setInt("u_roughnessMapSampler", 3);
+	standardShader->setInt("u_depthMapSampler", 4);
+	for (int i = 0; i < NUM_LIGHTS; ++i) {
+		standardShader->setInt("u_shadowMapSampler[" + std::to_string(i) + "]", i + 5);
+	}
+
 	// binds SSAO kernel
 	std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
 	std::default_random_engine generator;
@@ -375,11 +417,18 @@ int Renderer::RenderLoop() {
 			}
 		}
 
+		if (camera.use_count() == 1) {
+			camera.reset();
+		}
+
 		//draw
 		updateInterpolationValue();
 		glfwGetWindowSize(window, &windowWidth, &windowHeight);
 		if (windowWidth != 0 && windowHeight != 0) {
-			Draw();
+			if (camera != nullptr) {
+				Draw();
+			}
+			DrawUI();
 		}
 		renderables_mutex.unlock();
 
@@ -451,7 +500,7 @@ void Renderer::InitUIComponent(UIComponent * renderable) {
 }
 
 void Renderer::notify(EventName eventName, Param* params) {
-    switch (eventName) {
+	switch (eventName) {
 		case RENDERER_ADD_TO_RENDERABLES: {
 			TypeParam<std::shared_ptr<Renderable>> *p = dynamic_cast<TypeParam<std::shared_ptr<Renderable>> *>(params);
 			renderables_mutex.lock();
@@ -459,12 +508,13 @@ void Renderer::notify(EventName eventName, Param* params) {
 			renderables_mutex.unlock();
 			break;
 		}
-		
-        case RENDERER_SET_CAMERA: {
-            TypeParam<Camera> *p = dynamic_cast<TypeParam<Camera> *>(params);
-            camera = p->Param;
-            break;
-        }
+
+		case RENDERER_SET_CAMERA: {
+			TypeParam<std::shared_ptr<Camera>> *p = dynamic_cast<TypeParam<std::shared_ptr<Camera>> *>(params);
+			camera = p->Param;
+			camera->previousPosition = camera->position;
+			break;
+		}
 
 		case RENDERER_SET_DIRECTIONAL_LIGHT: {
 			TypeParam<DirectionalLight> *p = dynamic_cast<TypeParam<DirectionalLight> *>(params);
@@ -492,19 +542,23 @@ void Renderer::notify(EventName eventName, Param* params) {
 			for (auto renderable : renderables) {
 				UpdateTransform(renderable);
 			}
+			if (camera != nullptr) {
+				camera->previousPosition = camera->position;
+				camera->position = camera->newPosition;
+			}
 			renderables_mutex.unlock();
 			break;
 		}
 
 		default:
 			break;
-    }
+	}
 }
 
 Renderer::Renderer() {
 	renderThreadDone = false;
 	renderThread = std::thread(&Renderer::RenderLoop, this);
-    EventManager::subscribe(RENDERER_ADD_TO_RENDERABLES, this);
+	EventManager::subscribe(RENDERER_ADD_TO_RENDERABLES, this);
 	EventManager::subscribe(RENDERER_SET_CAMERA, this);
 	EventManager::subscribe(RENDERER_SET_DIRECTIONAL_LIGHT, this);
 	EventManager::subscribe(RENDERER_SET_AMBIENT_UP, this);

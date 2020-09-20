@@ -21,8 +21,10 @@ GameObject::GameObject() {
 }
 
 GameObject::~GameObject() {
-	renderable->parent = nullptr;
-	renderable.reset();
+	if (renderable != nullptr) {
+		renderable->parent = nullptr;
+		renderable.reset();
+	}
 	for (GameObject* child : children) {
 		delete child;
 	}

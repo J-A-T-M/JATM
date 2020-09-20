@@ -116,6 +116,7 @@
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="SoundSystemClass.cpp" />
     <ClCompile Include="StateMachine.cpp" />
+    <ClCompile Include="TestScene.cpp" />
     <ClCompile Include="UI\ImageComponent.cpp" />
     <ClCompile Include="UI\TextComponent.cpp" />
     <ClCompile Include="UI\UIComponent.cpp" />
@@ -153,6 +154,7 @@
     <ClInclude Include="ISubscriber.h" />
     <ClInclude Include="SoundSystemClass.h" />
     <ClInclude Include="StateMachine.h" />
+    <ClInclude Include="TestScene.h" />
     <ClInclude Include="UI\ImageComponent.h" />
     <ClInclude Include="UI\TextComponent.h" />
     <ClInclude Include="UI\UIComponent.h" />
