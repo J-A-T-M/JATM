@@ -66,8 +66,10 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 
 	glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
+
 	glBindBuffer(GL_ARRAY_BUFFER, model->UVLoc);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), BUFFER_OFFSET(0));
+
 	glBindBuffer(GL_ARRAY_BUFFER, model->normalLoc);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->elementLoc);
@@ -77,7 +79,7 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 	standardShader->setMat4("model", renderable->m);
 	standardShader->setVec3("u_color", glm::convertSRGBToLinear(renderable->color));
 	standardShader->setBool("u_fullBright", renderable->fullBright);
-	standardShader->setFloat("u_roughness", glm::max(renderable->roughness, 0.01f));
+	standardShader->setFloat("u_roughness", glm::max(renderable->roughness, 0.05f));
 	standardShader->setFloat("u_metallic", renderable->metallic);
 
 	glm::mat3 mn = glm::inverseTranspose(renderable->m);
@@ -117,6 +119,7 @@ void Renderer::Draw() {
 	glm::mat4 camera_viewProjection = camera_projection * camera_view;
 	glm::vec3 camera_upDir = camera_view * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
 
+	// draw light depthmaps
 	glm::mat4 lightViewProjections[NUM_LIGHTS];
 	glm::vec3 lightDirections[NUM_LIGHTS];
 	glm::vec3 lightColors[NUM_LIGHTS];
@@ -183,24 +186,29 @@ void Renderer::PreloadAssetBuffers() {
 		glGenBuffers(1, &model->UVLoc);
 		glGenBuffers(1, &model->normalLoc);
 		glGenBuffers(1, &model->elementLoc);
+
 		glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
 		glBufferData(GL_ARRAY_BUFFER, model->positions.size() * sizeof(glm::vec3), model->positions.data(), GL_STATIC_DRAW);
+
 		glBindBuffer(GL_ARRAY_BUFFER, model->UVLoc);
 		glBufferData(GL_ARRAY_BUFFER, model->UVs.size() * sizeof(glm::vec2), model->UVs.data(), GL_STATIC_DRAW);
+
 		glBindBuffer(GL_ARRAY_BUFFER, model->normalLoc);
 		glBufferData(GL_ARRAY_BUFFER, model->normals.size() * sizeof(glm::vec3), model->normals.data(), GL_STATIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->elementLoc);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->elements.size() * sizeof(GLuint), model->elements.data(), GL_STATIC_DRAW);
 	}
 	for (int i = 0; i < NUM_TEXTURES; i++) {
-		Texture* texture = &AssetLoader::textures[i];
-		glGenTextures(1, &texture->loc);
-		glBindTexture(GL_TEXTURE_2D, texture->loc);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		Texture& texture = AssetLoader::textures[i];
+		glGenTextures(1, &texture.loc);
+		glBindTexture(GL_TEXTURE_2D, texture.loc);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, texture->width, texture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->data.data());
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
+		GLint internalFormat = texture.sRGB ? GL_SRGB_ALPHA : GL_RGBA;
+		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, texture.width, texture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture.data.data());
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 }
