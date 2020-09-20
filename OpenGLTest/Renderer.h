@@ -44,10 +44,11 @@ class Renderer : public ISubscriber {
 		float interp_duration;
 		float interp_value;
 
+		float exposure = 0.5;
 		glm::vec3 floor_color;
 		glm::vec3 ambient_color_up;
 		glm::vec3 ambient_color_down;
-		Camera camera;
+		std::shared_ptr<Camera> camera;
 
 		std::thread renderThread;
 		bool renderThreadDone;

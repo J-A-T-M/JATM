@@ -23,6 +23,7 @@ uniform vec3 u_lightDirection[NUM_LIGHTS];
 uniform vec3 u_lightColor[NUM_LIGHTS];
 uniform float u_shadowMapTexelSize;
 
+uniform float u_exposure;
 uniform mat4 projection;
 uniform sampler2D u_depthMapSampler;
 uniform int u_numSamples;
@@ -171,5 +172,7 @@ void main() {
 		lighting += direct;
 	}
 
-	o_fragColor = vec4(dither(lighting), 1.0);
+    lighting *= u_exposure;
+	lighting = dither(lighting);
+	o_fragColor = vec4(lighting, 1.0);
 }

@@ -44,13 +44,13 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 		_gameObjects[i].addRenderable(Colour::SILVER, MODEL_CUBE_BEVEL, TEXTURE_NONE, 0.5f, 1.0f);
 	}
 
-	Camera camera;
-	camera.position = glm::vec3(0.0f, 64.0f, 100.0f);
-	camera.target = glm::vec3(0.0f, 0.0f, 0.0f);
-	camera.FOV = 25.0f;
-	camera.nearClip = 0.1f;
-	camera.farClip = 1000.0f;
-
+	camera = std::make_shared<Camera>();
+	camera->newPosition = glm::vec3(0.0f, 64.0f, 100.0f);
+	camera->position = glm::vec3(0.0f, 64.0f, 100.0f);
+	camera->target = glm::vec3(0.0f, 0.0f, 0.0f);
+	camera->FOV = 25.0f;
+	camera->nearClip = 0.1f;
+	camera->farClip = 1000.0f;
 
 	DirectionalLight directionalLight;
 	directionalLight.direction = glm::normalize(glm::vec3(1.0f, -0.5f, -0.25f));
@@ -58,7 +58,7 @@ MenuScene::MenuScene(std::string serverIP, bool isServer, int numLocal, int numR
 	directionalLight.nearclip = -50.0f;
 	directionalLight.farclip = 50.0f;
 
-	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<Camera>(camera));
+	EventManager::notify(RENDERER_SET_CAMERA, &TypeParam<std::shared_ptr<Camera>>(camera));
 	EventManager::notify(RENDERER_SET_DIRECTIONAL_LIGHT, &TypeParam<DirectionalLight>(directionalLight));
 	EventManager::notify(RENDERER_SET_AMBIENT_UP, &TypeParam<glm::vec3>(glm::vec3(0.1f, 0.15f, 0.25f)));
 	EventManager::notify(RENDERER_SET_FLOOR_COLOR, &TypeParam<glm::vec3>(floor.renderable->color));

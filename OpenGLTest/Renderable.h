@@ -14,7 +14,9 @@ typedef float GLfloat;
 #include "Colour.h"
 
 struct Camera {
+	glm::vec3 newPosition;
 	glm::vec3 position;
+	glm::vec3 previousPosition;
 	glm::vec3 target;
 	GLfloat FOV;
 	GLfloat nearClip;

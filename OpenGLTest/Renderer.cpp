@@ -99,7 +99,7 @@ void Renderer::DrawRenderableDepthMap(std::shared_ptr<Renderable> renderable) {
 }
 
 void Renderer::Draw() {
-	glClearColor(ambient_color_up.r, ambient_color_up.g, ambient_color_up.b, 1.0f);
+	glClearColor(ambient_color_up.r * exposure, ambient_color_up.g * exposure, ambient_color_up.b * exposure, 1.0f);
 	ambient_color_down = ambient_color_up;
 	for (int i = 0; i < NUM_LIGHTS; ++i) {
 		glm::vec3 L = glm::normalize(directionalLight[i].direction);
@@ -111,8 +111,9 @@ void Renderer::Draw() {
 		UpdateModelMatrix(renderable);
 	}
 
-	glm::mat4 camera_view = glm::lookAt(camera.position, camera.target, glm::vec3(0, 1, 0));
-	glm::mat4 camera_projection = glm::perspective(glm::radians(camera.FOV), (GLfloat)windowWidth / (GLfloat)windowHeight, camera.nearClip, camera.farClip);
+	glm::vec3 camera_pos = glm::mix(camera->previousPosition, camera->position, interp_value);
+	glm::mat4 camera_view = glm::lookAt(camera_pos, camera->target, glm::vec3(0, 1, 0));
+	glm::mat4 camera_projection = glm::perspective(glm::radians(camera->FOV), (GLfloat)windowWidth / (GLfloat)windowHeight, camera->nearClip, camera->farClip);
 	glm::mat4 camera_viewProjection = camera_projection * camera_view;
 	glm::vec3 camera_upDir = camera_view * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
 
@@ -151,6 +152,7 @@ void Renderer::Draw() {
 
 	// draw 3d objects
 	standardShader->use();
+	standardShader->setFloat("u_exposure", exposure);
 	standardShader->setMat4("view", camera_view);
 	standardShader->setMat4("projection", camera_projection);
 	standardShader->setVec3("u_up", camera_upDir);
@@ -172,9 +174,6 @@ void Renderer::Draw() {
 	for (auto renderable : renderables) {
 		DrawRenderable(renderable);
 	}
-	
-	// draw 2d objects
-	DrawUI();
 }
 
 void Renderer::PreloadAssetBuffers() {
@@ -375,11 +374,18 @@ int Renderer::RenderLoop() {
 			}
 		}
 
+		if (camera.use_count() == 1) {
+			camera.reset();
+		}
+
 		//draw
 		updateInterpolationValue();
 		glfwGetWindowSize(window, &windowWidth, &windowHeight);
 		if (windowWidth != 0 && windowHeight != 0) {
-			Draw();
+			if (camera != nullptr) {
+				Draw();
+			}
+			DrawUI();
 		}
 		renderables_mutex.unlock();
 
@@ -459,12 +465,13 @@ void Renderer::notify(EventName eventName, Param* params) {
 			renderables_mutex.unlock();
 			break;
 		}
-		
-        case RENDERER_SET_CAMERA: {
-            TypeParam<Camera> *p = dynamic_cast<TypeParam<Camera> *>(params);
-            camera = p->Param;
-            break;
-        }
+
+		case RENDERER_SET_CAMERA: {
+			TypeParam<std::shared_ptr<Camera>> *p = dynamic_cast<TypeParam<std::shared_ptr<Camera>> *>(params);
+			camera = p->Param;
+			camera->previousPosition = camera->position;
+			break;
+		}
 
 		case RENDERER_SET_DIRECTIONAL_LIGHT: {
 			TypeParam<DirectionalLight> *p = dynamic_cast<TypeParam<DirectionalLight> *>(params);
@@ -491,6 +498,10 @@ void Renderer::notify(EventName eventName, Param* params) {
 			interp_start = std::chrono::high_resolution_clock::now();
 			for (auto renderable : renderables) {
 				UpdateTransform(renderable);
+			}
+			if (camera != nullptr) {
+				camera->previousPosition = camera->position;
+				camera->position = camera->newPosition;
 			}
 			renderables_mutex.unlock();
 			break;
