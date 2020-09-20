@@ -1,6 +1,6 @@
 #include "Quadtree.h"
 
-Quadtree::Quadtree(int level, Rect * bounds) {
+Quadtree::Quadtree(int level, Rect bounds) {
 	objects = {};
 	nodes = {};
 	this->level = level;
@@ -9,7 +9,6 @@ Quadtree::Quadtree(int level, Rect * bounds) {
 
 Quadtree::~Quadtree() {
 	Clear();
-	delete bounds;
 }
 
 void Quadtree::Clear() {
@@ -77,15 +76,15 @@ std::vector<int>* Quadtree::Retrieve(std::vector<int>* result, Rect * rect) {
 }
 
 void Quadtree::Split() {
-	float subWidth = bounds->width / 2.0f;
-	float subHeight = bounds->height / 2.0f;
-	float x = bounds->x;
-	float y = bounds->y;
+	float subWidth = bounds.width / 2.0f;
+	float subHeight = bounds.height / 2.0f;
+	float x = bounds.x;
+	float y = bounds.y;
 
-	Quadtree* subQuad1 = new Quadtree(level + 1, new Rect(x, y + subHeight, subWidth, subHeight));
-	Quadtree* subQuad2 = new Quadtree(level + 1, new Rect(x + subWidth, y + subHeight, subWidth, subHeight));
-	Quadtree* subQuad3 = new Quadtree(level + 1, new Rect(x, y, subWidth, subHeight));
-	Quadtree* subQuad4 = new Quadtree(level + 1, new Rect(x + subWidth, y, subWidth, subHeight));
+	Quadtree* subQuad1 = new Quadtree(level + 1, Rect(x, y + subHeight, subWidth, subHeight));
+	Quadtree* subQuad2 = new Quadtree(level + 1, Rect(x + subWidth, y + subHeight, subWidth, subHeight));
+	Quadtree* subQuad3 = new Quadtree(level + 1, Rect(x, y, subWidth, subHeight));
+	Quadtree* subQuad4 = new Quadtree(level + 1, Rect(x + subWidth, y, subWidth, subHeight));
 
 	nodes.push_back(subQuad1);
 	nodes.push_back(subQuad2);
@@ -94,8 +93,8 @@ void Quadtree::Split() {
 }
 
 int Quadtree::GetIndex(Rect * rect) {
-	double horizontalMidpoint = bounds->x + bounds->width * 0.5;
-	double verticalMidpoint = bounds->y + bounds->height * 0.5;
+	double horizontalMidpoint = bounds.x + bounds.width * 0.5;
+	double verticalMidpoint = bounds.y + bounds.height * 0.5;
 
 	bool inLeft = (rect->x < horizontalMidpoint);
 	bool inRight = (rect->x + rect->width >= horizontalMidpoint);
