@@ -9,6 +9,6 @@ class AssetLoader {
 		static Texture textures[NUM_TEXTURES];
 	private:
 		static Model loadModel(std::string const &path);
-		static Model processMesh(aiMesh * mesh);
+		static Model processMesh(aiMesh &mesh);
 		static Texture loadTexture(std::string const & path, bool sRGB = true);
 };

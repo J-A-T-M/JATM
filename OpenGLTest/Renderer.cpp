@@ -63,6 +63,9 @@ void Renderer::DrawUIComponent(UIComponent* UIrenderable) {
 void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 	Model* model = &AssetLoader::models[renderable->model];
 	Texture* texture = &AssetLoader::textures[renderable->texture];
+	Texture* normalMap = &AssetLoader::textures[renderable->normalMap];
+	Texture* dispMap = &AssetLoader::textures[renderable->dispMap];
+	Texture* roughnessMap = &AssetLoader::textures[renderable->roughnessMap];
 
 	glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
@@ -72,9 +75,23 @@ void Renderer::DrawRenderable(std::shared_ptr<Renderable> renderable) {
 
 	glBindBuffer(GL_ARRAY_BUFFER, model->normalLoc);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
+
+	glBindBuffer(GL_ARRAY_BUFFER, model->tangentLoc);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
+
+	glBindBuffer(GL_ARRAY_BUFFER, model->bitangentLoc);
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(0));
+
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->elementLoc);
 
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture->loc);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, normalMap->loc);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, dispMap->loc);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, roughnessMap->loc);
 
 	standardShader->setMat4("model", renderable->m);
 	standardShader->setVec3("u_color", glm::convertSRGBToLinear(renderable->color));
@@ -164,13 +181,13 @@ void Renderer::Draw() {
 	standardShader->setMat4("lightSpace", lightViewProjections[0], NUM_LIGHTS);
 	standardShader->setVec3("u_lightDirection", lightDirections[0], NUM_LIGHTS);
 	standardShader->setVec3("u_lightColor", lightColors[0], NUM_LIGHTS);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, shadowMap[0]);
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, shadowMap[1]);
-	glActiveTexture(GL_TEXTURE3);
+	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
-	glActiveTexture(GL_TEXTURE0);
+	for (int i = 0; i < NUM_LIGHTS; ++i) {
+		glActiveTexture(GL_TEXTURE5 + i);
+		glBindTexture(GL_TEXTURE_2D, shadowMap[i]);
+	}
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, windowWidth, windowHeight);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -185,6 +202,8 @@ void Renderer::PreloadAssetBuffers() {
 		glGenBuffers(1, &model->positionLoc);
 		glGenBuffers(1, &model->UVLoc);
 		glGenBuffers(1, &model->normalLoc);
+		glGenBuffers(1, &model->tangentLoc);
+		glGenBuffers(1, &model->bitangentLoc);
 		glGenBuffers(1, &model->elementLoc);
 
 		glBindBuffer(GL_ARRAY_BUFFER, model->positionLoc);
@@ -195,6 +214,13 @@ void Renderer::PreloadAssetBuffers() {
 
 		glBindBuffer(GL_ARRAY_BUFFER, model->normalLoc);
 		glBufferData(GL_ARRAY_BUFFER, model->normals.size() * sizeof(glm::vec3), model->normals.data(), GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ARRAY_BUFFER, model->tangentLoc);
+		glBufferData(GL_ARRAY_BUFFER, model->tangents.size() * sizeof(glm::vec3), model->tangents.data(), GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ARRAY_BUFFER, model->bitangentLoc);
+		glBufferData(GL_ARRAY_BUFFER, model->bitangents.size() * sizeof(glm::vec3), model->bitangents.data(), GL_STATIC_DRAW);
+
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->elementLoc);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->elements.size() * sizeof(GLuint), model->elements.data(), GL_STATIC_DRAW);
 	}
@@ -275,6 +301,8 @@ int Renderer::Init() {
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(3);
+	glEnableVertexAttribArray(4);
 
 	standardShader->use();
 	// shadow stuff
@@ -293,7 +321,6 @@ int Renderer::Init() {
 		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap[i], 0);
-		standardShader->setInt("u_shadowMapSampler[" + std::to_string(i) + "]", i + 1);
 	}
 	// ssao stuff
 	glGenFramebuffers(1, &depthMapFBO);
@@ -306,8 +333,16 @@ int Renderer::Init() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-	// binds UNIFORM_DEPTHMAP_SAMPLER to GL_TEXTURE3
-	standardShader->setInt("u_depthMapSampler", 3);
+	// binds uniform samplers to texture units
+	standardShader->setInt("u_textureSampler", 0);
+	standardShader->setInt("u_normalMapSampler", 1);
+	standardShader->setInt("u_dispMapSampler", 2);
+	standardShader->setInt("u_roughnessMapSampler", 3);
+	standardShader->setInt("u_depthMapSampler", 4);
+	for (int i = 0; i < NUM_LIGHTS; ++i) {
+		standardShader->setInt("u_shadowMapSampler[" + std::to_string(i) + "]", i + 5);
+	}
+
 	// binds SSAO kernel
 	std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
 	std::default_random_engine generator;
@@ -465,7 +500,7 @@ void Renderer::InitUIComponent(UIComponent * renderable) {
 }
 
 void Renderer::notify(EventName eventName, Param* params) {
-    switch (eventName) {
+	switch (eventName) {
 		case RENDERER_ADD_TO_RENDERABLES: {
 			TypeParam<std::shared_ptr<Renderable>> *p = dynamic_cast<TypeParam<std::shared_ptr<Renderable>> *>(params);
 			renderables_mutex.lock();
@@ -517,13 +552,13 @@ void Renderer::notify(EventName eventName, Param* params) {
 
 		default:
 			break;
-    }
+	}
 }
 
 Renderer::Renderer() {
 	renderThreadDone = false;
 	renderThread = std::thread(&Renderer::RenderLoop, this);
-    EventManager::subscribe(RENDERER_ADD_TO_RENDERABLES, this);
+	EventManager::subscribe(RENDERER_ADD_TO_RENDERABLES, this);
 	EventManager::subscribe(RENDERER_SET_CAMERA, this);
 	EventManager::subscribe(RENDERER_SET_DIRECTIONAL_LIGHT, this);
 	EventManager::subscribe(RENDERER_SET_AMBIENT_UP, this);

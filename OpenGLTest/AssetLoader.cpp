@@ -14,47 +14,40 @@ Texture AssetLoader::textures[NUM_TEXTURES];
 Model AssetLoader::loadModel(std::string const &path) {
 	// read file via ASSIMP
 	Assimp::Importer importer;
-	const unsigned int flags = aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph;
+	const unsigned int flags = aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph;
 	const aiScene* scene = importer.ReadFile(path, flags);
-
 	// check for errors
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) { // if is Not Zero
-		std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
-		throw "Division by zero condition!";
+		std::cout << "ERROR::ASSIMP " << importer.GetErrorString() << std::endl;
+		return Model();
 	}
 
-	aiMesh* mesh = scene->mMeshes[0];
-	return processMesh(scene->mMeshes[0]);
+	aiMesh& mesh = *scene->mMeshes[0];
+	return processMesh(mesh);
 }
 
-Model AssetLoader::processMesh(aiMesh *mesh) {
+static inline glm::vec3 vec3_cast(const aiVector3D &v) { return glm::vec3(v.x, v.y, v.z); }
+static inline glm::vec2 vec2_cast(const aiVector3D &v) { return glm::vec2(v.x, v.y); }
+
+Model AssetLoader::processMesh(aiMesh &mesh) {
 	Model ret;
-	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-		glm::vec3 pos;
-		pos.x = mesh->mVertices[i].x;
-		pos.y = mesh->mVertices[i].y;
-		pos.z = mesh->mVertices[i].z;
-		ret.positions.push_back(pos);
+	for (int i = 0; i < mesh.mNumVertices; ++i) {
+		ret.positions.push_back(vec3_cast(mesh.mVertices[i]));
+		ret.normals.push_back(vec3_cast(mesh.mNormals[i]));
 
-		glm::vec3 normal;
-		normal.x = mesh->mNormals[i].x;
-		normal.y = mesh->mNormals[i].y;
-		normal.z = mesh->mNormals[i].z;
-		ret.normals.push_back(normal);
-
-		if (mesh->mTextureCoords[0]) {
-			glm::vec2 texCoord;
-			texCoord.x = mesh->mTextureCoords[0][i].x;
-			texCoord.y = mesh->mTextureCoords[0][i].y;
-			ret.UVs.push_back(texCoord);
+		if (mesh.HasTextureCoords(0)) {
+			ret.UVs.push_back(vec2_cast(mesh.mTextureCoords[0][i]));
+			ret.tangents.push_back(vec3_cast(mesh.mTangents[i]));
+			ret.bitangents.push_back(-vec3_cast(mesh.mBitangents[i]));
 		} else {
 			ret.UVs.push_back(glm::vec2(0, 0));
+			ret.tangents.push_back(glm::vec3(0, 0, 0));
+			ret.bitangents.push_back(glm::vec3(0, 0, 0));
 		}
-
 	}
-	for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
-		aiFace face = mesh->mFaces[i];
-		for (unsigned int j = 0; j < face.mNumIndices; j++) {
+	for (int i = 0; i < mesh.mNumFaces; i++) {
+		aiFace face = mesh.mFaces[i];
+		for (int j = 0; j < face.mNumIndices; j++) {
 			ret.elements.push_back(face.mIndices[j]);
 		}
 	}
