@@ -61,8 +61,9 @@ Model AssetLoader::processMesh(aiMesh *mesh) {
 	return ret;
 }
 
-Texture AssetLoader::loadTexture(std::string const & path) {
+Texture AssetLoader::loadTexture(std::string const & path, bool sRGB) {
 	Texture texture;
+	texture.sRGB = sRGB;
 	stbi_set_flip_vertically_on_load(true);
 	GLubyte* texData = stbi_load(path.c_str(), &texture.width, &texture.height, NULL, STBI_rgb_alpha);
 	texture.data.assign(texData, texData + texture.width * texture.height * 4);
@@ -76,4 +77,6 @@ void AssetLoader::preloadAssets() {
 	models[MODEL_SUZANNE] = loadModel("../assets/models/suzanne.obj");
 	textures[TEXTURE_UV_GRID] = loadTexture("../assets/textures/UV Grid.png");
 	textures[TEXTURE_FONT_SHARE_TECH_MONO] = loadTexture("../assets/textures/ShareTechMono.png");
+	textures[TEXTURE_NORMAL_BRICKS] = loadTexture("../assets/textures/bricks_normal.jpg", false);
+	textures[TEXTURE_DISP_BRICKS] = loadTexture("../assets/textures/bricks_disp.jpg", false);
 }

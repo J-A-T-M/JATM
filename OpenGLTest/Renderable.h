@@ -43,6 +43,7 @@ struct Texture {
 	std::vector<GLubyte> data;
 	int width;
 	int height;
+	bool sRGB;
 	GLuint loc;
 };
 
